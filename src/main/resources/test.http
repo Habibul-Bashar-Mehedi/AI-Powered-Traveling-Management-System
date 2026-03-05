@@ -1,0 +1,21 @@
+### User Registration Test
+POST http://localhost:8080/api/auth/registar
+Content-Type: application/json
+
+{
+  "username": "mehedi",
+  "email": "mehedi@gmail.com",
+  "password": "123324",
+  "role": "USER",
+  "countyId": "BD"
+}
+
+
+### User Login Test
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "mehedi@gmail.com",
+  "password": "123324"
+}
