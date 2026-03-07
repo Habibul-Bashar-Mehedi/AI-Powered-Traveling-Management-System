@@ -1,7 +1,7 @@
 package ai_powered_traveling_management_system.user.api;
 
 import ai_powered_traveling_management_system.user.entities.User;
-import ai_powered_traveling_management_system.user.service.RegistrationService;
+import ai_powered_traveling_management_system.user.services.RegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,8 +23,4 @@ public class AuthController {
         return registrationService.loginUser(loginRequest.getEmail(),loginRequest.getPassword());
     }
 
-    @GetMapping("/all")
-    public List<User> getAllUsers() {
-        return registrationService.getAllUsers();
-    }
 }

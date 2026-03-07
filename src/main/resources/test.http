@@ -1,10 +1,22 @@
-### User Registration Test
+### User Registration Test-1
 POST http://localhost:8080/api/auth/registar
 Content-Type: application/json
 
 {
   "username": "mehedi",
   "email": "mehedi@gmail.com",
+  "password": "123324",
+  "role": "USER",
+  "countyId": "BD"
+}
+
+### User Registration Test-2
+POST http://localhost:8080/api/auth/registar
+Content-Type: application/json
+
+{
+  "username": "mehedi-2",
+  "email": "mehedi2@gmail.com",
   "password": "123324",
   "role": "USER",
   "countyId": "BD"
@@ -18,4 +30,113 @@ Content-Type: application/json
 {
   "email": "mehedi@gmail.com",
   "password": "123324"
+}
+### User Login Test
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "mehedi2@gmail.com",
+  "password": "123324"
+}
+
+### Holtel Test
+POST http://localhost:8080/api/hotels/add
+Content-Type: application/json
+
+{
+  "vendor": { "id": 1 },
+  "destination": { "id": 1 },
+  "hotelName": "Radisson Blu",
+  "address": "Dhaka",
+  "status": "ACTIVE",
+  "descriptions": "Five star hotel"
+
+}
+
+### Holtel Test-2
+POST http://localhost:8080/api/hotels/add
+Content-Type: application/json
+
+{
+  "vendor": { "id": 2 },
+  "destination": { "id": 2 },
+  "hotelName": "Radisson Blu-2",
+  "address": "Dhaka",
+  "status": "ACTIVE",
+  "descriptions": "Five star hotel-2"
+
+}
+
+### Room Test
+POST http://localhost:8080/api/rooms/add
+Content-Type: application/json
+
+{
+  "roomTypeName": "Deluxe King",
+  "amenities": "WiFi, AC, TV, Mini Bar",
+  "pricePerNight": 5000.0,
+  "availableQuantities": 10,
+  "status": "AVAILABLE",
+  "hotel": { "id": 1 }
+}
+### Room Test-2
+POST http://localhost:8080/api/rooms/add
+Content-Type: application/json
+
+{
+  "roomTypeName": "Deluxe King-2",
+  "amenities": "WiFi, AC, TV, Mini Bar-2",
+  "pricePerNight": 5000.0,
+  "availableQuantities": 10,
+  "status": "AVAILABLE",
+  "hotel": { "id": 2 }
+}
+
+### Destination Test
+POST http://localhost:8080/api/desination/add
+Content-Type: application/json
+
+{
+  "name": "Cox's Bazar",
+  "region": "Chittagong",
+  "description": "The longest natural sandy beach in the world, famous for its scenic beauty and sunsets.",
+  "isAlive": true
+}
+
+### Destination Test
+POST http://localhost:8080/api/desination/add
+Content-Type: application/json
+
+{
+  "name": "Cox's Bazar-2",
+  "region": "Chittagong-2",
+  "description": "The longest natural sandy beach in the world, famous for its scenic beauty and sunsets.",
+  "isAlive": true
+}
+
+### Chat history Test
+POST http://localhost:8080/api/chat/history/add
+Content-Type: application/json
+
+{
+  "user": {
+    "id": 1
+  },
+  "userInput": "Cox's Bazar-e thakar shera hotel konta?",
+  "aiResponse": "Cox's Bazar-e thakar jonno Sayeman Beach Resort ba Sayeman Heritage bhalo hote pare.",
+  "sessionId": "session_abc_123"
+}
+
+### Chat history Test
+POST http://localhost:8080/api/chat/history/add
+Content-Type: application/json
+
+{
+  "user": {
+    "id": 2
+  },
+  "userInput": "Cox's Bazar-e thakar shera hotel konta?",
+  "aiResponse": "Cox's Bazar-e thakar jonno Sayeman Beach Resort ba Sayeman Heritage bhalo hote pare.",
+  "sessionId": "session_abc_1234"
 }
