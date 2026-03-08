@@ -1,4 +1,4 @@
-package ai_powered_traveling_management_system.booking;
+package ai_powered_traveling_management_system.booking.entities;
 
 import ai_powered_traveling_management_system.hotel.entities.Hotel;
 import ai_powered_traveling_management_system.hotel.entities.Room;
