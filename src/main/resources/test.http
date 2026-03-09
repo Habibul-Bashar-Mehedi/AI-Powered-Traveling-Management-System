@@ -98,6 +98,7 @@ Content-Type: application/json
   "specialRequest": "Please provide a room with a sea view and an extra pillow."
 }
 
+
 ### Transport Test
 POST http://localhost:8080/api/transports/add
 Content-Type: application/json
@@ -117,21 +118,36 @@ Content-Type: application/json
   "isLocal": false
 }
 
-### Transport Test
-POST http://localhost:8080/api/transports/add
+### Touriest Spot test
+POST http://localhost:8080/api/tourist/spot/add
 Content-Type: application/json
 
 {
-  "origin": {
-    "id": 1
-  },
   "destination": {
     "id": 1
   },
-  "model": "Hino 1J (Non-AC)",
-  "operatorName": "Hanif Enterprise",
-  "estimatedCost": 850.0,
-  "estimatedDuration": "12 hours",
-  "frequency": "Daily (Every 1 hour)",
-  "isLocal": false
+  "name": "Nilgiri Resort",
+  "description": "A beautiful hill resort in Bandarban surrounded by clouds.",
+  "visitingHours": "08:00 AM - 05:00 PM",
+  "adultEntryFees": 50.0,
+  "childEntryFees": 20.0,
+  "locationDescription": "Thanchi Road, Bandarban",
+  "isAlive": true,
+  "isDelete": false
+}
+
+### Traditional food test
+POST http://localhost:8080/api/traditional/food/add
+Content-Type: application/json
+
+{
+  "destination": {
+    "id": 1
+  },
+  "dishName": "Kala Bhuna",
+  "description": "A famous traditional dark beef curry from Chittagong with rich spices.",
+  "culturalContext": "Traditionally served at weddings and special occasions in the Chittagong region.",
+  "priceRange": "300 - 500 BDT",
+  "recommendedLocation": "Mezban Haile Ayun, Chittagong",
+  "isDeleted": false
 }
