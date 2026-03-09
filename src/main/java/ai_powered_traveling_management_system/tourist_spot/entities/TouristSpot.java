@@ -1,0 +1,35 @@
+package ai_powered_traveling_management_system.tourist_spot.entities;
+
+import ai_powered_traveling_management_system.destination.entities.Destination;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.util.Date;
+
+@Entity
+@Data
+@Table(name = "tourist_spots")
+public class TouristSpot {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    @ManyToOne
+    @JoinColumn(name = "destination_id", referencedColumnName = "id")
+    private Destination destination;
+    private String name;
+    @Column(columnDefinition = "TEXT")
+    private String description;
+    private String visitingHours;
+    private double adultEntryFees;
+    private double childEntryFees;
+    private String locationDescription;
+    private boolean isAlive = true;
+    private boolean isDelete;
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Date createdAt;
+    @UpdateTimestamp
+    private Date deletedAt;
+}
