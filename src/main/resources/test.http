@@ -151,3 +151,20 @@ Content-Type: application/json
   "recommendedLocation": "Mezban Haile Ayun, Chittagong",
   "isDeleted": false
 }
+
+### Market test
+POST http://localhost:8080/api/market/add
+Content-Type: application/json
+
+{
+  "destination": {
+    "id": 1
+  },
+  "name": "Burmese Market",
+  "description": "Famous for pickles, handloom products, and local sea-shell crafts.",
+  "location": "Cox's Bazar Main Town",
+  "operatingDays": "Saturday - Friday (Everyday)",
+  "operatingHours": "10:00 AM - 10:00 PM",
+  "isAlive": true,
+  "isDeleted": false
+}
