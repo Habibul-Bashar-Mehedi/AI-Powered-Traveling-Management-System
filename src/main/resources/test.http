@@ -97,3 +97,22 @@ Content-Type: application/json
   "status": "PENDING",
   "specialRequest": "Please provide a room with a sea view and an extra pillow."
 }
+
+### Transport Test
+POST http://localhost:8080/api/transports/add
+Content-Type: application/json
+
+{
+  "origin": {
+    "id": 1
+  },
+  "destination": {
+    "id": 1
+  },
+  "model": "Hino 1J (Non-AC)",
+  "operatorName": "Hanif Enterprise",
+  "estimatedCost": 850.0,
+  "estimatedDuration": "12 hours",
+  "frequency": "Daily (Every 1 hour)",
+  "isLocal": false
+}
