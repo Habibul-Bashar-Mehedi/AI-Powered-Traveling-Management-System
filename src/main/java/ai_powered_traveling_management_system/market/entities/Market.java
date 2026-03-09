@@ -3,6 +3,7 @@ package ai_powered_traveling_management_system.market.entities;
 import ai_powered_traveling_management_system.destination.entities.Destination;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.util.Date;
 
@@ -24,6 +25,8 @@ public class Market {
     private String description;
     private boolean isAlive;
     private boolean isDeleted;
+    @CreationTimestamp
+    @Column(updatable = false)
     private Date createdAt;
 
 }

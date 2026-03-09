@@ -168,3 +168,22 @@ Content-Type: application/json
   "isAlive": true,
   "isDeleted": false
 }
+
+### Route Test
+POST http://localhost:8080/api/route/add
+Content-Type: application/json
+
+{
+  "origin": {
+    "id": 1
+  },
+  "destination": {
+    "id": 1
+  },
+  "distanceKM": 398.5,
+  "estimatedDuration": "10-12 hours",
+  "routeDescription": "Dhaka to Cox's Bazar via Chittagong Highway. Road conditions are generally good.",
+  "isRecommended": true,
+  "isDeleted": false
+}
+
