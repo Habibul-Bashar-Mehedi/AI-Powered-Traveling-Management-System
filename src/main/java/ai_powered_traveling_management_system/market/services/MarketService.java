@@ -5,6 +5,8 @@ import ai_powered_traveling_management_system.market.repositories.MarketReposito
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class MarketService {
     @Autowired
@@ -19,7 +21,11 @@ public class MarketService {
                 .existsMarketsByNameAndDestinationId(
                         market.getName(),
                         market.getDestination().getId());
-
+        marketRepository.save(market);
         return "market added successfully done";
+    }
+
+    public List<Market> getAllMarket() {
+        return marketRepository.findAll();
     }
 }

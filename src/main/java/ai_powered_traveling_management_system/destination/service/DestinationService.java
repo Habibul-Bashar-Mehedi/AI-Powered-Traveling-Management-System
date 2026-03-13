@@ -5,6 +5,8 @@ import ai_powered_traveling_management_system.destination.repositories.Destinati
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class DestinationService {
     @Autowired
@@ -24,4 +26,8 @@ public class DestinationService {
         destinationRepository.save(destination);
         return "destination added successfully done";
     }
+    public List<Destination> getAllDestinations() {
+        return destinationRepository.findAll();
+    }
+
 }

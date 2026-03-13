@@ -51,7 +51,7 @@ Content-Type: application/json
 
 
 ### Destination Test
-POST http://localhost:8080/api/desination/add
+POST http://localhost:8080/api/destination/add
 Content-Type: application/json
 
 {
@@ -187,3 +187,54 @@ Content-Type: application/json
   "isDeleted": false
 }
 
+
+### Treditional item test
+POST http://localhost:8080/api/traditional/item/add
+Content-Type: application/json
+
+{
+  "market": {
+    "id": 1
+  },
+  "categoryName": "Handmade Pickles",
+  "description": "Variety of local pickles including mango, olive, and spicy garlic, famous in the Burmese market.",
+  "priceRange": "150 - 500 BDT",
+  "isDeleted": false
+}
+
+
+
+###
+POST http://localhost:8080/api/destination/add
+Content-Type: application/json
+
+{
+  "name": "Cox's Bazar",
+  "region": "Chittagong",
+  "description": "The longest sandy beach.",
+  "isAlive": true
+}
+###
+
+POST http://localhost:8080/api/market/add
+Content-Type: application/json
+
+{
+"destination": { "id": 1 },
+"name": "Burmese Market",
+"location": "Cox's Bazar",
+"isAlive": true,
+"isDeleted": false
+}
+
+###
+POST http://localhost:8080/api/traditional/item/add
+Content-Type: application/json
+
+{
+  "market": { "id": 1 },
+  "categoryName": "Handmade Pickles",
+  "description": "Local pickles.",
+  "priceRange": "150 - 500 BDT",
+  "isDeleted": false
+}

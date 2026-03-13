@@ -2,14 +2,14 @@ package ai_powered_traveling_management_system.destination.api;
 
 import ai_powered_traveling_management_system.destination.entities.Destination;
 import ai_powered_traveling_management_system.destination.service.DestinationService;
+import jdk.dynalink.linker.LinkerServices;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
-@RequestMapping("/api/desination")
+@RequestMapping("/api/destination")
 public class DestinationRestController {
     @Autowired
     private DestinationService destinationService;
@@ -17,5 +17,10 @@ public class DestinationRestController {
     @PostMapping("/add")
     public String postDestination(@RequestBody Destination destination) {
         return destinationService.addDestination(destination);
+    }
+
+    @GetMapping("/all")
+    public List<Destination> getAllDestination() {
+        return destinationService.getAllDestinations();
     }
 }
