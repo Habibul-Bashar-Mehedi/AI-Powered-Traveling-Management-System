@@ -5,6 +5,8 @@ import ai_powered_traveling_management_system.hotel.repositories.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class RoomService {
     @Autowired
@@ -28,5 +30,9 @@ public class RoomService {
 
         roomRepository.save(room);
         return "Room Successfully added";
+    }
+
+    public List<Room> getAllRoom() {
+        return roomRepository.findAll();
     }
 }

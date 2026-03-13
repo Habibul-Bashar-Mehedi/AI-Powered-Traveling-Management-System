@@ -5,6 +5,8 @@ import ai_powered_traveling_management_system.tourist_spot.repositories.TouristS
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class TouristSpotService {
     @Autowired
@@ -24,5 +26,9 @@ public class TouristSpotService {
         }
         touristSpotRepository.save(touristSpot);
         return "Tourist Spot Successfully Added";
+    }
+
+    public List<TouristSpot> getAllTouristSpot() {
+        return touristSpotRepository.findAll();
     }
 }

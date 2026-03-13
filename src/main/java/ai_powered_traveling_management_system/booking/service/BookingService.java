@@ -5,6 +5,8 @@ import ai_powered_traveling_management_system.booking.repositories.BookingReposi
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class BookingService {
     @Autowired
@@ -27,5 +29,9 @@ public class BookingService {
 
         bookingRepository.save(booking);
         return "Booking successfully done";
+    }
+
+    public List<Booking> getAllBookings() {
+        return bookingRepository.findAll();
     }
 }

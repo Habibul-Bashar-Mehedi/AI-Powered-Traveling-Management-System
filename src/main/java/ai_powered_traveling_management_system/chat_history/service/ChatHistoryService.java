@@ -5,6 +5,8 @@ import ai_powered_traveling_management_system.chat_history.repositories.ChatHist
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ChatHistoryService {
     @Autowired
@@ -26,5 +28,9 @@ public class ChatHistoryService {
         }
         chatHistoryRepository.save(chatHistory);
         return "chat history successfully added";
+    }
+
+    public List<ChatHistory> getAllChatHistory() {
+        return chatHistoryRepository.findAll();
     }
 }

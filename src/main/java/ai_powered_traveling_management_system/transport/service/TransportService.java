@@ -5,6 +5,8 @@ import ai_powered_traveling_management_system.transport.repository.TransportRepo
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class TransportService {
     @Autowired
@@ -26,5 +28,9 @@ public class TransportService {
 
         transportRepository.save(transport);
         return "transport successfully done";
+    }
+
+    public List<Transport> getAllTransport() {
+        return transportRepository.findAll();
     }
 }

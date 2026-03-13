@@ -5,6 +5,8 @@ import ai_powered_traveling_management_system.hotel.repositories.HotelRepository
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class HotelService {
     @Autowired
@@ -17,5 +19,9 @@ public class HotelService {
         }
         hotelRepository.save(hotel);
         return "Hotel successfully added";
+    }
+
+    public List<Hotel> getAllHotel() {
+        return hotelRepository.findAll();
     }
 }

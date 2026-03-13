@@ -5,6 +5,8 @@ import ai_powered_traveling_management_system.traditional_food.repositories.Trad
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class TraditionalFoodService {
     @Autowired
@@ -24,5 +26,8 @@ public class TraditionalFoodService {
 
         traditionalFoodRepository.save(traditionalFood);
         return "traditional food successfully added";
+    }
+    public List<TraditionalFood> getAllTraditionalFood () {
+        return traditionalFoodRepository.findAll();
     }
 }

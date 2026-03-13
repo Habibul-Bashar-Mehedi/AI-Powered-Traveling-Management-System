@@ -23,4 +23,9 @@ public class AuthController {
         return registrationService.loginUser(loginRequest.getEmail(),loginRequest.getPassword());
     }
 
+    @GetMapping("/all")
+    public List<User> getAllUsers() {
+        return registrationService.getAllUsers();
+    }
+
 }

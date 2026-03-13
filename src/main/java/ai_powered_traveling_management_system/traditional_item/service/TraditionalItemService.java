@@ -5,6 +5,8 @@ import ai_powered_traveling_management_system.traditional_item.repositories.Trad
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class TraditionalItemService {
     @Autowired
@@ -25,5 +27,9 @@ public class TraditionalItemService {
         traditionalItemRepository.save(traditionalItem);
 
         return "traditional item successfully added";
+    }
+
+    public List<TraditionalItem> getAllTraditionalItem () {
+        return  traditionalItemRepository.findAll();
     }
 }

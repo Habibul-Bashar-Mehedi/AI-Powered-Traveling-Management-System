@@ -5,6 +5,8 @@ import ai_powered_traveling_management_system.route.repositoies.RouteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class RouteService {
     @Autowired
@@ -26,5 +28,9 @@ public class RouteService {
 
         return "route successfully added";
 
+    }
+
+    public List<Route> getAllRoute() {
+        return routeRepository.findAll();
     }
 }

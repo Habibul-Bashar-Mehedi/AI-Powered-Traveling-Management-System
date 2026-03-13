@@ -5,6 +5,8 @@ import ai_powered_traveling_management_system.user.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class RegistrationService {
     @Autowired
@@ -26,6 +28,10 @@ public class RegistrationService {
                     return "Invalid password";
                 })
                 .orElse("User not found with this email");
+    }
+
+    public List<User> getAllUsers () {
+        return userRepository.findAll();
     }
 
 
