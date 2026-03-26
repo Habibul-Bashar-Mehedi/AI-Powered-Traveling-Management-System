@@ -1,0 +1,34 @@
+package aptms.services;
+
+import aptms.entities.TouristSpot;
+import aptms.repositories.TouristSpotRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class TouristSpotService {
+    @Autowired
+    private TouristSpotRepository touristSpotRepository;
+
+    public String addTouristSpot(TouristSpot touristSpot) {
+        if(touristSpot.getDestination() == null || touristSpot.getName() == null) {
+            throw new RuntimeException("Destination id or spot name required");
+        }
+        boolean exist = touristSpotRepository
+                .existsByNameAndDestinationId(
+                        touristSpot.getName(),
+                        touristSpot.getDestination().getId());
+
+        if(exist) {
+            throw  new RuntimeException("Tourist Spot already added");
+        }
+        touristSpotRepository.save(touristSpot);
+        return "Tourist Spot Successfully Added";
+    }
+
+    public List<TouristSpot> getAllTouristSpot() {
+        return touristSpotRepository.findAll();
+    }
+}

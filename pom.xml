@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>sia</groupId>
-    <artifactId>AI-Powered-Traveling-Management-System</artifactId>
+    <artifactId>System</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>AI-Powered-Traveling-Management-System</name>
     <description>AI-Powered-Traveling-Management-System</description>
