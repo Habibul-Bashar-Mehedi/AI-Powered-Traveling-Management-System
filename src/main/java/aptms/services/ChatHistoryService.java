@@ -1,6 +1,9 @@
 package aptms.services;
 
 import aptms.entities.ChatHistory;
+import aptms.exceptions.DuplicateValueFoundExceptions;
+import aptms.exceptions.IdNotFoundException;
+import aptms.exceptions.InvalidException;
 import aptms.repositories.ChatHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,7 +17,7 @@ public class ChatHistoryService {
 
     public ChatHistory addChatHistory(ChatHistory chatHistory) {
         if(chatHistory.getUserInput() == null || chatHistory.getSessionId() == null) {
-            throw new RuntimeException("user input and session id required");
+            throw new InvalidException("user input and session id required");
         }
         boolean exists =
                 chatHistoryRepository
@@ -24,7 +27,7 @@ public class ChatHistoryService {
                                 chatHistory.getSessionId()
                         );
         if (exists) {
-            throw new RuntimeException("this chat history already added");
+            throw new DuplicateValueFoundExceptions("this chat history already added");
         }
         return chatHistoryRepository.save(chatHistory);
     }
@@ -35,7 +38,7 @@ public class ChatHistoryService {
 
     //chat history
     public String deleteChatHistory(long id) {
-        if(!chatHistoryRepository.existsById(id)) return "chat history not found";
+        if(!chatHistoryRepository.existsById(id)) throw new IdNotFoundException("chat history id not found");
 
         chatHistoryRepository.deleteById(id);
         return "chat history is deleted";
@@ -50,6 +53,8 @@ public class ChatHistoryService {
 
             chatHistoryRepository.save(chatHistory);
             return true;
-        }).orElse(false);
+        }).orElseThrow(()->
+                new IdNotFoundException("chat history id not found")
+        );
     }
 }

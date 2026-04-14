@@ -1,6 +1,9 @@
 package aptms.services;
 
 import aptms.entities.Room;
+import aptms.exceptions.DuplicateValueFoundExceptions;
+import aptms.exceptions.IdNotFoundException;
+import aptms.exceptions.InvalidException;
 import aptms.repositories.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,7 +18,7 @@ public class RoomService {
     public Room addRoom(Room room) {
         // Validation
         if (room.getHotel() == null || room.getHotel().getId() == 0) {
-            throw new RuntimeException("Error: Hotel ID is missing!");
+            throw new InvalidException("Error: Hotel ID is missing!");
         }
 
         // existsBy logic
@@ -25,7 +28,7 @@ public class RoomService {
         );
 
         if (exists) {
-            throw new RuntimeException("This room type already exists for this hotel.");
+            throw new DuplicateValueFoundExceptions("This room type already exists for this hotel.");
         }
 
         return roomRepository.save(room);
@@ -37,7 +40,8 @@ public class RoomService {
 
     //room
     public String deleteRoom(long id) {
-        if(!roomRepository.existsById(id)) return "room not found";
+        if(!roomRepository.existsById(id)) throw new IdNotFoundException("room id not found");
+
 
         roomRepository.deleteById(id);
         return "room is deleted";
@@ -56,7 +60,9 @@ public class RoomService {
 
             roomRepository.save(room);
             return true;
-        }).orElse(false);
+        }).orElseThrow(()->
+                new IdNotFoundException("room id not found")
+        );
 
     }
 }

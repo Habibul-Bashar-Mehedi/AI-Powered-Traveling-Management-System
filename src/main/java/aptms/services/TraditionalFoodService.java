@@ -1,6 +1,9 @@
 package aptms.services;
 
 import aptms.entities.TraditionalFood;
+import aptms.exceptions.DuplicateValueFoundExceptions;
+import aptms.exceptions.IdNotFoundException;
+import aptms.exceptions.InvalidException;
 import aptms.repositories.TraditionalFoodRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,7 +17,7 @@ public class TraditionalFoodService {
 
     public TraditionalFood addTraditionalFood(TraditionalFood traditionalFood) {
         if(traditionalFood.getDishName() == null || traditionalFood.getDestination() == null) {
-            throw new RuntimeException("required dish name and destination");
+            throw new InvalidException("required dish name and destination");
         }
 
         boolean exist =
@@ -22,7 +25,7 @@ public class TraditionalFoodService {
                         .existsByDishNameAndDestinationId(
                           traditionalFood.getDishName(),traditionalFood.getDestination().getId()
                         );
-        if(exist) throw new RuntimeException("already added");
+        if(exist) throw new DuplicateValueFoundExceptions("already added");
 
         return traditionalFoodRepository.save(traditionalFood);
     }
@@ -33,7 +36,7 @@ public class TraditionalFoodService {
 
     //traditional food
     public String deleteTraditionalFood(long id) {
-        if(!traditionalFoodRepository.existsById(id)) return "traditional food not found";
+        if(!traditionalFoodRepository.existsById(id)) throw new IdNotFoundException("traditional food id not found");
 
         traditionalFoodRepository.deleteById(id);
         return "traditional food is deleted";
@@ -52,7 +55,9 @@ public class TraditionalFoodService {
             traditionalFoodRepository.save(traditionalFood);
 
             return true;
-        }).orElse(false);
+        }).orElseThrow(()->
+                new IdNotFoundException("traditional food id not found")
+        );
 
     }
 }

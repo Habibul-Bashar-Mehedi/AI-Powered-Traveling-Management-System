@@ -1,6 +1,8 @@
 package aptms.services;
 
 import aptms.entities.Hotel;
+import aptms.exceptions.DuplicateValueFoundExceptions;
+import aptms.exceptions.IdNotFoundException;
 import aptms.repositories.HotelRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,7 +17,7 @@ public class HotelService {
     public Hotel addHotel(Hotel hotel) {
         boolean exists = hotelRepository.existsHotelByHotelNameAndAddress(hotel.getHotelName(),hotel.getAddress());
         if(exists) {
-            throw  new RuntimeException("Hotel already exists");
+            throw  new DuplicateValueFoundExceptions("Hotel already exists");
         }
         return hotelRepository.save(hotel);
     }
@@ -26,7 +28,7 @@ public class HotelService {
 
     //hotel
     public String deleteHotel(long id) {
-        if(!hotelRepository.existsById(id)) return "hotel not found";
+        if(!hotelRepository.existsById(id)) throw new IdNotFoundException("hotel id not found");
 
         hotelRepository.deleteById(id);
         return "hotel is deleted";
@@ -43,7 +45,8 @@ public class HotelService {
 
             hotelRepository.save(hotel);
             return true;
-        }).orElse(false);
+        }).orElseThrow(()->
+                new IdNotFoundException("hotel id not found"));
 
     }
 }

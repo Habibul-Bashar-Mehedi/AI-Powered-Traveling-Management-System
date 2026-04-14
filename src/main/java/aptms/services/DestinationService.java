@@ -1,6 +1,9 @@
 package aptms.services;
 
 import aptms.entities.Destination;
+import aptms.exceptions.DuplicateValueFoundExceptions;
+import aptms.exceptions.IdNotFoundException;
+import aptms.exceptions.InvalidException;
 import aptms.repositories.DestinationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,12 +18,12 @@ public class DestinationService {
     public Destination addDestination(Destination destination) {
 
         if(destination.getName() == null || destination.getRegion() == null) {
-            throw new RuntimeException("Name and Region are required!");
+            throw new InvalidException("Name and Region are required!");
         }
         boolean exists = destinationRepository.existsByNameAndRegion(destination.getName(),destination.getRegion());
 
         if(exists) {
-            throw new RuntimeException("this destination already added");
+            throw new DuplicateValueFoundExceptions("this destination already added");
         }
 
         return destinationRepository.save(destination);
@@ -31,7 +34,7 @@ public class DestinationService {
 
     //destination
     public String deleteDestination(long id) {
-        if(!destinationRepository.existsById(id)) return "destination not found";
+        if(!destinationRepository.existsById(id)) throw new IdNotFoundException("destination id not found");
 
         destinationRepository.deleteById(id);
         return "destination is deleted";
@@ -47,6 +50,8 @@ public class DestinationService {
 
             destinationRepository.save(destination);
             return true;
-        }).orElse(false);
+        }).orElseThrow(()->
+                new IdNotFoundException("destination id not found")
+        );
     }
 }

@@ -1,6 +1,9 @@
 package aptms.services;
 
 import aptms.entities.Booking;
+import aptms.exceptions.DuplicateValueFoundExceptions;
+import aptms.exceptions.IdNotFoundException;
+import aptms.exceptions.InvalidException;
 import aptms.repositories.BookingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,7 +17,7 @@ public class BookingService {
     private BookingRepository bookingRepository;
     public Booking booking(Booking booking) {
         if(booking.getRoom() == null || booking.getHotel() == null || booking.getUser() == null) {
-            throw new RuntimeException("User, Room, and Hotel information are required!");
+            throw new InvalidException("User, Room, and Hotel information are required!");
         }
 
         // Logic Fix: Date overlap check korun
@@ -25,7 +28,7 @@ public class BookingService {
         );
 
         if(isAlreadyBooked){
-            throw new RuntimeException("This room is already booked for the selected dates!");
+            throw new DuplicateValueFoundExceptions("This room is already booked for the selected dates!");
         }
 
         return bookingRepository.save(booking);
@@ -37,7 +40,7 @@ public class BookingService {
 
     //booking
     public String deleteBooking(long id) {
-        if(!bookingRepository.existsById(id)) return "booking not found";
+        if(!bookingRepository.existsById(id)) throw new IdNotFoundException("booking id not found");
 
         bookingRepository.deleteById(id);
         return "booking is deleted";
@@ -58,7 +61,9 @@ public class BookingService {
 
             bookingRepository.save(booking);
             return true;
-        }).orElse(false);
+        }).orElseThrow(()->
+                new IdNotFoundException("booking id not found")
+        );
 
     }
 }

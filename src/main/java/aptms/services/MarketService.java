@@ -1,6 +1,9 @@
 package aptms.services;
 
 import aptms.entities.Market;
+import aptms.exceptions.DuplicateValueFoundExceptions;
+import aptms.exceptions.IdNotFoundException;
+import aptms.exceptions.InvalidException;
 import aptms.repositories.MarketRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,13 +17,16 @@ public class MarketService {
 
     public Market addMarket(Market market) {
         if(market.getName() == null || market.getDestination() == null) {
-            throw  new RuntimeException("market name and destination required");
+            throw  new InvalidException("market name and destination required");
         }
 
         boolean exist = marketRepository
                 .existsMarketsByNameAndDestinationId(
                         market.getName(),
                         market.getDestination().getId());
+        if(exist) {
+            throw new DuplicateValueFoundExceptions("already added");
+        }
         return marketRepository.save(market);
     }
 
@@ -30,7 +36,7 @@ public class MarketService {
 
     //market
     public String deleteMarket(long id) {
-        if(!marketRepository.existsById(id)) return "market not found";
+        if(!marketRepository.existsById(id)) throw new IdNotFoundException("market id not found");
 
         marketRepository.deleteById(id);
         return "market is deleted";
@@ -49,7 +55,9 @@ public class MarketService {
 
             marketRepository.save(market);
             return true;
-        }).orElse(false);
+        }).orElseThrow(()->
+                new IdNotFoundException("market id not found")
+        );
 
     }
 }

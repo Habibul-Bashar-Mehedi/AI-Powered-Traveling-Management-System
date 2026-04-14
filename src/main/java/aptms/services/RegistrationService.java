@@ -1,6 +1,9 @@
 package aptms.services;
 
 import aptms.entities.User;
+import aptms.exceptions.DuplicateValueFoundExceptions;
+import aptms.exceptions.IdNotFoundException;
+import aptms.exceptions.InvalidException;
 import aptms.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,7 +17,7 @@ public class RegistrationService {
 
     public User registerUser(User user) {
         if(userRepository.existsByEmail(user.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new DuplicateValueFoundExceptions("Email already exists");
         }
         return userRepository.save(user);
     }
@@ -25,9 +28,10 @@ public class RegistrationService {
                     if (user.getPassword().equals(password)) {
                         return "Login Successful! Welcome " + user.getUsername();
                     }
-                    return "Invalid password";
+                    throw new InvalidException("Invalid password");
                 })
-                .orElse("User not found with this email");
+                .orElseThrow(()->
+                        new InvalidException("User not found with this email. invalid email"));
     }
 
     public List<User> getAllUsers () {
@@ -37,7 +41,7 @@ public class RegistrationService {
     //user
     public String deleteUser(long id) {
         if(!userRepository.existsById(id)) {
-            return "user not found";
+            throw new IdNotFoundException("user id not found");
         }
         userRepository.deleteById(id);
         return "user is deleted";
@@ -57,6 +61,8 @@ public class RegistrationService {
 
             userRepository.save(user);
             return true;
-        }).orElse(false);
+        }).orElseThrow(()->
+                new IdNotFoundException("user id not found")
+        );
     }
 }

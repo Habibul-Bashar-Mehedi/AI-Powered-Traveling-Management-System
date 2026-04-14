@@ -1,6 +1,9 @@
 package aptms.services;
 
 import aptms.entities.TraditionalItem;
+import aptms.exceptions.DuplicateValueFoundExceptions;
+import aptms.exceptions.IdNotFoundException;
+import aptms.exceptions.InvalidException;
 import aptms.repositories.TraditionalItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,7 +17,7 @@ public class TraditionalItemService {
 
     public TraditionalItem addTraditionalItem(TraditionalItem traditionalItem) {
         if(traditionalItem.getMarket() == null || traditionalItem.getCategoryName() == null) {
-            throw new RuntimeException("market and category name required");
+            throw new InvalidException("market and category name required");
         }
 
         boolean exist =
@@ -22,7 +25,7 @@ public class TraditionalItemService {
                         .existsTraditionalItemByMarketIdAndCategoryName(
                           traditionalItem.getMarket().getId(),traditionalItem.getCategoryName()
                         );
-        if(exist) throw new RuntimeException("already added");
+        if(exist) throw new DuplicateValueFoundExceptions("already added");
 
         return traditionalItemRepository.save(traditionalItem);
     }
@@ -33,7 +36,7 @@ public class TraditionalItemService {
 
     //traditional item
     public String deleteTraditionalItem(long id) {
-        if(!traditionalItemRepository.existsById(id)) return "traditional item not found";
+        if(!traditionalItemRepository.existsById(id)) throw new IdNotFoundException("traditional item id not found");
 
         traditionalItemRepository.deleteById(id);
         return "traditional item is deleted";
@@ -49,6 +52,8 @@ public class TraditionalItemService {
             traditionalItemRepository.save(traditionalItem);
 
             return true;
-        }).orElse(false);
+        }).orElseThrow(()->
+                new IdNotFoundException("traditional item id not found")
+        );
     }
 }

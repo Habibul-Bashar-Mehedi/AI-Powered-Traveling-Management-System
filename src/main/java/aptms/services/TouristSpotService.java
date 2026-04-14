@@ -1,6 +1,9 @@
 package aptms.services;
 
 import aptms.entities.TouristSpot;
+import aptms.exceptions.DuplicateValueFoundExceptions;
+import aptms.exceptions.IdNotFoundException;
+import aptms.exceptions.InvalidException;
 import aptms.repositories.TouristSpotRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,7 +17,7 @@ public class TouristSpotService {
 
     public TouristSpot addTouristSpot(TouristSpot touristSpot) {
         if(touristSpot.getDestination() == null || touristSpot.getName() == null) {
-            throw new RuntimeException("Destination id or spot name required");
+            throw new InvalidException("Destination id or spot name required");
         }
         boolean exist = touristSpotRepository
                 .existsByNameAndDestinationId(
@@ -22,7 +25,7 @@ public class TouristSpotService {
                         touristSpot.getDestination().getId());
 
         if(exist) {
-            throw  new RuntimeException("Tourist Spot already added");
+            throw  new DuplicateValueFoundExceptions("Tourist Spot already added");
         }
         return touristSpotRepository.save(touristSpot);
     }
@@ -33,7 +36,7 @@ public class TouristSpotService {
 
     //tourist spot
     public String deleteTouristSpot(long id) {
-        if(!touristSpotRepository.existsById(id)) return "tourist spot not found";
+        if(!touristSpotRepository.existsById(id)) throw new IdNotFoundException("tourist spot id not found");
 
         touristSpotRepository.deleteById(id);
         return "tourist spot is deleted";
@@ -55,7 +58,8 @@ public class TouristSpotService {
             touristSpotRepository.save(touristSpot);
 
             return true;
-        }).orElse(false);
+        }).orElseThrow(()->new IdNotFoundException("tourist spot id not found")
+        );
 
     }
 }
