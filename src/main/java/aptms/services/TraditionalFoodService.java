@@ -12,7 +12,7 @@ public class TraditionalFoodService {
     @Autowired
     private TraditionalFoodRepository traditionalFoodRepository;
 
-    public String addTraditionalFood(TraditionalFood traditionalFood) {
+    public TraditionalFood addTraditionalFood(TraditionalFood traditionalFood) {
         if(traditionalFood.getDishName() == null || traditionalFood.getDestination() == null) {
             throw new RuntimeException("required dish name and destination");
         }
@@ -24,10 +24,35 @@ public class TraditionalFoodService {
                         );
         if(exist) throw new RuntimeException("already added");
 
-        traditionalFoodRepository.save(traditionalFood);
-        return "traditional food successfully added";
+        return traditionalFoodRepository.save(traditionalFood);
     }
+
     public List<TraditionalFood> getAllTraditionalFood () {
         return traditionalFoodRepository.findAll();
+    }
+
+    //traditional food
+    public String deleteTraditionalFood(long id) {
+        if(!traditionalFoodRepository.existsById(id)) return "traditional food not found";
+
+        traditionalFoodRepository.deleteById(id);
+        return "traditional food is deleted";
+    }
+
+    public boolean updateTraditionalFood(long id, String dishName,
+                                         String description,String culturalContext,
+                                         String priceRange,String recommendedLocation) {
+        return traditionalFoodRepository.findById(id).map(traditionalFood -> {
+            traditionalFood.setDishName(dishName);
+            traditionalFood.setDescription(description);
+            traditionalFood.setCulturalContext(culturalContext);
+            traditionalFood.setPriceRange(priceRange);
+            traditionalFood.setRecommendedLocation(recommendedLocation);
+
+            traditionalFoodRepository.save(traditionalFood);
+
+            return true;
+        }).orElse(false);
+
     }
 }

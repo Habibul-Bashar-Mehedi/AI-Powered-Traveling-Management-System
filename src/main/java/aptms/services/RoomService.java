@@ -12,7 +12,7 @@ public class RoomService {
     @Autowired
     private RoomRepository roomRepository;
 
-    public String addRoom(Room room) {
+    public Room addRoom(Room room) {
         // Validation
         if (room.getHotel() == null || room.getHotel().getId() == 0) {
             throw new RuntimeException("Error: Hotel ID is missing!");
@@ -28,11 +28,35 @@ public class RoomService {
             throw new RuntimeException("This room type already exists for this hotel.");
         }
 
-        roomRepository.save(room);
-        return "Room Successfully added";
+        return roomRepository.save(room);
     }
 
     public List<Room> getAllRoom() {
         return roomRepository.findAll();
+    }
+
+    //room
+    public String deleteRoom(long id) {
+        if(!roomRepository.existsById(id)) return "room not found";
+
+        roomRepository.deleteById(id);
+        return "room is deleted";
+    }
+
+    public boolean updateRoom(long id,String roomTypeName,
+                              String amenities,double pricePerNight,
+                              int availableQuantities,String status) {
+
+        return roomRepository.findById(id).map(room -> {
+            room.setRoomTypeName(roomTypeName);
+            room.setAmenities(amenities);
+            room.setPricePerNight(pricePerNight);
+            room.setAvailableQuantities(availableQuantities);
+            room.setStatus(status);
+
+            roomRepository.save(room);
+            return true;
+        }).orElse(false);
+
     }
 }

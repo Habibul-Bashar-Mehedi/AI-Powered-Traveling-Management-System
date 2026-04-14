@@ -1,82 +1,164 @@
-### User Registration Test-1
-POST http://localhost:8080/api/auth/registar
+############################################################
+# 🟢 ১. AUTHENTICATION & USER APIs
+############################################################
+
+### User Registration
+POST http://localhost:8080/api/auth/user/registar
 Content-Type: application/json
 
 {
   "username": "mehedi",
   "email": "mehedi@gmail.com",
-  "password": "123324",
+  "password": "123",
   "role": "USER",
-  "countyId": "BD"
+  "countryId": "BD"
 }
+> {% client.global.set("userId1", response.body.id); %}
 
-
-### User Login Test
-POST http://localhost:8080/api/auth/login
+### User Login
+POST http://localhost:8080/api/auth/user/login
 Content-Type: application/json
 
 {
   "email": "mehedi@gmail.com",
-  "password": "123324"
+  "password": "123"
 }
 
 
-### Holtel Test
-POST http://localhost:8080/api/hotels/add
-Content-Type: application/json
+############################################################
+# 🔵 ২. DATA CREATION (POST APIs)
+############################################################
 
-{
-  "vendor": { "id": 1 },
-  "destination": { "id": 1 },
-  "hotelName": "Radisson Blu",
-  "address": "Dhaka",
-  "status": "ACTIVE",
-  "descriptions": "Five star hotel"
-
-}
-
-
-### Room Test
-POST http://localhost:8080/api/rooms/add
-Content-Type: application/json
-
-{
-  "roomTypeName": "Deluxe King",
-  "amenities": "WiFi, AC, TV, Mini Bar",
-  "pricePerNight": 5000.0,
-  "availableQuantities": 10,
-  "status": "AVAILABLE",
-  "hotel": { "id": 1 }
-}
-
-
-### Destination Test
+### Add Destination
 POST http://localhost:8080/api/destination/add
 Content-Type: application/json
 
 {
   "name": "Cox's Bazar",
   "region": "Chittagong",
-  "description": "The longest natural sandy beach in the world, famous for its scenic beauty and sunsets.",
+  "description": "The longest natural sandy beach in the world.",
   "isAlive": true
 }
+> {% client.global.set("destinationId1", response.body.id); %}
 
-
-### Chat history Test
-POST http://localhost:8080/api/chat/history/add
+### Add Hotel
+POST http://localhost:8080/api/hotels/add
 Content-Type: application/json
 
 {
-  "user": {
+  "vendor": {
     "id": 1
   },
-  "userInput": "Cox's Bazar-e thakar shera hotel konta?",
-  "aiResponse": "Cox's Bazar-e thakar jonno Sayeman Beach Resort ba Sayeman Heritage bhalo hote pare.",
-  "sessionId": "session_abc_123"
+  "destinationId": {
+    "id": 1
+  },
+  "hotelName": "Radisson Blu",
+  "address": "Dhaka",
+  "status": "ACTIVE",
+  "descriptions": "Five star luxury hotel"
 }
 
+> {% client.global.set("hotelId1", response.body.id); %}
 
-###Booking Test
+### Add Room
+POST http://localhost:8080/api/rooms/add
+Content-Type: application/json
+
+{
+  "hotel": {
+    "id": 1
+  },
+  "roomTypeName": "Deluxe King",
+  "amenities": "WiFi, AC, TV, Mini Bar",
+  "pricePerNight": 5000.0,
+  "availableQuantities": 10,
+  "status": "AVAILABLE"
+}
+> {% client.global.set("roomId1", response.body.id); %}
+
+### Add Transport
+POST http://localhost:8080/api/transports/add
+Content-Type: application/json
+
+{
+  "origin": {
+    "id": 1
+  },
+  "destination": {
+    "id": 1
+  },
+  "model": "Hino 1J (Non-AC)",
+  "operatorName": "Hanif Enterprise",
+  "estimatedCost": 850.0,
+  "estimatedDuration": "12 hours",
+  "frequency": "Daily"
+}
+> {% client.global.set("transportId1", response.body.id); %}
+
+### Add Tourist Spot
+POST http://localhost:8080/api/tourist/spot/add
+Content-Type: application/json
+
+{
+  "destination": {
+    "id": 1
+  },
+  "name": "Nilgiri Resort",
+  "description": "Surrounded by clouds.",
+  "visitingHours": "08:00 AM - 05:00 PM",
+  "adultEntryFees": 50.0,
+  "childEntryFees": 20.0,
+  "locationDescription": "Bandarban"
+}
+> {% client.global.set("touristSpotId1", response.body.id); %}
+
+### Add Traditional Food
+POST http://localhost:8080/api/traditional/food/add
+Content-Type: application/json
+
+{
+  "destination": {
+    "id": 1
+  },
+  "dishName": "Kala Bhuna",
+  "description": "Traditional dark beef curry.",
+  "culturalContext": "Chittagong tradition.",
+  "priceRange": "300 - 500 BDT",
+  "recommendedLocation": "Mezban Haile Ayun"
+}
+
+### Add Market
+POST http://localhost:8080/api/market/add
+Content-Type: application/json
+
+{
+  "destination": {
+    "id": 1
+  },
+  "name": "Burmese Market",
+  "location": "Cox's Bazar",
+  "operatingDays": "Everyday",
+  "operatingHours": "10:00 AM - 10:00 PM"
+}
+> {% client.global.set("marketId1", response.body.id); %}
+
+### Add Route
+POST http://localhost:8080/api/route/add
+Content-Type: application/json
+
+{
+  "origin": {
+    "id": 1
+  },
+  "destination": {
+    "id": 1
+  },
+  "distanceKM": 398.5,
+  "estimatedDuration": "10 hours",
+  "routeDescription": "Dhaka to Cox via Highway."
+}
+
+### Add Booking
 POST http://localhost:8080/api/booking/add
 Content-Type: application/json
 
@@ -93,13 +175,159 @@ Content-Type: application/json
   "checkInDate": "2026-04-10",
   "checkOutDate": "2026-04-15",
   "guestCount": 2,
-  "totalPrice": 15000.50,
-  "status": "PENDING",
-  "specialRequest": "Please provide a room with a sea view and an extra pillow."
+  "totalPrice": 15000.0,
+  "status": "PENDING"
 }
 
 
-### Transport Test
+############################################################
+# 🟡 ৩. ADMIN UPDATE (PUT APIs)
+############################################################
+
+### Update User
+PUT http://localhost:8080/api/auth/user/1
+Content-Type: application/json
+
+{
+  "username": "mehedi hasan",
+  "email": "mehedihasan@gmail.com",
+  "password": "1234",
+  "role": "ADMIN",
+  "countryId": "BD"
+}
+
+### Update Hotel
+PUT http://localhost:8080/api/hotels/1
+Content-Type: application/json
+
+{
+  "hotelName": "Radisson Blu Water Garden",
+  "address": "Dhaka Cantonment",
+  "status": "ACTIVE",
+  "descriptions": "Updated luxury description."
+}
+
+### Update Transport
+PUT http://localhost:8080/api/transports/1
+Content-Type: application/json
+
+{
+  "model": "Scania AC",
+  "operatorName": "Green Line",
+  "estimatedCost": 1500.0,
+  "estimatedDuration": "8 hours",
+  "frequency": "Hourly"
+}
+
+### Update Tourist Spot
+PUT http://localhost:8080/api/tourist/spot/1
+Content-Type: application/json
+
+{
+  "name": "Inani Beach",
+  "description": "Updated coral beach info.",
+  "visitingHours": "06:00 AM - 06:00 PM",
+  "adultEntryFees": 100.0,
+  "childEntryFees": 50.0,
+  "locationDescription": "Marine Drive"
+}
+
+### Update Booking
+PUT http://localhost:8080/api/booking/1
+Content-Type: application/json
+
+{
+  "checkInDate": "2026-05-01",
+  "checkOutDate": "2026-05-05",
+  "guestCount": 4,
+  "totalPrice": 25000.0,
+  "status": "CONFIRMED"
+}
+
+
+
+
+############################################################
+# 1. DESTINATIONS (Sylhet, Sajek, Khagrachari)
+############################################################
+### Add Destination - Sylhet
+POST http://localhost:8080/api/destination/add
+Content-Type: application/json
+
+{
+  "name": "Sylhet",
+  "region": "Sylhet Division",
+  "description": "Tea gardens, swamps, and shrines.",
+  "isAlive": true
+}
+
+### Add Destination - Sajek Valley
+POST http://localhost:8080/api/destination/add
+Content-Type: application/json
+
+{
+  "name": "Sajek Valley",
+  "region": "Chittagong Hill Tracts",
+  "description": "The Land of Clouds.",
+  "isAlive": true
+}
+
+### Add Destination - Khagrachari
+POST http://localhost:8080/api/destination/add
+Content-Type: application/json
+
+{
+  "name": "Khagrachari",
+  "region": "Chittagong Hill Tracts",
+  "description": "The gateway to Sajek and home to Alutila Cave.",
+  "isAlive": true
+}
+
+
+############################################################
+# 2. HOTELS & RESORTS (Based on IDs 2, 3, 4)
+############################################################
+
+### Add Hotel - Sylhet (Luxury)
+POST http://localhost:8080/api/hotels/add
+Content-Type: application/json
+
+{
+  "vendor": {
+    "id": 1
+  },
+  "destination": {
+    "id": 2
+  },
+  "hotelName": "Grand Sylhet Hotel",
+  "address": "Airport Road, Sylhet",
+  "status": "ACTIVE",
+  "descriptions": "Five star resort with tea garden view."
+}
+
+### Add Hotel - Sajek (Eco Resort)
+POST http://localhost:8080/api/hotels/add
+Content-Type: application/json
+
+{
+  "vendor": {
+    "id": 1
+  },
+  "destination": {
+    "id": 3
+  },
+  "hotelName": "Lusai Cottage",
+  "address": "Sajek Kanglak Para",
+  "status": "ACTIVE",
+  "descriptions": "Traditional wooden cottage above the clouds."
+}
+
+
+############################################################
+# 3. TRANSPORT & ROUTES
+############################################################
+
+### Add Transport - AC Bus
 POST http://localhost:8080/api/transports/add
 Content-Type: application/json
 
@@ -108,68 +336,16 @@ Content-Type: application/json
     "id": 1
   },
   "destination": {
-    "id": 1
+    "id": 2
   },
-  "model": "Hino 1J (Non-AC)",
-  "operatorName": "Hanif Enterprise",
-  "estimatedCost": 850.0,
-  "estimatedDuration": "12 hours",
-  "frequency": "Daily (Every 1 hour)",
-  "isLocal": false
+  "model": "Hyundai Universe",
+  "operatorName": "Green Line Waterways",
+  "estimatedCost": 1500.0,
+  "estimatedDuration": "5.5 hours",
+  "frequency": "Hourly"
 }
 
-### Touriest Spot test
-POST http://localhost:8080/api/tourist/spot/add
-Content-Type: application/json
-
-{
-  "destination": {
-    "id": 1
-  },
-  "name": "Nilgiri Resort",
-  "description": "A beautiful hill resort in Bandarban surrounded by clouds.",
-  "visitingHours": "08:00 AM - 05:00 PM",
-  "adultEntryFees": 50.0,
-  "childEntryFees": 20.0,
-  "locationDescription": "Thanchi Road, Bandarban",
-  "isAlive": true,
-  "isDelete": false
-}
-
-### Traditional food test
-POST http://localhost:8080/api/traditional/food/add
-Content-Type: application/json
-
-{
-  "destination": {
-    "id": 1
-  },
-  "dishName": "Kala Bhuna",
-  "description": "A famous traditional dark beef curry from Chittagong with rich spices.",
-  "culturalContext": "Traditionally served at weddings and special occasions in the Chittagong region.",
-  "priceRange": "300 - 500 BDT",
-  "recommendedLocation": "Mezban Haile Ayun, Chittagong",
-  "isDeleted": false
-}
-
-### Market test
-POST http://localhost:8080/api/market/add
-Content-Type: application/json
-
-{
-  "destination": {
-    "id": 1
-  },
-  "name": "Burmese Market",
-  "description": "Famous for pickles, handloom products, and local sea-shell crafts.",
-  "location": "Cox's Bazar Main Town",
-  "operatingDays": "Saturday - Friday (Everyday)",
-  "operatingHours": "10:00 AM - 10:00 PM",
-  "isAlive": true,
-  "isDeleted": false
-}
-
-### Route Test
+### Add Route - Dhaka to Khagrachari
 POST http://localhost:8080/api/route/add
 Content-Type: application/json
 
@@ -178,17 +354,274 @@ Content-Type: application/json
     "id": 1
   },
   "destination": {
-    "id": 1
+    "id": 4
   },
-  "distanceKM": 398.5,
-  "estimatedDuration": "10-12 hours",
-  "routeDescription": "Dhaka to Cox's Bazar via Chittagong Highway. Road conditions are generally good.",
-  "isRecommended": true,
-  "isDeleted": false
+  "distanceKM": 270.5,
+  "estimatedDuration": "8 hours",
+  "routeDescription": "Via N2 Highway to Chittagong then Khagrachari."
 }
 
 
-### Treditional item test
+############################################################
+# 4. TOURIST SPOTS & FOOD
+############################################################
+
+### Add Tourist Spot - Ratargul
+POST http://localhost:8080/api/tourist/spot/add
+Content-Type: application/json
+
+{
+  "destination": {
+    "id": 2
+  },
+  "name": "Ratargul Swamp Forest",
+  "description": "Amazon of Bangladesh.",
+  "visitingHours": "08:00 AM - 05:00 PM",
+  "adultEntryFees": 50.0,
+  "childEntryFees": 25.0,
+  "locationDescription": "Gowainghat"
+}
+
+### Add Tourist Spot - Alutila Cave
+POST http://localhost:8080/api/tourist/spot/add
+Content-Type: application/json
+
+{
+  "destination": {
+    "id": 4
+  },
+  "name": "Alutila Mysterious Cave",
+  "description": "A natural cave under a hill.",
+  "visitingHours": "09:00 AM - 06:00 PM",
+  "adultEntryFees": 40.0,
+  "childEntryFees": 20.0,
+  "locationDescription": "Khagrachari Sadar"
+}
+
+### Add Traditional Food - Bamboo Chicken
+POST http://localhost:8080/api/traditional/food/add
+Content-Type: application/json
+
+{
+  "destination": {
+    "id": 3
+  },
+  "dishName": "Bamboo Chicken",
+  "description": "Chicken cooked inside a bamboo pole.",
+  "culturalContext": "Ethnic tribal cuisine of Hill Tracts.",
+  "priceRange": "400 - 600 BDT",
+  "recommendedLocation": "Sajek Food Village"
+}
+
+
+############################################################
+# 5. MARKETS
+############################################################
+
+### Add Market - Sylhet
+POST http://localhost:8080/api/market/add
+Content-Type: application/json
+
+{
+  "destination": {
+    "id": 2
+  },
+  "name": "Zinda Bazar",
+  "location": "Central Sylhet",
+  "operatingDays": "Mon-Sat",
+  "operatingHours": "10:00 AM - 10:00 PM"
+}
+
+############################################################
+# 6. BOOKING DATA (POST & PUT)
+############################################################
+
+### Add Booking 1 - Sylhet (Grand Sylhet Hotel)
+POST http://localhost:8080/api/booking/add
+Content-Type: application/json
+
+{
+  "user": {
+    "id": 1
+  },
+  "hotel": {
+    "id": 2
+  },
+  "room": {
+    "id": 1
+  },
+  "checkInDate": "2026-05-10",
+  "checkOutDate": "2026-05-13",
+  "guestCount": 2,
+  "totalPrice": 18000.0,
+  "status": "PENDING",
+  "specialRequest": "Need a room with a tea garden view."
+}
+
+### Add Booking 2 - Sajek (Lusai Cottage)
+POST http://localhost:8080/api/booking/add
+Content-Type: application/json
+
+{
+  "user": {
+    "id": 1
+  },
+  "hotel": {
+    "id": 3
+  },
+  "room": {
+    "id": 2
+  },
+  "checkInDate": "2026-06-01",
+  "checkOutDate": "2026-06-03",
+  "guestCount": 3,
+  "totalPrice": 12000.0,
+  "status": "CONFIRMED",
+  "specialRequest": "Early check-in if possible."
+}
+
+
+############################################################
+# 7. ADMIN BOOKING UPDATES (Testing your PutMapping)
+############################################################
+
+### Update Booking Status to CONFIRMED
+PUT http://localhost:8080/api/booking/1
+Content-Type: application/json
+
+{
+  "checkInDate": "2026-05-10",
+  "checkOutDate": "2026-05-13",
+  "guestCount": 2,
+  "totalPrice": 18000.0,
+  "status": "CONFIRMED",
+  "specialRequest": "Confirmed with complimentary breakfast."
+}
+
+### Update Booking Status to CANCELLED
+PUT http://localhost:8080/api/booking/2
+Content-Type: application/json
+
+{
+  "checkInDate": "2026-06-01",
+  "checkOutDate": "2026-06-03",
+  "guestCount": 3,
+  "totalPrice": 12000.0,
+  "status": "CANCELLED",
+  "specialRequest": "Cancelled by user."
+}
+
+############################################################
+# 8. CHAT HISTORY DATA (POST & PUT)
+############################################################
+
+### Add Chat History 1 (Initial Inquiry)
+POST http://localhost:8080/api/chat/history/add
+Content-Type: application/json
+
+{
+  "user": {
+    "id": 1
+  },
+  "userInput": "What are the best places to visit in Sylhet?",
+  "aiResponse": "Sylhet offers beautiful spots like Ratargul, Bisnakhandi, and many tea gardens.",
+  "sessionId": "sess-9988-abc",
+  "timestamp": "2026-04-14T10:00:00"
+}
+
+### Add Chat History 2 (Hotel Inquiry)
+POST http://localhost:8080/api/chat/history/add
+Content-Type: application/json
+
+{
+  "user": {
+    "id": 1
+  },
+  "userInput": "Suggest a luxury hotel in Cox's Bazar.",
+  "aiResponse": "Radisson Blu is a great choice for a luxury stay in Cox's Bazar.",
+  "sessionId": "sess-1122-xyz",
+  "timestamp": "2026-04-14T10:05:00"
+}
+
+
+############################################################
+# 9. ADMIN CHAT HISTORY UPDATES (Testing your PutMapping)
+############################################################
+
+### Update AI Response in Chat History (Correction)
+PUT http://localhost:8080/api/chat/history/1
+Content-Type: application/json
+
+{
+  "aiResponse": "Updated: Sylhet is famous for Ratargul Swamp Forest, Jaflong, and tea gardens. Best time to visit is during the monsoon.",
+  "sessionId": "sess-9988-abc"
+}
+
+### Update Session ID or Response for Debugging
+PUT http://localhost:8080/api/chat/history/2
+Content-Type: application/json
+
+{
+  "aiResponse": "Radisson Blu Water Garden is recommended for its premium amenities and beach access.",
+  "sessionId": "sess-modified-5566"
+}
+
+############################################################
+# 10. ROOM DATA (POST & PUT)
+############################################################
+
+### Add Room 1 - Deluxe for Grand Sylhet (Hotel ID: 2)
+POST http://localhost:8080/api/rooms/add
+Content-Type: application/json
+
+{
+  "hotel": {
+    "id": 2
+  },
+  "roomTypeName": "Deluxe Twin",
+  "amenities": "High-speed WiFi, Tea/Coffee maker, Mini Bar, City View",
+  "pricePerNight": 7500.0,
+  "availableQuantities": 5,
+  "status": "AVAILABLE"
+}
+
+### Add Room 2 - Executive Suite for Sajek (Hotel ID: 3)
+POST http://localhost:8080/api/rooms/add
+Content-Type: application/json
+
+{
+  "hotel": {
+    "id": 3
+  },
+  "roomTypeName": "Cloud View Suite",
+  "amenities": "Balcony, Hammock, Solar Power, Hot Water",
+  "pricePerNight": 4500.0,
+  "availableQuantities": 2,
+  "status": "AVAILABLE"
+}
+
+
+############################################################
+# 11. ADMIN ROOM UPDATES (Testing your PutMapping)
+############################################################
+
+### Update Room Info (Price or Quantity Change)
+PUT http://localhost:8080/api/rooms/1
+Content-Type: application/json
+
+{
+  "roomTypeName": "Premium Deluxe Twin",
+  "amenities": "High-speed WiFi, Tea/Coffee maker, Mini Bar, Breakfast Included",
+  "pricePerNight": 8500.0,
+  "availableQuantities": 3,
+  "status": "BOOKED"
+}
+
+############################################################
+# 12. TRADITIONAL ITEMS DATA (POST APIs)
+############################################################
+
+### Add Traditional Item 1 - Jamdani Saree (Market ID: 1)
 POST http://localhost:8080/api/traditional/item/add
 Content-Type: application/json
 
@@ -196,30 +629,51 @@ Content-Type: application/json
   "market": {
     "id": 1
   },
-  "categoryName": "Handmade Pickles",
-  "description": "Variety of local pickles including mango, olive, and spicy garlic, famous in the Burmese market.",
-  "priceRange": "150 - 500 BDT",
+  "categoryName": "Clothing",
+  "description": "Authentic Dhakai Jamdani. Hand-woven fine muslin textile with intricate floral motifs.",
+  "priceRange": "5000 - 50000 BDT",
   "isDeleted": false
 }
 
-### user update
-PUT http://localhost:8080/api/admin/user/1
+### Add Traditional Item 2 - Bamboo Crafts (Market ID: 2)
+POST http://localhost:8080/api/traditional/item/add
 Content-Type: application/json
 
 {
-  "username" : "mehedi hasan",
-  "email" : "mehedihasan@gmail.com",
-  "password": "1234",
-  "role" : "USER",
-  "countryId" : "BD"
+  "market": {
+    "id": 2
+  },
+  "categoryName": "Handicrafts",
+  "description": "Handmade durable bamboo baskets made by local ethnic communities.",
+  "priceRange": "200 - 800 BDT",
+  "isDeleted": false
 }
-### User Login Test
-POST http://localhost:8080/api/auth/login
+
+### Add Traditional Item 3 - Monipuri Shawl (Market ID: 3)
+POST http://localhost:8080/api/traditional/item/add
 Content-Type: application/json
 
 {
-  "email": "mehedihasan@gmail.com",
-  "password": "1234"
+  "market": {
+    "id": 3
+  },
+  "categoryName": "Winter Clothing",
+  "description": "Traditional hand-loomed Monipuri shawl with unique geometric patterns.",
+  "priceRange": "800 - 2500 BDT",
+  "isDeleted": false
 }
-### trasport update
-PUT http://localhost:8080/api/admin/tr
+
+
+############################################################
+# 13. ADMIN TRADITIONAL ITEM UPDATES (PUT APIs)
+############################################################
+
+### Update Traditional Item (Category or Price Range)
+PUT http://localhost:8080/api/traditional/item/2
+Content-Type: application/json
+
+{
+  "categoryName": "Heritage Clothing",
+  "description": "Authentic Hand-woven Dhakai Jamdani hello (GI Certified).",
+  "priceRange": "7000 - 60000 BDT"
+}

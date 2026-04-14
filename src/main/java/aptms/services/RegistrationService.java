@@ -34,5 +34,29 @@ public class RegistrationService {
         return userRepository.findAll();
     }
 
+    //user
+    public String deleteUser(long id) {
+        if(!userRepository.existsById(id)) {
+            return "user not found";
+        }
+        userRepository.deleteById(id);
+        return "user is deleted";
+    }
 
+    public boolean updateUser(
+            long id,String username,
+            String email,String password,
+            String role,String countryId) {
+
+        return userRepository.findById(id).map(user -> {
+            user.setUsername(username);
+            user.setPassword(password);
+            user.setEmail(email);
+            user.setRole(role);
+            user.setCountryId(countryId);
+
+            userRepository.save(user);
+            return true;
+        }).orElse(false);
+    }
 }

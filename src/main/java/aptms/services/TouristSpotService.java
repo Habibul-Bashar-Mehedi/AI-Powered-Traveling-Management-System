@@ -12,7 +12,7 @@ public class TouristSpotService {
     @Autowired
     private TouristSpotRepository touristSpotRepository;
 
-    public String addTouristSpot(TouristSpot touristSpot) {
+    public TouristSpot addTouristSpot(TouristSpot touristSpot) {
         if(touristSpot.getDestination() == null || touristSpot.getName() == null) {
             throw new RuntimeException("Destination id or spot name required");
         }
@@ -24,11 +24,38 @@ public class TouristSpotService {
         if(exist) {
             throw  new RuntimeException("Tourist Spot already added");
         }
-        touristSpotRepository.save(touristSpot);
-        return "Tourist Spot Successfully Added";
+        return touristSpotRepository.save(touristSpot);
     }
 
     public List<TouristSpot> getAllTouristSpot() {
         return touristSpotRepository.findAll();
+    }
+
+    //tourist spot
+    public String deleteTouristSpot(long id) {
+        if(!touristSpotRepository.existsById(id)) return "tourist spot not found";
+
+        touristSpotRepository.deleteById(id);
+        return "tourist spot is deleted";
+    }
+
+    public boolean updateTouristSpot(long id,String name,
+                                     String description,String visitingHours,
+                                     double adultEntryFees,double childEntryFees,
+                                     String locationDescription) {
+
+        return touristSpotRepository.findById(id).map(touristSpot -> {
+            touristSpot.setName(name);
+            touristSpot.setDescription(description);
+            touristSpot.setVisitingHours(visitingHours);
+            touristSpot.setAdultEntryFees(adultEntryFees);
+            touristSpot.setChildEntryFees(childEntryFees);
+            touristSpot.setLocationDescription(locationDescription);
+
+            touristSpotRepository.save(touristSpot);
+
+            return true;
+        }).orElse(false);
+
     }
 }
