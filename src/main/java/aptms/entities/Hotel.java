@@ -4,11 +4,13 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.envers.Audited;
 
 import java.util.Date;
 
 
 @Table(name = "hotels")
+@Audited
 @Entity
 @Data
 public class Hotel {

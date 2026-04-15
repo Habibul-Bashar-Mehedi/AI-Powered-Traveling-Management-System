@@ -4,10 +4,12 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.envers.Audited;
 
 import java.util.Date;
 
 @Entity
+@Audited
 @Data
 @Table(name = "tourist_spots")
 public class TouristSpot {

@@ -3,11 +3,13 @@ package aptms.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.envers.Audited;
 
 import java.util.Date;
 
 @Table(name= "booking")
 @Entity
+@Audited
 @Data
 public class Booking {
     @Id
@@ -32,7 +34,7 @@ public class Booking {
     private String specialRequest;
     @CreationTimestamp
     @Column(updatable = false)
-    private Date CreatedAt;
+    private Date createdAt;
     @CreationTimestamp
     private Date updatedAt;
 

@@ -2,10 +2,12 @@ package aptms.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.envers.Audited;
 
 import java.util.Date;
 
 @Entity
+@Audited
 @Data
 @Table(name = "transports")
 public class Transport {

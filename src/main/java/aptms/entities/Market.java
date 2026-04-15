@@ -3,10 +3,12 @@ package aptms.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.envers.Audited;
 
 import java.util.Date;
 
 @Entity
+@Audited
 @Data
 @Table(name = "Markets")
 public class Market {
