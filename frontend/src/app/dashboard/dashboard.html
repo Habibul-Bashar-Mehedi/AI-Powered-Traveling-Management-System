@@ -1,0 +1,241 @@
+<div class="dashboard-root">
+
+  <!-- ── MAIN CONTENT ─────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- TOP HEADER -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-sub">Friday, 10 April 2026</p>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn notif-btn">
+          🔔
+          @if (user.notifications > 0) {
+            <span class="notif-dot">{{ user.notifications }}</span>
+          }
+        </button>
+        <button class="icon-btn">⚙️</button>
+        <div class="topbar-avatar-wrap">
+          <img [src]="user.avatar" class="topbar-avatar" alt="User" />
+          <div class="avatar-ring"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- HERO SLIDER -->
+    <section class="slider-section">
+      <div class="slider-track-wrap">
+        <div class="slider-track" [style.transform]="'translateX(-' + currentIndex * 100 + '%)'">
+          @for (slide of slides; track $index) {
+            <div class="slide">
+              <span class="slide-tag">{{ slide.tag }}</span>
+              <div class="slide-content">
+                <div class="slide-text">
+                  <h2 class="slide-title">{{ slide.title }}</h2>
+                  <p class="slide-sub">{{ slide.subtitle }}</p>
+                  <button class="slide-cta">Explore Now →</button>
+                </div>
+                <img [src]="slide.img" class="slide-img" alt="" />
+              </div>
+              <div class="slide-accent" [style.background]="slide.accent + '22'"></div>
+              <div class="slide-bar" [style.background]="'linear-gradient(90deg, ' + slide.accent + ', transparent)'"></div>
+            </div>
+          }
+        </div>
+        <button class="slider-btn slider-prev" (click)="prev()">‹</button>
+        <button class="slider-btn slider-next" (click)="next()">›</button>
+        <div class="slider-dots">
+          @for (slide of slides; track $index) {
+            <button
+              class="dot"
+              [class.active]="currentIndex === $index"
+              (click)="goToSlide($index)">
+            </button>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS GRID -->
+    <section class="stats-grid">
+      @for (stat of stats; track $index) {
+        <div class="stat-card stat-{{ stat.color }}">
+          <div class="stat-icon">{{ stat.icon }}</div>
+          <div class="stat-body">
+            <div class="stat-value">{{ stat.value }}</div>
+            <div class="stat-label">{{ stat.label }}</div>
+            <div class="stat-trend">{{ stat.trend }}</div>
+          </div>
+          <div class="stat-glow"></div>
+        </div>
+      }
+    </section>
+
+    <!-- SECTION HEADER -->
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Destinations & Experiences</h2>
+        <p class="section-sub">Handpicked for your travel style</p>
+      </div>
+      <button class="view-all-btn">View All →</button>
+    </div>
+
+<!-- DESTINATIONS GRID -->
+<section class="dest-grid">
+  @for (dest of destinations; track $index) {
+    <div class="dest-card">
+
+      <!-- IMAGE -->
+      <div class="dest-img-wrap">
+        <img [src]="dest.img" class="dest-img" alt="{{ dest.name }}" loading="lazy" />
+        <div class="dest-overlay"></div>
+        <span class="dest-badge">{{ dest.badge }}</span>
+
+        @if (dest.type === 'tour') {
+          <div class="dest-price-tag">৳{{ dest.price }}</div>
+        }
+      </div>
+
+      <!-- BODY -->
+      <div class="dest-body">
+
+        <div class="dest-top">
+          <h3 class="dest-name">{{ dest.name }}</h3>
+
+          @if (dest.type === 'tour') {
+            <p class="dest-loc">📍 {{ dest.location }}</p>
+
+            <div class="dest-meta">
+              <span class="meta-pill">🕒 {{ dest.duration }}</span>
+              <span class="meta-pill">👥 {{ dest.group }}</span>
+            </div>
+
+            <div class="dest-rating">
+              <span class="stars">
+                @for (s of getStars(dest.rating!); track $index) {
+                  <span [class.filled]="s === '★'">{{ s }}</span>
+                }
+              </span>
+              <span class="rating-num">{{ dest.rating }} ({{ dest.reviews }})</span>
+            </div>
+          }
+
+          @else {
+            <p class="dest-desc">{{ dest.desc }}</p>
+
+            <div class="dest-rating">
+              <span class="stars">
+                <span class="filled">★</span>
+                <span class="filled">★</span>
+                <span class="filled">★</span>
+                <span class="filled">★</span>
+                <span class="filled">★</span>
+              </span>
+
+              <span class="rating-num">4.8 (200+)</span>
+            </div>
+          }
+        </div>
+
+        <!-- BUTTON ALWAYS BOTTOM -->
+        <button class="dest-btn">
+          {{ dest.type === 'tour' ? 'Book Now' : 'Discover' }}
+        </button>
+
+      </div>
+    </div>
+  }
+</section>
+
+  </main>
+</div>
+
+<!-- ════════════════════════════════════
+     CHATBOT — Fixed Bottom Right
+     ════════════════════════════════════ -->
+
+@if (showChatbot) {
+  <div class="chat-panel" [class.minimized]="chatMinimized">
+
+    <!-- Header -->
+    <div class="chat-header">
+      <div class="chat-header-left">
+        <div class="bot-avatar">🤖</div>
+        <div>
+          <div class="bot-name">AI Travel Assistant</div>
+          <div class="bot-status">
+            <span class="status-dot"></span> Online
+          </div>
+        </div>
+      </div>
+      <div class="chat-header-actions">
+        <button class="chat-icon-btn" (click)="clearChat()" title="Clear chat">🗑</button>
+        <button class="chat-icon-btn" (click)="minimizeChat()" title="Minimize">
+          {{ chatMinimized ? '▲' : '▼' }}
+        </button>
+        <button class="chat-icon-btn" (click)="toggleChatbot()" title="Close">✕</button>
+      </div>
+    </div>
+
+    <!-- Body -->
+    @if (!chatMinimized) {
+      <div class="chat-body">
+        @for (msg of messages; track $index) {
+          <div class="msg-row" [class.user-row]="msg.sender === 'user'">
+            @if (msg.sender === 'bot') {
+              <div class="msg-bot-avatar">🤖</div>
+            }
+            <div class="msg-bubble"
+              [class.user-bubble]="msg.sender === 'user'"
+              [class.bot-bubble]="msg.sender === 'bot'">
+              <p class="msg-text">{{ msg.text }}</p>
+              <div class="msg-time">{{ formatTimestamp(msg.timestamp) }}</div>
+            </div>
+          </div>
+        }
+        @if (isTyping) {
+          <div class="msg-row">
+            <div class="msg-bot-avatar">🤖</div>
+            <div class="bot-bubble typing-bubble">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Quick Replies -->
+      <div class="quick-replies">
+        <button class="qr-btn" (click)="userInput = 'Best destinations in Asia?'; sendMessage()">Asia Trips ✈️</button>
+        <button class="qr-btn" (click)="userInput = 'Budget travel tips?'; sendMessage()">Budget Tips 💰</button>
+        <button class="qr-btn" (click)="userInput = 'Plan a honeymoon trip'; sendMessage()">Honeymoon 💑</button>
+      </div>
+
+      <!-- Input -->
+      <div class="chat-footer">
+        <textarea
+          [(ngModel)]="userInput"
+          (keydown)="onEnterPress($event)"
+          rows="1"
+          class="chat-input"
+          placeholder="Ask about destinations, budgets, itineraries…">
+        </textarea>
+        <button
+          (click)="sendMessage()"
+          [disabled]="!userInput.trim() || isTyping"
+          class="chat-send-btn">
+          ➤
+        </button>
+      </div>
+    }
+  </div>
+}
+
+<!-- Floating Toggle Button -->
+<button class="chat-fab" (click)="toggleChatbot()" [class.fab-open]="showChatbot">
+  <span class="fab-icon">{{ showChatbot ? '✕' : '💬' }}</span>
+  @if (!showChatbot) {
+    <span class="fab-pulse"></span>
+  }
+</button>

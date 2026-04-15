@@ -1,0 +1,70 @@
+<form class="w-full max-w-md mx-auto bg-gray-100 p-8 rounded-2xl shadow-md" [formGroup]="loginGroup" (ngSubmit)="onSubmit()">
+
+  <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">
+    Login
+  </h2>
+
+  <div class="mb-4">
+    <label class="block text-sm font-medium mb-1">Email</label>
+    <input type="email" class="w-full px-4 py-2 border rounded-lg" formControlName="email" required="" placeholder="Enter your email">
+    @if(loginGroup.get('email')?.invalid && (loginGroup.get('email')?.touched || loginGroup.get('email')?.dirty) ) {
+      @if(loginGroup.get('email')?.hasError('required')) {
+        <div class="text-red-500 text-sm mt-1">
+          Email is required.
+        </div>
+      }
+      @if(loginGroup.get('email')?.hasError('email')) {
+        <div class="text-red-500 text-sm mt-1">
+          Please enter a valid email address.
+        </div>      
+        }
+    }
+  </div>
+
+  <div class="mb-4">
+    <label class="block text-sm font-medium mb-1">Password</label>
+    <input type="password" class="w-full px-4 py-2 border rounded-lg" formControlName="password" required="" placeholder="Enter your password" minlength="6" maxlength="12">
+    @if(loginGroup.get('password')?.invalid && (loginGroup.get('password')?.touched || loginGroup.get('password')?.dirty) ) {
+      @if (loginGroup.get('password')?.hasError('required')) {
+        <div class="text-red-500 text-sm mt-1">
+          Password is required.
+        </div>
+      }
+      @if (loginGroup.get('password')?.hasError('minlength')) {
+        <div class="text-red-500 text-sm mt-1">
+          Password must be at least 6 characters long.
+        </div>
+      }
+      @if (loginGroup.get('password')?.hasError('maxlength')) {
+        <div class="text-red-500 text-sm mt-1">
+          Password must be no more than 12 characters long.
+        </div>
+      }     
+    }
+  </div>
+
+  <button 
+  type="submit"
+  class="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold
+         shadow-md hover:bg-indigo-700 hover:shadow-lg
+         active:scale-95 transition duration-200
+         focus:outline-none focus:ring-2 focus:ring-indigo-400
+         cursor-pointer"
+>
+  Sign In
+</button>
+
+<p class="text-center">
+  Don't have an account?
+  <a routerLink="/registration" class="text-indigo-600 underline hover:no-underline">
+    Register here
+  </a>.
+</p>
+</form>
+
+
+<h1 class = "text-2xl font-bold text-center mt-6 text-gray-800">
+  json output</h1>
+<p>
+    {{loginGroup.value | json }}
+  </p>
