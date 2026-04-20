@@ -5,15 +5,17 @@ import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class RegistrationService {
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
+    public RegistrationService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public User registerUser(User user) {
         if(userRepository.existsByEmail(user.getEmail())) {

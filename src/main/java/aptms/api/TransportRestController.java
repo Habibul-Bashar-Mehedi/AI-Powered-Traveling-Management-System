@@ -12,8 +12,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/transports")
 public class TransportRestController {
-    @Autowired
-    private TransportService transportService;
+    private final TransportService transportService;
+
+    public TransportRestController(TransportService transportService) {
+        this.transportService = transportService;
+    }
 
     @PostMapping("/add")
     public Transport postTransport(@RequestBody Transport transport) {

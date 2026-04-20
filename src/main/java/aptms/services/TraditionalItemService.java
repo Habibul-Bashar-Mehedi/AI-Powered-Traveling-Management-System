@@ -12,8 +12,11 @@ import java.util.List;
 
 @Service
 public class TraditionalItemService {
-    @Autowired
-    private TraditionalItemRepository traditionalItemRepository;
+    private final TraditionalItemRepository traditionalItemRepository;
+
+    public TraditionalItemService(TraditionalItemRepository traditionalItemRepository) {
+        this.traditionalItemRepository = traditionalItemRepository;
+    }
 
     public TraditionalItem addTraditionalItem(TraditionalItem traditionalItem) {
         if(traditionalItem.getMarket() == null || traditionalItem.getCategoryName() == null) {

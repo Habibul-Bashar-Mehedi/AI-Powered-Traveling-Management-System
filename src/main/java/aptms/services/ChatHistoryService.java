@@ -12,8 +12,12 @@ import java.util.List;
 
 @Service
 public class ChatHistoryService {
-    @Autowired
-    private ChatHistoryRepository chatHistoryRepository;
+
+    private final ChatHistoryRepository chatHistoryRepository;
+
+    public ChatHistoryService(ChatHistoryRepository chatHistoryRepository) {
+        this.chatHistoryRepository = chatHistoryRepository;
+    }
 
     public ChatHistory addChatHistory(ChatHistory chatHistory) {
         if(chatHistory.getUserInput() == null || chatHistory.getSessionId() == null) {

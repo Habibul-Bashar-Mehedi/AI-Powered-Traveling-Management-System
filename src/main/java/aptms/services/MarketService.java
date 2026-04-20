@@ -12,8 +12,12 @@ import java.util.List;
 
 @Service
 public class MarketService {
-    @Autowired
-    private MarketRepository marketRepository;
+
+    private final MarketRepository marketRepository;
+
+    public MarketService(MarketRepository marketRepository) {
+        this.marketRepository = marketRepository;
+    }
 
     public Market addMarket(Market market) {
         if(market.getName() == null || market.getDestination() == null) {

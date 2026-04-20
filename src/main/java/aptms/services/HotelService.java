@@ -11,8 +11,12 @@ import java.util.List;
 
 @Service
 public class HotelService {
-    @Autowired
-    private HotelRepository hotelRepository;
+
+    private final HotelRepository hotelRepository;
+
+    public HotelService(HotelRepository hotelRepository) {
+        this.hotelRepository = hotelRepository;
+    }
 
     public Hotel addHotel(Hotel hotel) {
         boolean exists = hotelRepository.existsHotelByHotelNameAndAddress(hotel.getHotelName(),hotel.getAddress());

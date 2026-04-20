@@ -12,8 +12,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/booking")
 public class BookingRestController {
-    @Autowired
-    private BookingService bookingService;
+    private final BookingService bookingService;
+
+    public BookingRestController(BookingService bookingService) {
+        this.bookingService = bookingService;
+    }
 
     @PostMapping("/add")
     public Booking postBooking(@RequestBody Booking booking) {

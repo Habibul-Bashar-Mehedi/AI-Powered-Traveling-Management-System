@@ -12,8 +12,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/tourist/spot")
 public class TouristSpotRestController {
-    @Autowired
-    private TouristSpotService touristSpotService;
+    private final TouristSpotService touristSpotService;
+
+    public TouristSpotRestController(TouristSpotService touristSpotService) {
+        this.touristSpotService = touristSpotService;
+    }
 
     @PostMapping("/add")
     public TouristSpot postTouristSpot(@RequestBody TouristSpot touristSpot) {

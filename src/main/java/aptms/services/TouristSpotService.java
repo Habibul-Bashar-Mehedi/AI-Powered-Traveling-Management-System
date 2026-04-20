@@ -12,8 +12,11 @@ import java.util.List;
 
 @Service
 public class TouristSpotService {
-    @Autowired
-    private TouristSpotRepository touristSpotRepository;
+    private final TouristSpotRepository touristSpotRepository;
+
+    public TouristSpotService(TouristSpotRepository touristSpotRepository) {
+        this.touristSpotRepository = touristSpotRepository;
+    }
 
     public TouristSpot addTouristSpot(TouristSpot touristSpot) {
         if(touristSpot.getDestination() == null || touristSpot.getName() == null) {

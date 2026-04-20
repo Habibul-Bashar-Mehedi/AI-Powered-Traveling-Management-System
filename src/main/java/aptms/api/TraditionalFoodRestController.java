@@ -12,8 +12,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/traditional/food")
 public class TraditionalFoodRestController {
-    @Autowired
-    private TraditionalFoodService traditionalFoodService;
+    private final TraditionalFoodService traditionalFoodService;
+
+    public TraditionalFoodRestController(TraditionalFoodService traditionalFoodService) {
+        this.traditionalFoodService = traditionalFoodService;
+    }
 
     @PostMapping("/add")
     public TraditionalFood postTraditionalFood(@RequestBody TraditionalFood traditionalFood) {

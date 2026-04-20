@@ -12,8 +12,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/route")
 public class RouteRestController {
-    @Autowired
-    private RouteService routeService;
+    private final RouteService routeService;
+
+    public RouteRestController(RouteService routeService) {
+        this.routeService = routeService;
+    }
 
     @PostMapping("/add")
     public Route postRoute(@RequestBody Route route) {

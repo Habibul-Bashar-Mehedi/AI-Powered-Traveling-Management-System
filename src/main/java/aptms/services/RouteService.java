@@ -12,8 +12,11 @@ import java.util.List;
 
 @Service
 public class RouteService {
-    @Autowired
-    private RouteRepository routeRepository;
+    private final RouteRepository routeRepository;
+
+    public RouteService(RouteRepository routeRepository) {
+        this.routeRepository = routeRepository;
+    }
 
     public Route addRoute(Route route) {
         if(route.getOrigin() == null || route.getDestination() == null) {

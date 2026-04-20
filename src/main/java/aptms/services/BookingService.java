@@ -13,8 +13,13 @@ import java.util.List;
 
 @Service
 public class BookingService {
-    @Autowired
-    private BookingRepository bookingRepository;
+    
+    private final BookingRepository bookingRepository;
+
+    public BookingService(BookingRepository bookingRepository) {
+        this.bookingRepository = bookingRepository;
+    }
+
     public Booking booking(Booking booking) {
         if(booking.getRoom() == null || booking.getHotel() == null || booking.getUser() == null) {
             throw new InvalidException("User, Room, and Hotel information are required!");

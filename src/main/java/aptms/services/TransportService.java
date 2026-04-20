@@ -12,8 +12,11 @@ import java.util.List;
 
 @Service
 public class TransportService {
-    @Autowired
-    private TransportRepository transportRepository;
+    private final TransportRepository transportRepository;
+
+    public TransportService(TransportRepository transportRepository) {
+        this.transportRepository = transportRepository;
+    }
 
     public Transport addTransport(Transport transport) {
 

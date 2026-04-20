@@ -12,8 +12,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/destination")
 public class DestinationRestController {
-    @Autowired
-    private DestinationService destinationService;
+    private final DestinationService destinationService;
+
+    public DestinationRestController(DestinationService destinationService) {
+        this.destinationService = destinationService;
+    }
 
     @PostMapping("/add")
     public Destination postDestination(@RequestBody Destination destination) {

@@ -12,8 +12,11 @@ import java.util.List;
 
 @Service
 public class TraditionalFoodService {
-    @Autowired
-    private TraditionalFoodRepository traditionalFoodRepository;
+    private final TraditionalFoodRepository traditionalFoodRepository;
+
+    public TraditionalFoodService(TraditionalFoodRepository traditionalFoodRepository) {
+        this.traditionalFoodRepository = traditionalFoodRepository;
+    }
 
     public TraditionalFood addTraditionalFood(TraditionalFood traditionalFood) {
         if(traditionalFood.getDishName() == null || traditionalFood.getDestination() == null) {

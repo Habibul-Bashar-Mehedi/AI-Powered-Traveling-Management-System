@@ -12,8 +12,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/traditional/item")
 public class TraditionalItemRestController {
-    @Autowired
-    private TraditionalItemService traditionalItemService;
+    private final TraditionalItemService traditionalItemService;
+
+    public TraditionalItemRestController(TraditionalItemService traditionalItemService) {
+        this.traditionalItemService = traditionalItemService;
+    }
 
     @PostMapping("/add")
     public TraditionalItem postTraditionalItem(@RequestBody TraditionalItem traditionalItem) {

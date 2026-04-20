@@ -12,8 +12,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/chat/history")
 public class ChatHistoryRestController {
-    @Autowired
-    private ChatHistoryService chatHistoryService;
+    private final ChatHistoryService chatHistoryService;
+
+    public ChatHistoryRestController(ChatHistoryService chatHistoryService) {
+        this.chatHistoryService = chatHistoryService;
+    }
 
     @PostMapping("/add")
     public ChatHistory postChatHistory(@RequestBody ChatHistory chatHistory) {

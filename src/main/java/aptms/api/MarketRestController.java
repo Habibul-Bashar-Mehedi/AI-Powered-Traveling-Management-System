@@ -12,8 +12,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/market")
 public class MarketRestController {
-    @Autowired
-    private MarketService marketService;
+    private final MarketService marketService;
+
+    public MarketRestController(MarketService marketService) {
+        this.marketService = marketService;
+    }
 
     @PostMapping("/add")
     public Market postMarket(@RequestBody Market market) {

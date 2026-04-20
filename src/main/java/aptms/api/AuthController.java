@@ -12,8 +12,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/auth/user")
 public class AuthController {
-    @Autowired
-    private RegistrationService registrationService;
+    private final RegistrationService registrationService;
+
+    public AuthController(RegistrationService registrationService) {
+        this.registrationService = registrationService;
+    }
 
     @PostMapping("/registar")
     public User userRegister(@RequestBody User user) {
