@@ -1,12 +1,13 @@
 package aptms.services;
 
+import aptms.annotations.SecureAction;
 import aptms.entities.TouristSpot;
 import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.TouristSpotRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,6 +19,8 @@ public class TouristSpotService {
         this.touristSpotRepository = touristSpotRepository;
     }
 
+    @Transactional
+    @SecureAction(role = "USER")
     public TouristSpot addTouristSpot(TouristSpot touristSpot) {
         if(touristSpot.getDestination() == null || touristSpot.getName() == null) {
             throw new InvalidException("Destination id or spot name required");
@@ -33,11 +36,14 @@ public class TouristSpotService {
         return touristSpotRepository.save(touristSpot);
     }
 
+    @Transactional(readOnly = true)
+    @SecureAction(role = "ADMIN")
     public List<TouristSpot> getAllTouristSpot() {
         return touristSpotRepository.findAll();
     }
 
-    //tourist spot
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public String deleteTouristSpot(long id) {
         if(!touristSpotRepository.existsById(id)) throw new IdNotFoundException("tourist spot id not found");
 
@@ -45,6 +51,8 @@ public class TouristSpotService {
         return "tourist spot is deleted";
     }
 
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public boolean updateTouristSpot(long id,String name,
                                      String description,String visitingHours,
                                      double adultEntryFees,double childEntryFees,

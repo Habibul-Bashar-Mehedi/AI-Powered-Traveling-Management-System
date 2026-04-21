@@ -15,7 +15,9 @@ import java.util.Date;
 public class Room {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
+    @Version
+    private Integer version;
     @ManyToOne
     @JoinColumn(name = "hotel_id", referencedColumnName = "id")
     private Hotel hotel; // 'hotelId' er bodole 'hotel' likhun

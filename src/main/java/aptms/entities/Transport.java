@@ -2,6 +2,7 @@ package aptms.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.envers.Audited;
 
 import java.util.Date;
@@ -13,7 +14,9 @@ import java.util.Date;
 public class Transport {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
+    @Version
+    private Integer version;
     @ManyToOne
     @JoinColumn(name = "origin_id", referencedColumnName = "id")
     private Destination origin;
@@ -26,5 +29,6 @@ public class Transport {
     private String estimatedDuration;
     private String frequency;
     private boolean isLocal;
+    @CreationTimestamp
     private Date createdAt;
 }

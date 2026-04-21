@@ -1,12 +1,13 @@
 package aptms.services;
 
+import aptms.annotations.SecureAction;
 import aptms.entities.Market;
 import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.MarketRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -19,6 +20,8 @@ public class MarketService {
         this.marketRepository = marketRepository;
     }
 
+    @Transactional
+    @SecureAction(role = "USER")
     public Market addMarket(Market market) {
         if(market.getName() == null || market.getDestination() == null) {
             throw  new InvalidException("market name and destination required");
@@ -34,6 +37,8 @@ public class MarketService {
         return marketRepository.save(market);
     }
 
+    @Transactional(readOnly = true)
+    @SecureAction(role = "ADMIN")
     public List<Market> getAllMarket() {
         return marketRepository.findAll();
     }
@@ -46,6 +51,8 @@ public class MarketService {
         return "market is deleted";
     }
 
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public boolean updateMarket(long id ,String name,String location,
                                 String operatingDays,String operatingHours,
                                 String description) {

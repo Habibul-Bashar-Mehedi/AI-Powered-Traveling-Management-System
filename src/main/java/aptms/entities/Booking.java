@@ -3,6 +3,7 @@ package aptms.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.envers.Audited;
 
 import java.util.Date;
@@ -14,7 +15,9 @@ import java.util.Date;
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
+    @Version
+    private Integer version;
     @ManyToOne
     @JoinColumn(name = "user_id",referencedColumnName = "id")
     private User user;
@@ -35,7 +38,7 @@ public class Booking {
     @CreationTimestamp
     @Column(updatable = false)
     private Date createdAt;
-    @CreationTimestamp
+    @UpdateTimestamp
     private Date updatedAt;
 
 

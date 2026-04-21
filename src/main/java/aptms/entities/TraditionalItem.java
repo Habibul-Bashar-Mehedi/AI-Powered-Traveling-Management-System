@@ -11,7 +11,9 @@ import org.hibernate.envers.Audited;
 public class TraditionalItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
+    @Version
+    private Integer version;
     @ManyToOne
     @JoinColumn(name = "market_id", referencedColumnName = "id")
     private Market market;

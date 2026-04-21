@@ -14,7 +14,9 @@ import java.util.Date;
 public class ChatHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
+    @Version
+    private Integer version;
     @ManyToOne
     @JoinColumn(name = "user-id",referencedColumnName = "id")
     private User user;

@@ -11,7 +11,9 @@ import org.hibernate.envers.Audited;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id ;
+    private Long id ;
+    @Version
+    private Integer version;
     private String username;
     private String email;
     private String password;

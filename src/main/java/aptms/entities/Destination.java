@@ -14,7 +14,9 @@ import java.util.Date;
 public class Destination {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
+    @Version
+    private Integer version;
     private String name;
     private String region;
     @Column(columnDefinition = "TEXT")

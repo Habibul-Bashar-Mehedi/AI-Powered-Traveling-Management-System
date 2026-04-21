@@ -14,7 +14,9 @@ import java.util.Date;
 public class Route {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
+    @Version
+    private Integer version;
     @ManyToOne
     @JoinColumn(name = "origin_id",referencedColumnName = "id")
     private Destination origin;

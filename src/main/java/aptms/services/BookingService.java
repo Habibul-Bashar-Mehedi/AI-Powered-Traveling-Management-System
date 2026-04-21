@@ -1,11 +1,12 @@
 package aptms.services;
 
+import aptms.annotations.SecureAction;
 import aptms.entities.Booking;
 import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.BookingRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -20,6 +21,8 @@ public class BookingService {
         this.bookingRepository = bookingRepository;
     }
 
+    @Transactional
+    @SecureAction(role = "USER")
     public Booking booking(Booking booking) {
         if(booking.getRoom() == null || booking.getHotel() == null || booking.getUser() == null) {
             throw new InvalidException("User, Room, and Hotel information are required!");
@@ -39,11 +42,15 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
+    @Transactional(readOnly = true)
+    @SecureAction(role = "ADMIN")
     public List<Booking> getAllBookings() {
         return bookingRepository.findAll();
     }
 
-    //booking
+
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public String deleteBooking(long id) {
         if(!bookingRepository.existsById(id)) throw new IdNotFoundException("booking id not found");
 
@@ -51,6 +58,8 @@ public class BookingService {
         return "booking is deleted";
     }
 
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public boolean updateBooking(long id, Date checkInDate,
                                  Date checkOutDate,int guestCount,
                                  Double totalPrice,String status,

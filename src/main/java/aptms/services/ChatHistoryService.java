@@ -1,12 +1,14 @@
 package aptms.services;
 
+import aptms.annotations.SecureAction;
 import aptms.entities.ChatHistory;
 import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.ChatHistoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -19,6 +21,8 @@ public class ChatHistoryService {
         this.chatHistoryRepository = chatHistoryRepository;
     }
 
+    @Transactional
+    @SecureAction(role = "USER")
     public ChatHistory addChatHistory(ChatHistory chatHistory) {
         if(chatHistory.getUserInput() == null || chatHistory.getSessionId() == null) {
             throw new InvalidException("user input and session id required");
@@ -36,11 +40,13 @@ public class ChatHistoryService {
         return chatHistoryRepository.save(chatHistory);
     }
 
+    @Transactional(readOnly = true)
+    @SecureAction(role = "ADMIN")
     public List<ChatHistory> getAllChatHistory() {
         return chatHistoryRepository.findAll();
     }
 
-    //chat history
+    @SecureAction(role = "ADMIN")
     public String deleteChatHistory(long id) {
         if(!chatHistoryRepository.existsById(id)) throw new IdNotFoundException("chat history id not found");
 
@@ -48,6 +54,8 @@ public class ChatHistoryService {
         return "chat history is deleted";
     }
 
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public boolean updateChatHistory(long id,
                                      String aiResponse,String sessionId) {
 

@@ -16,8 +16,9 @@ import java.util.Date;
 public class Hotel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
-
+    private Long id;
+    @Version
+    private Integer version;
     // Foreign Key Mapping
     @ManyToOne(fetch = FetchType.LAZY) // Onek gulo Hotel ekta Vendor-er hote pare
     @JoinColumn(name = "vendor_id", referencedColumnName = "id") // Database-e 'vendor_id' name FK hobe

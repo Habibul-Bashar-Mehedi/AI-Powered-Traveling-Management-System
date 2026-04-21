@@ -1,12 +1,13 @@
 package aptms.services;
 
+import aptms.annotations.SecureAction;
 import aptms.entities.TraditionalFood;
 import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.TraditionalFoodRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,6 +19,8 @@ public class TraditionalFoodService {
         this.traditionalFoodRepository = traditionalFoodRepository;
     }
 
+    @Transactional
+    @SecureAction(role = "USER")
     public TraditionalFood addTraditionalFood(TraditionalFood traditionalFood) {
         if(traditionalFood.getDishName() == null || traditionalFood.getDestination() == null) {
             throw new InvalidException("required dish name and destination");
@@ -33,11 +36,14 @@ public class TraditionalFoodService {
         return traditionalFoodRepository.save(traditionalFood);
     }
 
+    @Transactional(readOnly = true)
+    @SecureAction(role = "ADMIN")
     public List<TraditionalFood> getAllTraditionalFood () {
         return traditionalFoodRepository.findAll();
     }
 
-    //traditional food
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public String deleteTraditionalFood(long id) {
         if(!traditionalFoodRepository.existsById(id)) throw new IdNotFoundException("traditional food id not found");
 
@@ -45,6 +51,8 @@ public class TraditionalFoodService {
         return "traditional food is deleted";
     }
 
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public boolean updateTraditionalFood(long id, String dishName,
                                          String description,String culturalContext,
                                          String priceRange,String recommendedLocation) {

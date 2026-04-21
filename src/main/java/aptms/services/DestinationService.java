@@ -1,12 +1,13 @@
 package aptms.services;
 
+import aptms.annotations.SecureAction;
 import aptms.entities.Destination;
 import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.DestinationRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,6 +19,8 @@ public class DestinationService {
         this.destinationRepository = destinationRepository;
     }
 
+    @Transactional
+    @SecureAction(role = "USER")
     public Destination addDestination(Destination destination) {
 
         if(destination.getName() == null || destination.getRegion() == null) {
@@ -31,11 +34,15 @@ public class DestinationService {
 
         return destinationRepository.save(destination);
     }
+
+    @Transactional(readOnly = true)
+    @SecureAction(role = "ADMIN")
     public List<Destination> getAllDestinations() {
         return destinationRepository.findAll();
     }
 
-    //destination
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public String deleteDestination(long id) {
         if(!destinationRepository.existsById(id)) throw new IdNotFoundException("destination id not found");
 
@@ -43,6 +50,8 @@ public class DestinationService {
         return "destination is deleted";
     }
 
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public boolean updateDestination(long id,String name, String region,
                                      String description) {
 

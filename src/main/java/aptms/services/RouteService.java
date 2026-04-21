@@ -1,12 +1,13 @@
 package aptms.services;
 
+import aptms.annotations.SecureAction;
 import aptms.entities.Route;
 import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.RouteRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,6 +19,8 @@ public class RouteService {
         this.routeRepository = routeRepository;
     }
 
+    @Transactional
+    @SecureAction(role = "USER")
     public Route addRoute(Route route) {
         if(route.getOrigin() == null || route.getDestination() == null) {
             throw new InvalidException("origin and destination is required");
@@ -34,11 +37,15 @@ public class RouteService {
 
     }
 
+    @Transactional(readOnly = true)
+    @SecureAction(role = "ADMIN")
     public List<Route> getAllRoute() {
         return routeRepository.findAll();
     }
 
-    //route
+
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public String deleteRoute(long id) {
         if(!routeRepository.existsById(id)) throw new IdNotFoundException("Route id not found");
 
@@ -46,6 +53,8 @@ public class RouteService {
         return "route is deleted";
     }
 
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public boolean updateRoute(long id,double distanceKM,
                                String estimatedDuration,String routeDescription) {
 

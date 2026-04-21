@@ -1,12 +1,13 @@
 package aptms.services;
 
+import aptms.annotations.SecureAction;
 import aptms.entities.Transport;
 import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.TransportRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,6 +19,8 @@ public class TransportService {
         this.transportRepository = transportRepository;
     }
 
+    @Transactional
+    @SecureAction(role = "USER")
     public Transport addTransport(Transport transport) {
 
         if(transport.getOrigin() == null || transport.getDestination() == null) {
@@ -35,11 +38,14 @@ public class TransportService {
         return transportRepository.save(transport);
     }
 
+    @Transactional(readOnly = true)
+    @SecureAction(role = "ADMIN")
     public List<Transport> getAllTransport() {
         return transportRepository.findAll();
     }
 
-    //transport
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public String deleteTransport(long id) {
         if(!transportRepository.existsById(id)) {
             throw new IdNotFoundException("Transport id not found ");
@@ -48,6 +54,8 @@ public class TransportService {
         return "transport is deleted";
     }
 
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public boolean updateTransport(long id ,String model,
                                    String operatorName ,double estimatedCost,
                                    String estimatedDuration ,String frequency) {

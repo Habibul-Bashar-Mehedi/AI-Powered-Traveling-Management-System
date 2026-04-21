@@ -14,7 +14,9 @@ import java.util.Date;
 public class Market {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
+    @Version
+    private Integer version;
     @ManyToOne
     @JoinColumn(name = "destination_id", referencedColumnName = "id")
     private Destination destination;

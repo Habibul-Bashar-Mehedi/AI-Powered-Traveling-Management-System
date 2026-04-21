@@ -1,11 +1,13 @@
 package aptms.services;
 
+import aptms.annotations.SecureAction;
 import aptms.entities.User;
 import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,6 +19,7 @@ public class RegistrationService {
         this.userRepository = userRepository;
     }
 
+
     public User registerUser(User user) {
         if(userRepository.existsByEmail(user.getEmail())) {
             throw new DuplicateValueFoundExceptions("Email already exists");
@@ -24,6 +27,8 @@ public class RegistrationService {
         return userRepository.save(user);
     }
 
+    @Transactional
+    @SecureAction(role = "USER")
     public String loginUser(String email, String password) {
         return userRepository.findByEmail(email)
                 .map(user -> {
@@ -36,11 +41,14 @@ public class RegistrationService {
                         new InvalidException("User not found with this email. invalid email"));
     }
 
+    @Transactional(readOnly = true)
+    @SecureAction(role = "ADMIN")
     public List<User> getAllUsers () {
         return userRepository.findAll();
     }
 
-    //user
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public String deleteUser(long id) {
         if(!userRepository.existsById(id)) {
             throw new IdNotFoundException("user id not found");
@@ -49,6 +57,8 @@ public class RegistrationService {
         return "user is deleted";
     }
 
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public boolean updateUser(
             long id,String username,
             String email,String password,
