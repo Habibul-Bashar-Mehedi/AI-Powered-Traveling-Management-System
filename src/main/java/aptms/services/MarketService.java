@@ -43,7 +43,7 @@ public class MarketService {
         return marketRepository.findAll();
     }
 
-    //market
+
     public String deleteMarket(long id) {
         if(!marketRepository.existsById(id)) throw new IdNotFoundException("market id not found");
 

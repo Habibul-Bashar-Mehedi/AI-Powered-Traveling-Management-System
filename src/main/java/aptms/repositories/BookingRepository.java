@@ -17,4 +17,5 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     boolean isRoomBooked(@Param("roomId") Long roomId,
                          @Param("checkIn") Date checkIn,
                          @Param("checkOut") Date checkOut);
+
 }

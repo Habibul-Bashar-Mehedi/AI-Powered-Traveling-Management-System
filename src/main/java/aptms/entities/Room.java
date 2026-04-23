@@ -20,7 +20,7 @@ public class Room {
     private Integer version;
     @ManyToOne
     @JoinColumn(name = "hotel_id", referencedColumnName = "id")
-    private Hotel hotel; // 'hotelId' er bodole 'hotel' likhun
+    private Hotel hotel;
 
     private String roomTypeName;
 
@@ -37,7 +37,7 @@ public class Room {
     @Column(updatable = false)
     private Date createdAt;
 
-    @UpdateTimestamp // Eta fix kora holo, jate update korle automatic time change hoy
+    @UpdateTimestamp
     private Date updatedAt;
 
 }

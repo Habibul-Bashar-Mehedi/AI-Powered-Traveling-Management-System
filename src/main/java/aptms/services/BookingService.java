@@ -60,24 +60,16 @@ public class BookingService {
 
     @Transactional
     @SecureAction(role = "ADMIN")
-    public boolean updateBooking(long id, Date checkInDate,
-                                 Date checkOutDate,int guestCount,
-                                 Double totalPrice,String status,
-                                 String specialRequest) {
-
+    public boolean updateBooking(long id, Date checkIn, Date checkOut, int guests, Double price, String status, String request) {
         return bookingRepository.findById(id).map(booking -> {
-            booking.setCheckInDate(checkInDate);
-            booking.setCheckOutDate(checkOutDate);
-            booking.setGuestCount(guestCount);
-            booking.setTotalPrice(totalPrice);
+            booking.setCheckInDate(checkIn);
+            booking.setCheckOutDate(checkOut);
+            booking.setGuestCount(guests);
+            booking.setTotalPrice(price);
             booking.setStatus(status);
-            booking.setSpecialRequest(specialRequest);
-
+            booking.setSpecialRequest(request);
             bookingRepository.save(booking);
             return true;
-        }).orElseThrow(()->
-                new IdNotFoundException("booking id not found")
-        );
-
+        }).orElseThrow(() -> new IdNotFoundException("Booking id not found"));
     }
 }
