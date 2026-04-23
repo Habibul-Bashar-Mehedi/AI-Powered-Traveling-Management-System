@@ -14,7 +14,7 @@ import java.util.List;
 
 @Service
 public class BookingService {
-    
+
     private final BookingRepository bookingRepository;
 
     public BookingService(BookingRepository bookingRepository) {
@@ -28,7 +28,6 @@ public class BookingService {
             throw new InvalidException("User, Room, and Hotel information are required!");
         }
 
-        // Logic Fix: Date overlap check korun
         boolean isAlreadyBooked = bookingRepository.isRoomBooked(
                 booking.getRoom().getId(),
                 booking.getCheckInDate(),
@@ -60,16 +59,24 @@ public class BookingService {
 
     @Transactional
     @SecureAction(role = "ADMIN")
-    public boolean updateBooking(long id, Date checkIn, Date checkOut, int guests, Double price, String status, String request) {
+    public boolean updateBooking(long id, Date checkInDate,
+                                 Date checkOutDate,int guestCount,
+                                 Double totalPrice,String status,
+                                 String specialRequest) {
+
         return bookingRepository.findById(id).map(booking -> {
-            booking.setCheckInDate(checkIn);
-            booking.setCheckOutDate(checkOut);
-            booking.setGuestCount(guests);
-            booking.setTotalPrice(price);
+            booking.setCheckInDate(checkInDate);
+            booking.setCheckOutDate(checkOutDate);
+            booking.setGuestCount(guestCount);
+            booking.setTotalPrice(totalPrice);
             booking.setStatus(status);
-            booking.setSpecialRequest(request);
+            booking.setSpecialRequest(specialRequest);
+
             bookingRepository.save(booking);
             return true;
-        }).orElseThrow(() -> new IdNotFoundException("Booking id not found"));
+        }).orElseThrow(()->
+                new IdNotFoundException("booking id not found")
+        );
+
     }
 }

@@ -53,7 +53,7 @@ public class ChatHistoryService {
         chatHistoryRepository.deleteById(id);
         return "chat history is deleted";
     }
-
+//23
     @Transactional
     @SecureAction(role = "ADMIN")
     public boolean updateChatHistory(long id,
