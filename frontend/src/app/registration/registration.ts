@@ -1,103 +1,66 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { min } from 'rxjs';
+import {Auth} from '../services/auth';
 
-export interface RegistrationUser {
-  fullname: string;
-  email: string;
-  role: string;
-  password: string;
-  confirmPassword: string;
-  country?: string;
-}
 
 @Component({
   selector: 'app-registration',
   standalone: true,
-  imports: [
-    FormsModule,
-    ReactiveFormsModule,
-    CommonModule, 
-    RouterLink
-  ],
+  imports: [FormsModule, ReactiveFormsModule, CommonModule, RouterLink],
   templateUrl: './registration.html',
   styleUrls: ['./registration.css'],
 })
-export class Registration {
+export class Registration implements OnInit {
 
-  constructor() {}
+  constructor(private authService: Auth, private router: Router) {}
 
   ngOnInit() {
     console.log('Registration component initialized');
   }
 
-  registrationUser: RegistrationUser = {
-    fullname: '',
-    email: '',
-    role: '',
-    password: '',
-    confirmPassword: '',
-    country: ''
-  };
-
-  regisstrationGroup = new FormGroup({  
-    fullname: new FormControl(this.registrationUser.fullname, [
-      Validators.required,
-      Validators.minLength(6),
-      Validators.maxLength(20)
-    ]),
-    email: new FormControl(this.registrationUser.email, [
-      Validators.required,
-      Validators.email
-    ]),
-    role: new FormControl(this.registrationUser.role, [
-      Validators.required
-    ]),
-    password: new FormControl(this.registrationUser.password, [
-      Validators.required,
-      Validators.minLength(6),
-      Validators.maxLength(100)
-    ]),
-    confirmPassword: new FormControl(this.registrationUser.confirmPassword, [
-      Validators.required,
-      Validators.minLength(6),
-      Validators.maxLength(100)
-    ]),
-    country: new FormControl(this.registrationUser.country, [
-      Validators.required,
-      Validators.maxLength(40),
-      Validators.minLength(2)
-    ])
-
-  }); 
-  
-  getFullName() {
-    return this.regisstrationGroup.get('fullname')?.value;
-  }
-
-  getEmail() {
-    return this.regisstrationGroup.get('email')?.value;
-  }
-
-  getRole() {
-    return this.regisstrationGroup.get('role')?.value;
-  }
-
-  getPassword() {
-    return this.regisstrationGroup.get('password')?.value;
-  }
-
-  getConfirmPassword() {
-    return this.regisstrationGroup.get('confirmPassword')?.value;
-  }   
-
-  getCountry() {
-    return this.regisstrationGroup.get('country')?.value;
-  }
+  regisstrationGroup = new FormGroup({
+    fullname: new FormControl('', [Validators.required, Validators.minLength(6), Validators.maxLength(20)]),
+    email: new FormControl('', [Validators.required, Validators.email]),
+    role: new FormControl('user', [Validators.required]),
+    password: new FormControl('', [Validators.required, Validators.minLength(8)]),
+    confirmPassword: new FormControl('', [Validators.required]),
+    country: new FormControl('', [Validators.required])
+  });
 
   onSubmit() {
-    console.warn(this.regisstrationGroup.value); //TODO: Implement actual registration logic here 
+    if (this.regisstrationGroup.valid) {
+      const formVal = this.regisstrationGroup.value;
+
+      // পাসওয়ার্ড ম্যাচিং চেক
+      if (formVal.password !== formVal.confirmPassword) {
+        alert("Passwords do not match!");
+        return;
+      }
+
+      // আপনার Spring Boot User Entity অনুযায়ী ডাটা ম্যাপিং
+      const payload = {
+        username: formVal.fullname, // এনটিটিতে username আছে
+        email: formVal.email,
+        password: formVal.password,
+        role: formVal.role,
+        countryId: formVal.country // এনটিটিতে countryId আছে
+      };
+
+      this.authService.register(payload).subscribe({
+        next: (res) => {
+          console.log('Success:', res);
+          alert('Registration Successful!');
+          this.router.navigate(['/login']);
+        },
+        error: (err) => {
+          console.error('Error:', err);
+          alert('Registration failed! Please try again.');
+        }
+      });
+    } else {
+      this.regisstrationGroup.markAllAsTouched();
+    }
   }
 }

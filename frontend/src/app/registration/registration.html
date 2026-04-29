@@ -9,7 +9,7 @@
     <label class="block text-sm font-medium mb-1 text-gray-700">
       Full Name
     </label>
-    <input 
+    <input
       type="text"
       placeholder="Enter your full name"
       class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
@@ -30,7 +30,7 @@
         <div class="text-red-500 text-sm mt-1">Full Name cannot exceed 20 characters.</div>
       }
     }
-      
+
   </div>
 
   <!-- Email -->
@@ -38,7 +38,7 @@
     <label class="block text-sm font-medium mb-1 text-gray-700">
       Email
     </label>
-    <input 
+    <input
       type="email"
       placeholder="Enter your email"
       class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
@@ -81,15 +81,15 @@
     <label class="block text-sm font-medium mb-1 text-gray-700">
       Password
     </label>
-    <input 
+    <input
       type="password"
       placeholder="Enter password"
       class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
       formControlName="password"
       required=""
-      minlength="8" 
+      minlength="8"
       maxlength="100"
-      pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"  
+      pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
     >
     @if(regisstrationGroup.get('password')?.invalid && (regisstrationGroup.get('password')?.dirty || regisstrationGroup.get('password')?.touched)) {
       @if(regisstrationGroup.get('password')?.errors?.['required']) {
@@ -115,7 +115,7 @@
     <label class="block text-sm font-medium mb-1 text-gray-700">
       Confirm Password
     </label>
-    <input 
+    <input
       type="password"
       placeholder="Confirm password"
       class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
@@ -153,7 +153,7 @@
       Country
     </label>
 
-    <select 
+    <select
       formControlName="country"
       class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-700 bg-white">
       <option value="" disabled selected>Select your country</option>
@@ -166,13 +166,13 @@
       <option value="China">China</option>
       <option value="Japan">Japan</option>
       <option value="South Korea">South Korea</option>
-      
+
       <!-- Middle East -->
       <option value="Saudi Arabia">Saudi Arabia</option>
       <option value="UAE">United Arab Emirates</option>
       <option value="Qatar">Qatar</option>
       <option value="Kuwait">Kuwait</option>
-      
+
       <!-- Europe -->
       <option value="United Kingdom">United Kingdom</option>
       <option value="Germany">Germany</option>
@@ -180,33 +180,33 @@
       <option value="Italy">Italy</option>
       <option value="Spain">Spain</option>
       <option value="Netherlands">Netherlands</option>
-      
+
       <!-- America -->
       <option value="United States">United States</option>
       <option value="Canada">Canada</option>
       <option value="Brazil">Brazil</option>
       <option value="Mexico">Mexico</option>
-      
+
       <!-- Others -->
       <option value="Australia">Australia</option>
       <option value="New Zealand">New Zealand</option>
       <option value="South Africa">South Africa</option>
     </select>
-    
-    @if(regisstrationGroup.get('country')?.invalid && 
+
+    @if(regisstrationGroup.get('country')?.invalid &&
       (regisstrationGroup.get('country')?.dirty || regisstrationGroup.get('country')?.touched)) {
-        
+
         @if(regisstrationGroup.get('country')?.errors?.['required']) {
           <div class="text-red-500 text-sm mt-1">Country is required.</div>
         }
       }
-      
-      
+
+
     </div>
-    
-    
+
+
     <!-- Button -->
-    <button 
+    <button
     type="submit"
     class="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold
            hover:bg-indigo-700 hover:shadow-lg

@@ -180,9 +180,9 @@ export class Dashboard implements OnInit, OnDestroy {
   isTyping = false;
   messages: any[] = [];
   chatMinimized = false;
-  chatContext = `You are an expert AI travel assistant for a premium travel booking platform. 
-  Help users plan trips, recommend destinations, suggest itineraries, estimate budgets, 
-  and answer travel-related questions. Keep responses concise, friendly, and professional. 
+  chatContext = `You are an expert AI travel assistant for a premium travel booking platform.
+  Help users plan trips, recommend destinations, suggest itineraries, estimate budgets,
+  and answer travel-related questions. Keep responses concise, friendly, and professional.
   Use emojis sparingly for a warm tone. The user's name is Aryan Rahman.`;
 
   toggleChatbot() {
