@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/auth/user")
 public class AuthController {
@@ -25,7 +27,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public String userLogin(@RequestBody User loginRequest) {
-        return registrationService.loginUser(loginRequest.getEmail(),loginRequest.getPassword());
+        return registrationService.loginUser(loginRequest.getEmail(), loginRequest.getPassword());
     }
 
     @GetMapping()
@@ -36,19 +38,19 @@ public class AuthController {
     @PutMapping("/{id}")
     public ResponseEntity<String> updateUser(@PathVariable long id, @RequestBody User user) {
 
-        boolean update = registrationService.updateUser(id,user.getUsername(), user.getEmail(), user.getPassword(), user.getRole(),user.getCountryId());
-        if(update) {
+        boolean update = registrationService.updateUser(id, user.getUsername(), user.getEmail(), user.getPassword(), user.getRole(), user.getCountryId());
+        if (update) {
             return ResponseEntity.ok("user updated successfully");
-        }else {
+        } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("user not found with id : "+id);
+                    .body("user not found with id : " + id);
         }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable long id) {
         String result = registrationService.deleteUser(id);
-        if(result.equals("user is deleted")) {
+        if (result.equals("user is deleted")) {
             return ResponseEntity.ok(result);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);

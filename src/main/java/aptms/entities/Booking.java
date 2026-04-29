@@ -41,5 +41,4 @@ public class Booking {
     @UpdateTimestamp
     private Date updatedAt;
 
-
 }

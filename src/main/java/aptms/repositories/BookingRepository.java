@@ -18,4 +18,5 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                          @Param("checkIn") Date checkIn,
                          @Param("checkOut") Date checkOut);
 
+
 }

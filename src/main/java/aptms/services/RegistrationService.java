@@ -27,8 +27,6 @@ public class RegistrationService {
         return userRepository.save(user);
     }
 
-    @Transactional
-    @SecureAction(role = "USER")
     public String loginUser(String email, String password) {
         return userRepository.findByEmail(email)
                 .map(user -> {
