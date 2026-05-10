@@ -2,6 +2,7 @@ package aptms.services;
 
 import aptms.annotations.SecureAction;
 import aptms.entities.User;
+import aptms.enums.UserRole;
 import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
@@ -11,6 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static aptms.constants.EntityConstants.*;
+import static aptms.constants.SecurityConstants.*;
+import static aptms.constants.ValidationConstants.*;
+
 @Service
 public class RegistrationService {
     private final UserRepository userRepository;
@@ -19,11 +24,19 @@ public class RegistrationService {
         this.userRepository = userRepository;
     }
 
-
+    @Transactional
     public User registerUser(User user) {
         if(userRepository.existsByEmail(user.getEmail())) {
-            throw new DuplicateValueFoundExceptions("Email already exists");
+            throw new DuplicateValueFoundExceptions(
+                String.format(DUPLICATE_ENTRY_MESSAGE, FIELD_EMAIL)
+            );
         }
+        
+        // Set default role if not provided
+        if(user.getRole() == null) {
+            user.setRole(UserRole.USER);
+        }
+        
         return userRepository.save(user);
     }
 
@@ -33,15 +46,15 @@ public class RegistrationService {
                     if (user.getPassword().equals(password)) {
                         return "Login Successful! Welcome " + user.getUsername();
                     }
-                    throw new InvalidException("Invalid password");
+                    throw new InvalidException(INVALID_CREDENTIALS_MESSAGE);
                 })
-                .orElseThrow(()->
-                        new InvalidException("User not found with this email. invalid email"));
+                .orElseThrow(() ->
+                        new InvalidException(USER_NOT_FOUND_MESSAGE));
     }
 
     @Transactional(readOnly = true)
     @SecureAction(role = "ADMIN")
-    public List<User> getAllUsers () {
+    public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
@@ -49,18 +62,20 @@ public class RegistrationService {
     @SecureAction(role = "ADMIN")
     public String deleteUser(long id) {
         if(!userRepository.existsById(id)) {
-            throw new IdNotFoundException("user id not found");
+            throw new IdNotFoundException(
+                String.format(ENTITY_NOT_FOUND_MESSAGE, USER, id)
+            );
         }
         userRepository.deleteById(id);
-        return "user is deleted";
+        return String.format(ENTITY_DELETED_MESSAGE, USER);
     }
 
     @Transactional
     @SecureAction(role = "ADMIN")
     public boolean updateUser(
-            long id,String username,
-            String email,String password,
-            String role,String countryId) {
+            long id, String username,
+            String email, String password,
+            UserRole role, String countryId) {
 
         return userRepository.findById(id).map(user -> {
             user.setUsername(username);
@@ -71,8 +86,10 @@ public class RegistrationService {
 
             userRepository.save(user);
             return true;
-        }).orElseThrow(()->
-                new IdNotFoundException("user id not found")
+        }).orElseThrow(() ->
+                new IdNotFoundException(
+                    String.format(ENTITY_NOT_FOUND_MESSAGE, USER, id)
+                )
         );
     }
 }

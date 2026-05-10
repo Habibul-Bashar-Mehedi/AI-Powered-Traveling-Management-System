@@ -1,5 +1,6 @@
 package aptms.entities;
 
+import aptms.enums.HotelStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -7,7 +8,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.envers.Audited;
 
 import java.util.Date;
-
 
 @Table(name = "hotels")
 @Audited
@@ -17,26 +17,38 @@ public class Hotel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
     @Version
     private Integer version;
-    // Foreign Key Mapping
-    @ManyToOne(fetch = FetchType.LAZY) // Onek gulo Hotel ekta Vendor-er hote pare
-    @JoinColumn(name = "vendor_id", referencedColumnName = "id") // Database-e 'vendor_id' name FK hobe
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vendor_id", referencedColumnName = "id")
     private User vendor;
-    @ManyToOne
+    
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "destination_id", referencedColumnName = "id")
-    private Destination destinationId;
-
+    private Destination destination;
+    
+    @Column(nullable = false, length = 100)
     private String hotelName;
+    
+    @Column(nullable = false, length = 255)
     private String address;
-    private String status;
-    @Column(columnDefinition = "TEXT")//description beshi hote pare dekhe use kora hoiyese
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private HotelStatus status = HotelStatus.ACTIVE;
+    
+    @Column(columnDefinition = "TEXT")
     private String descriptions;
-
+    
     @CreationTimestamp
     @Column(updatable = false)
     private Date createdAt;
+    
     @UpdateTimestamp
     private Date updatedAt;
-    private boolean isDeleted;
+    
+    @Column(nullable = false)
+    private boolean isDeleted = false;
 }

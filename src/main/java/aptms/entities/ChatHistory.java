@@ -15,15 +15,24 @@ public class ChatHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
     @Version
     private Integer version;
-    @ManyToOne
-    @JoinColumn(name = "user-id",referencedColumnName = "id")
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
+    
+    @Column(columnDefinition = "TEXT")
     private String userInput;
+    
+    @Column(columnDefinition = "TEXT")
     private String aiResponse;
+    
+    @Column(length = 100)
     private String sessionId;
+    
     @CreationTimestamp
     @Column(updatable = false)
-    private Date CreatedAt;
+    private Date createdAt;
 }

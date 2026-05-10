@@ -2,6 +2,7 @@ package aptms.services;
 
 import aptms.annotations.SecureAction;
 import aptms.entities.Room;
+import aptms.enums.RoomStatus;
 import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
@@ -10,6 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import static aptms.constants.EntityConstants.*;
+import static aptms.constants.ValidationConstants.*;
 
 @Service
 public class RoomService {
@@ -24,18 +28,27 @@ public class RoomService {
     @SecureAction(role = "USER")
     public Room addRoom(Room room) {
         // Validation
-        if (room.getHotel() == null || room.getHotel().getId() == 0) {
-            throw new InvalidException("Error: Hotel ID is missing!");
+        if (room.getHotel() == null || room.getHotel().getId() == null) {
+            throw new InvalidException(
+                String.format(REQUIRED_FIELD_MESSAGE, "Hotel")
+            );
         }
 
-        // existsBy logic
+        // Check if room type already exists for this hotel
         boolean exists = roomRepository.existsByRoomTypeNameAndHotelId(
                 room.getRoomTypeName(),
                 room.getHotel().getId()
         );
 
         if (exists) {
-            throw new DuplicateValueFoundExceptions("This room type already exists for this hotel.");
+            throw new DuplicateValueFoundExceptions(
+                String.format(DUPLICATE_ENTRY_MESSAGE, ROOM)
+            );
+        }
+        
+        // Set default status if not provided
+        if(room.getStatus() == null) {
+            room.setStatus(RoomStatus.AVAILABLE);
         }
 
         return roomRepository.save(room);
@@ -50,18 +63,21 @@ public class RoomService {
     @Transactional
     @SecureAction(role = "ADMIN")
     public String deleteRoom(long id) {
-        if(!roomRepository.existsById(id)) throw new IdNotFoundException("room id not found");
-
+        if(!roomRepository.existsById(id)) {
+            throw new IdNotFoundException(
+                String.format(ENTITY_NOT_FOUND_MESSAGE, ROOM, id)
+            );
+        }
 
         roomRepository.deleteById(id);
-        return "room is deleted";
+        return String.format(ENTITY_DELETED_MESSAGE, ROOM);
     }
 
     @Transactional
     @SecureAction(role = "ADMIN")
-    public boolean updateRoom(long id,String roomTypeName,
-                              String amenities,double pricePerNight,
-                              int availableQuantities,String status) {
+    public boolean updateRoom(long id, String roomTypeName,
+                              String amenities, double pricePerNight,
+                              int availableQuantities, RoomStatus status) {
 
         return roomRepository.findById(id).map(room -> {
             room.setRoomTypeName(roomTypeName);
@@ -72,9 +88,10 @@ public class RoomService {
 
             roomRepository.save(room);
             return true;
-        }).orElseThrow(()->
-                new IdNotFoundException("room id not found")
+        }).orElseThrow(() ->
+                new IdNotFoundException(
+                    String.format(ENTITY_NOT_FOUND_MESSAGE, ROOM, id)
+                )
         );
-
     }
 }

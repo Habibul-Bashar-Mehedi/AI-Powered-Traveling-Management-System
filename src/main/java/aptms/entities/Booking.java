@@ -1,5 +1,6 @@
 package aptms.entities;
 
+import aptms.enums.BookingStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -16,29 +17,47 @@ public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
     @Version
     private Integer version;
-    @ManyToOne
-    @JoinColumn(name = "user_id",referencedColumnName = "id")
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
-    @ManyToOne
-    @JoinColumn(name = "room_id", referencedColumnName = "id")
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", referencedColumnName = "id", nullable = false)
     private Room room;
-    @ManyToOne
-    @JoinColumn(name = "hotel_id", referencedColumnName = "id")
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hotel_id", referencedColumnName = "id", nullable = false)
     private Hotel hotel;
+    
+    @Column(nullable = false)
+    @Temporal(TemporalType.DATE)
     private Date checkInDate;
+    
+    @Column(nullable = false)
+    @Temporal(TemporalType.DATE)
     private Date checkOutDate;
+    
+    @Column(nullable = false)
     private int guestCount;
+    
+    @Column(nullable = false)
     private Double totalPrice;
-    @Column(columnDefinition = "TEXT")
-    private String status;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private BookingStatus status = BookingStatus.PENDING;
+    
     @Column(columnDefinition = "TEXT")
     private String specialRequest;
+    
     @CreationTimestamp
     @Column(updatable = false)
     private Date createdAt;
+    
     @UpdateTimestamp
     private Date updatedAt;
-
 }

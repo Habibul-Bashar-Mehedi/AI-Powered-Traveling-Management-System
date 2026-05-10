@@ -6,19 +6,22 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
 
+import static aptms.constants.SecurityConstants.*;
+
 @Aspect
 @Component
 public class SecurityAspects {
+    
     @Before("@annotation(secureAction)")
-    public void authorize(SecureAction secureAction ) {
+    public void authorize(SecureAction secureAction) {
         System.out.println(">>> AOP Security check: necessary role is " + secureAction.role());
 
-        String currentLoggingRole = "USER"; // temp data
+        // TODO: Replace with actual authentication context
+        String currentLoggingRole = ROLE_USER; // Temporary - should come from SecurityContext
 
-        if(secureAction.role().equals("ADMIN") && !currentLoggingRole.equals("ADMIN")) {
+        if(secureAction.role().equals(ROLE_ADMIN) && !currentLoggingRole.equals(ROLE_ADMIN)) {
             System.out.println(">>> AOP security check: Access Denied!");
-            // এই মেসেজটি হুবহু টেস্ট ক্লাসে থাকতে হবে
-            throw new InvalidException("Access Denied: Admin role required.");
+            throw new InvalidException(ACCESS_DENIED_MESSAGE);
         }
 
         System.out.println(">>> AOP security check: permission granted");

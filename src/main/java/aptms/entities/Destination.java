@@ -15,13 +15,22 @@ public class Destination {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
     @Version
     private Integer version;
+    
+    @Column(nullable = false, length = 100)
     private String name;
+    
+    @Column(nullable = false, length = 100)
     private String region;
+    
     @Column(columnDefinition = "TEXT")
     private String description;
+    
+    @Column(nullable = false)
     private boolean isAlive = true;
+    
     @CreationTimestamp
     @Column(updatable = false)
     private Date createdAt;
