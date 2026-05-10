@@ -11,6 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static aptms.constants.EntityConstants.*;
+import static aptms.constants.ValidationConstants.*;
+
 @Service
 public class TransportService {
     private final TransportRepository transportRepository;
@@ -24,7 +27,7 @@ public class TransportService {
     public Transport addTransport(Transport transport) {
 
         if(transport.getOrigin() == null || transport.getDestination() == null) {
-            throw new InvalidException("origin id and destination id required");
+            throw new InvalidException(ORIGIN_DESTINATION_REQUIRED);
         }
 
         boolean exists = transportRepository.existsByOriginIdAndDestinationId(
@@ -32,7 +35,7 @@ public class TransportService {
                 transport.getDestination().getId()
         );
         if(exists) {
-            throw new DuplicateValueFoundExceptions("already added");
+            throw new DuplicateValueFoundExceptions(String.format(DUPLICATE_ENTRY_MESSAGE, TRANSPORT));
         }
 
         return transportRepository.save(transport);
@@ -48,29 +51,27 @@ public class TransportService {
     @SecureAction(role = "ADMIN")
     public String deleteTransport(long id) {
         if(!transportRepository.existsById(id)) {
-            throw new IdNotFoundException("Transport id not found ");
+            throw new IdNotFoundException(String.format(ENTITY_NOT_FOUND_MESSAGE, TRANSPORT, id));
         }
         transportRepository.deleteById(id);
-        return "transport is deleted";
+        return String.format(ENTITY_DELETED_MESSAGE, TRANSPORT);
     }
 
     @Transactional
     @SecureAction(role = "ADMIN")
-    public boolean updateTransport(long id ,String model,
-                                   String operatorName ,double estimatedCost,
-                                   String estimatedDuration ,String frequency) {
-        return transportRepository.findById(id).map(transport -> {
+    public void updateTransport(long id, String model,
+                                String operatorName, double estimatedCost,
+                                String estimatedDuration, String frequency) {
+        transportRepository.findById(id).map(transport -> {
             transport.setModel(model);
             transport.setOperatorName(operatorName);
             transport.setEstimatedCost(estimatedCost);
             transport.setEstimatedDuration(estimatedDuration);
             transport.setFrequency(frequency);
 
-            transportRepository.save(transport);
-
-            return true;
+            return transportRepository.save(transport);
         }).orElseThrow(() ->
-                new IdNotFoundException("Transport id not found")
+                new IdNotFoundException(String.format(ENTITY_NOT_FOUND_MESSAGE, TRANSPORT, id))
         );
     }
 }

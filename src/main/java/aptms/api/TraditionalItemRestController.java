@@ -2,12 +2,13 @@ package aptms.api;
 
 import aptms.entities.TraditionalItem;
 import aptms.services.TraditionalItemService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static aptms.constants.EntityConstants.*;
 
 @RestController
 @RequestMapping("/api/traditional/item")
@@ -19,35 +20,34 @@ public class TraditionalItemRestController {
     }
 
     @PostMapping("/add")
-    public TraditionalItem postTraditionalItem(@RequestBody TraditionalItem traditionalItem) {
-        return traditionalItemService.addTraditionalItem(traditionalItem);
+    public ResponseEntity<TraditionalItem> postTraditionalItem(@RequestBody TraditionalItem traditionalItem) {
+        TraditionalItem createdItem = traditionalItemService.addTraditionalItem(traditionalItem);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdItem);
     }
 
     @GetMapping()
-    public List<TraditionalItem> getAllTraditionalItems () {
-        return traditionalItemService.getAllTraditionalItem();
+    public ResponseEntity<List<TraditionalItem>> getAllTraditionalItems() {
+        List<TraditionalItem> items = traditionalItemService.getAllTraditionalItem();
+        return ResponseEntity.ok(items);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateTraditionalItem(@PathVariable long id, @RequestBody TraditionalItem traditionalItem) {
-        boolean update = traditionalItemService.updateTraditionalItem(id,traditionalItem.getCategoryName(),traditionalItem.getDescription(),traditionalItem.getPriceRange());
-
-        if(update) {
-            return ResponseEntity.ok("traditional item updated");
-        }else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("traditional item not found with id: "+id);
-        }
-
+    public ResponseEntity<String> updateTraditionalItem(@PathVariable long id, @RequestBody TraditionalItemUpdateRequest request) {
+        traditionalItemService.updateTraditionalItem(id, request.categoryName, 
+                request.description, request.priceRange);
+        return ResponseEntity.ok(String.format(ENTITY_UPDATED_MESSAGE, TRADITIONAL_ITEM));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteTraditionalItem(@PathVariable long id) {
         String result = traditionalItemService.deleteTraditionalItem(id);
-        if(result.equals("traditional item is deleted")) {
-            return ResponseEntity.ok(result);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);
-        }
+        return ResponseEntity.ok(result);
+    }
+
+    // Inner class for update requests
+    public static class TraditionalItemUpdateRequest {
+        public String categoryName;
+        public String description;
+        public String priceRange;
     }
 }

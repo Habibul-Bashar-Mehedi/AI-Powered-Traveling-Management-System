@@ -2,12 +2,13 @@ package aptms.api;
 
 import aptms.entities.Market;
 import aptms.services.MarketService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static aptms.constants.EntityConstants.*;
 
 @RestController
 @RequestMapping("/api/market")
@@ -19,35 +20,36 @@ public class MarketRestController {
     }
 
     @PostMapping("/add")
-    public Market postMarket(@RequestBody Market market) {
-        return marketService.addMarket(market);
+    public ResponseEntity<Market> postMarket(@RequestBody Market market) {
+        Market createdMarket = marketService.addMarket(market);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdMarket);
     }
 
     @GetMapping()
-    public List<Market> getAllMarket() {
-        return marketService.getAllMarket();
+    public ResponseEntity<List<Market>> getAllMarket() {
+        List<Market> markets = marketService.getAllMarket();
+        return ResponseEntity.ok(markets);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateMarket(@PathVariable long id, @RequestBody Market market) {
-        boolean update = marketService.updateMarket(id,market.getName(), market.getLocation(),
-                market.getOperatingDays(), market.getOperatingHours(), market.getDescription());
-
-        if(update) {
-            return ResponseEntity.ok("market updated successfully");
-        }else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("market not found with id: "+id);
-        }
+    public ResponseEntity<String> updateMarket(@PathVariable long id, @RequestBody MarketUpdateRequest request) {
+        marketService.updateMarket(id, request.name, request.location, 
+                request.operatingDays, request.operatingHours, request.description);
+        return ResponseEntity.ok(String.format(ENTITY_UPDATED_MESSAGE, MARKET));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteMarket(@PathVariable long id) {
         String result = marketService.deleteMarket(id);
-        if(result.equals("market is deleted")) {
-            return ResponseEntity.ok(result);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);
-        }
+        return ResponseEntity.ok(result);
+    }
+
+    // Inner class for update requests
+    public static class MarketUpdateRequest {
+        public String name;
+        public String location;
+        public String operatingDays;
+        public String operatingHours;
+        public String description;
     }
 }

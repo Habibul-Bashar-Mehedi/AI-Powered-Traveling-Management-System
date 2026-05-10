@@ -11,6 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static aptms.constants.EntityConstants.*;
+import static aptms.constants.ValidationConstants.*;
+
 @Service
 public class TraditionalItemService {
     private final TraditionalItemRepository traditionalItemRepository;
@@ -23,48 +26,50 @@ public class TraditionalItemService {
     @SecureAction(role = "USER")
     public TraditionalItem addTraditionalItem(TraditionalItem traditionalItem) {
         if(traditionalItem.getMarket() == null || traditionalItem.getCategoryName() == null) {
-            throw new InvalidException("market and category name required");
+            throw new InvalidException(MARKET_CATEGORY_REQUIRED);
         }
 
         boolean exist =
                 traditionalItemRepository
                         .existsTraditionalItemByMarketIdAndCategoryName(
-                          traditionalItem.getMarket().getId(),traditionalItem.getCategoryName()
+                          traditionalItem.getMarket().getId(), traditionalItem.getCategoryName()
                         );
-        if(exist) throw new DuplicateValueFoundExceptions("already added");
+        if(exist) {
+            throw new DuplicateValueFoundExceptions(String.format(DUPLICATE_ENTRY_MESSAGE, TRADITIONAL_ITEM));
+        }
 
         return traditionalItemRepository.save(traditionalItem);
     }
 
     @Transactional(readOnly = true)
     @SecureAction(role = "ADMIN")
-    public List<TraditionalItem> getAllTraditionalItem () {
-        return  traditionalItemRepository.findAll();
+    public List<TraditionalItem> getAllTraditionalItem() {
+        return traditionalItemRepository.findAll();
     }
 
     @Transactional
     @SecureAction(role = "ADMIN")
     public String deleteTraditionalItem(long id) {
-        if(!traditionalItemRepository.existsById(id)) throw new IdNotFoundException("traditional item id not found");
+        if(!traditionalItemRepository.existsById(id)) {
+            throw new IdNotFoundException(String.format(ENTITY_NOT_FOUND_MESSAGE, TRADITIONAL_ITEM, id));
+        }
 
         traditionalItemRepository.deleteById(id);
-        return "traditional item is deleted";
+        return String.format(ENTITY_DELETED_MESSAGE, TRADITIONAL_ITEM);
     }
 
     @Transactional
     @SecureAction(role = "ADMIN")
-    public boolean updateTraditionalItem(long id,String categoryName,
-                                         String description,String priceRange) {
-        return traditionalItemRepository.findById(id).map(traditionalItem -> {
+    public void updateTraditionalItem(long id, String categoryName,
+                                      String description, String priceRange) {
+        traditionalItemRepository.findById(id).map(traditionalItem -> {
             traditionalItem.setCategoryName(categoryName);
             traditionalItem.setDescription(description);
             traditionalItem.setPriceRange(priceRange);
 
-            traditionalItemRepository.save(traditionalItem);
-
-            return true;
-        }).orElseThrow(()->
-                new IdNotFoundException("traditional item id not found")
+            return traditionalItemRepository.save(traditionalItem);
+        }).orElseThrow(() ->
+                new IdNotFoundException(String.format(ENTITY_NOT_FOUND_MESSAGE, TRADITIONAL_ITEM, id))
         );
     }
 }

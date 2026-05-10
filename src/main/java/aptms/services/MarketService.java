@@ -11,6 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static aptms.constants.EntityConstants.*;
+import static aptms.constants.ValidationConstants.*;
+
 @Service
 public class MarketService {
 
@@ -24,7 +27,7 @@ public class MarketService {
     @SecureAction(role = "USER")
     public Market addMarket(Market market) {
         if(market.getName() == null || market.getDestination() == null) {
-            throw  new InvalidException("market name and destination required");
+            throw new InvalidException(MARKET_NAME_DESTINATION_REQUIRED);
         }
 
         boolean exist = marketRepository
@@ -32,7 +35,7 @@ public class MarketService {
                         market.getName(),
                         market.getDestination().getId());
         if(exist) {
-            throw new DuplicateValueFoundExceptions("already added");
+            throw new DuplicateValueFoundExceptions(String.format(DUPLICATE_ENTRY_MESSAGE, MARKET));
         }
         return marketRepository.save(market);
     }
@@ -43,32 +46,33 @@ public class MarketService {
         return marketRepository.findAll();
     }
 
-
+    @Transactional
+    @SecureAction(role = "ADMIN")
     public String deleteMarket(long id) {
-        if(!marketRepository.existsById(id)) throw new IdNotFoundException("market id not found");
+        if(!marketRepository.existsById(id)) {
+            throw new IdNotFoundException(String.format(ENTITY_NOT_FOUND_MESSAGE, MARKET, id));
+        }
 
         marketRepository.deleteById(id);
-        return "market is deleted";
+        return String.format(ENTITY_DELETED_MESSAGE, MARKET);
     }
 
     @Transactional
     @SecureAction(role = "ADMIN")
-    public boolean updateMarket(long id ,String name,String location,
-                                String operatingDays,String operatingHours,
-                                String description) {
+    public void updateMarket(long id, String name, String location,
+                             String operatingDays, String operatingHours,
+                             String description) {
 
-        return marketRepository.findById(id).map(market -> {
+        marketRepository.findById(id).map(market -> {
             market.setName(name);
             market.setLocation(location);
             market.setOperatingDays(operatingDays);
             market.setOperatingHours(operatingHours);
             market.setDescription(description);
 
-            marketRepository.save(market);
-            return true;
-        }).orElseThrow(()->
-                new IdNotFoundException("market id not found")
+            return marketRepository.save(market);
+        }).orElseThrow(() ->
+                new IdNotFoundException(String.format(ENTITY_NOT_FOUND_MESSAGE, MARKET, id))
         );
-
     }
 }

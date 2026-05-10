@@ -11,6 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static aptms.constants.EntityConstants.*;
+import static aptms.constants.ValidationConstants.*;
+
 @Service
 public class TraditionalFoodService {
     private final TraditionalFoodRepository traditionalFoodRepository;
@@ -23,52 +26,53 @@ public class TraditionalFoodService {
     @SecureAction(role = "USER")
     public TraditionalFood addTraditionalFood(TraditionalFood traditionalFood) {
         if(traditionalFood.getDishName() == null || traditionalFood.getDestination() == null) {
-            throw new InvalidException("required dish name and destination");
+            throw new InvalidException(DISH_NAME_DESTINATION_REQUIRED);
         }
 
         boolean exist =
                 traditionalFoodRepository
                         .existsByDishNameAndDestinationId(
-                          traditionalFood.getDishName(),traditionalFood.getDestination().getId()
+                          traditionalFood.getDishName(), traditionalFood.getDestination().getId()
                         );
-        if(exist) throw new DuplicateValueFoundExceptions("already added");
+        if(exist) {
+            throw new DuplicateValueFoundExceptions(String.format(DUPLICATE_ENTRY_MESSAGE, TRADITIONAL_FOOD));
+        }
 
         return traditionalFoodRepository.save(traditionalFood);
     }
 
     @Transactional(readOnly = true)
     @SecureAction(role = "ADMIN")
-    public List<TraditionalFood> getAllTraditionalFood () {
+    public List<TraditionalFood> getAllTraditionalFood() {
         return traditionalFoodRepository.findAll();
     }
 
     @Transactional
     @SecureAction(role = "ADMIN")
     public String deleteTraditionalFood(long id) {
-        if(!traditionalFoodRepository.existsById(id)) throw new IdNotFoundException("traditional food id not found");
+        if(!traditionalFoodRepository.existsById(id)) {
+            throw new IdNotFoundException(String.format(ENTITY_NOT_FOUND_MESSAGE, TRADITIONAL_FOOD, id));
+        }
 
         traditionalFoodRepository.deleteById(id);
-        return "traditional food is deleted";
+        return String.format(ENTITY_DELETED_MESSAGE, TRADITIONAL_FOOD);
     }
 
     @Transactional
     @SecureAction(role = "ADMIN")
-    public boolean updateTraditionalFood(long id, String dishName,
-                                         String description,String culturalContext,
-                                         String priceRange,String recommendedLocation) {
-        return traditionalFoodRepository.findById(id).map(traditionalFood -> {
+    public void updateTraditionalFood(long id, String dishName,
+                                      String description, String culturalContext,
+                                      String priceRange, String recommendedLocation) {
+        traditionalFoodRepository.findById(id).map(traditionalFood -> {
             traditionalFood.setDishName(dishName);
             traditionalFood.setDescription(description);
             traditionalFood.setCulturalContext(culturalContext);
             traditionalFood.setPriceRange(priceRange);
             traditionalFood.setRecommendedLocation(recommendedLocation);
 
-            traditionalFoodRepository.save(traditionalFood);
-
-            return true;
-        }).orElseThrow(()->
-                new IdNotFoundException("traditional food id not found")
+            return traditionalFoodRepository.save(traditionalFood);
+        }).orElseThrow(() ->
+                new IdNotFoundException(String.format(ENTITY_NOT_FOUND_MESSAGE, TRADITIONAL_FOOD, id))
         );
-
     }
 }

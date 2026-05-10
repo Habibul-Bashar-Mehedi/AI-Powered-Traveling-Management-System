@@ -16,6 +16,13 @@ public final class ValidationConstants {
     public static final String INVALID_DATE_RANGE_MESSAGE = "Check-out date must be after check-in date";
     public static final String INVALID_GUEST_COUNT_MESSAGE = "Guest count must be at least 1";
     public static final String INVALID_PRICE_MESSAGE = "Price must be greater than 0";
+    
+    // Entity-specific validation messages
+    public static final String ORIGIN_DESTINATION_REQUIRED = "Origin and destination are required";
+    public static final String DESTINATION_NAME_REQUIRED = "Destination and name are required";
+    public static final String DISH_NAME_DESTINATION_REQUIRED = "Dish name and destination are required";
+    public static final String MARKET_CATEGORY_REQUIRED = "Market and category name are required";
+    public static final String MARKET_NAME_DESTINATION_REQUIRED = "Market name and destination are required";
 
     // Field Names
     public static final String FIELD_EMAIL = "Email";

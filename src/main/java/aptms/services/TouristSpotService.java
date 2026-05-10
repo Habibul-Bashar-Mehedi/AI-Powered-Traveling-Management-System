@@ -11,6 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static aptms.constants.EntityConstants.*;
+import static aptms.constants.ValidationConstants.*;
+
 @Service
 public class TouristSpotService {
     private final TouristSpotRepository touristSpotRepository;
@@ -23,7 +26,7 @@ public class TouristSpotService {
     @SecureAction(role = "USER")
     public TouristSpot addTouristSpot(TouristSpot touristSpot) {
         if(touristSpot.getDestination() == null || touristSpot.getName() == null) {
-            throw new InvalidException("Destination id or spot name required");
+            throw new InvalidException(DESTINATION_NAME_REQUIRED);
         }
         boolean exist = touristSpotRepository
                 .existsByNameAndDestinationId(
@@ -31,7 +34,7 @@ public class TouristSpotService {
                         touristSpot.getDestination().getId());
 
         if(exist) {
-            throw  new DuplicateValueFoundExceptions("Tourist Spot already added");
+            throw new DuplicateValueFoundExceptions(String.format(DUPLICATE_ENTRY_MESSAGE, TOURIST_SPOT));
         }
         return touristSpotRepository.save(touristSpot);
     }
@@ -45,20 +48,22 @@ public class TouristSpotService {
     @Transactional
     @SecureAction(role = "ADMIN")
     public String deleteTouristSpot(long id) {
-        if(!touristSpotRepository.existsById(id)) throw new IdNotFoundException("tourist spot id not found");
+        if(!touristSpotRepository.existsById(id)) {
+            throw new IdNotFoundException(String.format(ENTITY_NOT_FOUND_MESSAGE, TOURIST_SPOT, id));
+        }
 
         touristSpotRepository.deleteById(id);
-        return "tourist spot is deleted";
+        return String.format(ENTITY_DELETED_MESSAGE, TOURIST_SPOT);
     }
 
     @Transactional
     @SecureAction(role = "ADMIN")
-    public boolean updateTouristSpot(long id,String name,
-                                     String description,String visitingHours,
-                                     double adultEntryFees,double childEntryFees,
-                                     String locationDescription) {
+    public void updateTouristSpot(long id, String name,
+                                  String description, String visitingHours,
+                                  double adultEntryFees, double childEntryFees,
+                                  String locationDescription) {
 
-        return touristSpotRepository.findById(id).map(touristSpot -> {
+        touristSpotRepository.findById(id).map(touristSpot -> {
             touristSpot.setName(name);
             touristSpot.setDescription(description);
             touristSpot.setVisitingHours(visitingHours);
@@ -66,11 +71,9 @@ public class TouristSpotService {
             touristSpot.setChildEntryFees(childEntryFees);
             touristSpot.setLocationDescription(locationDescription);
 
-            touristSpotRepository.save(touristSpot);
-
-            return true;
-        }).orElseThrow(()->new IdNotFoundException("tourist spot id not found")
+            return touristSpotRepository.save(touristSpot);
+        }).orElseThrow(() -> 
+                new IdNotFoundException(String.format(ENTITY_NOT_FOUND_MESSAGE, TOURIST_SPOT, id))
         );
-
     }
 }
