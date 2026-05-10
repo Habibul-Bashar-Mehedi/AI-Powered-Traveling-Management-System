@@ -2,7 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Auth } from '../services/auth'; 
+import { AuthService } from '../services/auth';
+import { LoginRequest } from '../models/user.model';
+import { VALIDATION_MESSAGES } from '../constants/validation-messages';
+import { APP_CONSTANTS } from '../constants/app-constants';
 
 @Component({
   selector: 'app-login',
@@ -12,43 +15,88 @@ import { Auth } from '../services/auth';
   styleUrls: ['./login.css'],
 })
 export class Login implements OnInit {
+  loginGroup: FormGroup;
+  isSubmitting = false;
+  errorMessage = '';
+  
+  validationMessages = VALIDATION_MESSAGES;
 
-  loginGroup = new FormGroup({
-    email: new FormControl('', [Validators.required, Validators.email]),
-    password: new FormControl('', [Validators.required, Validators.minLength(6)])
-  });
-
-  constructor(private authService: Auth, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {
+    this.loginGroup = this.createForm();
+  }
 
   ngOnInit() {
     console.log('Login initialized');
+    
+    // Redirect if already logged in
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/dashboard']);
+    }
   }
 
-  get email() { return this.loginGroup.get('email'); }
-  get password() { return this.loginGroup.get('password'); }
+  /**
+   * Create login form
+   */
+  private createForm(): FormGroup {
+    return new FormGroup({
+      email: new FormControl('', [Validators.required, Validators.email]),
+      password: new FormControl('', [
+        Validators.required,
+        Validators.minLength(APP_CONSTANTS.PASSWORD_MIN_LENGTH)
+      ])
+    });
+  }
 
+  /**
+   * Get form control
+   */
+  get email() {
+    return this.loginGroup.get('email');
+  }
+
+  get password() {
+    return this.loginGroup.get('password');
+  }
+
+  /**
+   * Submit login form
+   */
   onSubmit() {
-    if (this.loginGroup.valid) {
-      const loginData = {
-        email: this.loginGroup.value.email!,
-        password: this.loginGroup.value.password!
-      };
-
-      this.authService.login(loginData).subscribe({
-        next: (res: string) => {
-          console.log("Backend Response:", res);
-          if (res.includes("Successful")) {
-            alert("Login Successful!");
-            this.router.navigate(['/dashboard']);
-          }
-        },
-        error: (err) => {
-          console.error("Login Failed:", err);
-          alert("Login failed! Error: " + (err.error || "Server Connection Issue"));
-        }
-      });
-    } else {
+    if (this.loginGroup.invalid) {
       this.loginGroup.markAllAsTouched();
+      return;
     }
+
+    this.isSubmitting = true;
+    this.errorMessage = '';
+
+    const loginData: LoginRequest = {
+      email: this.loginGroup.value.email!,
+      password: this.loginGroup.value.password!
+    };
+
+    this.authService.login(loginData).subscribe({
+      next: (response: string) => {
+        console.log("Backend Response:", response);
+        if (response.includes("Successful")) {
+          alert("Login Successful!");
+          this.router.navigate(['/dashboard']);
+        } else {
+          this.errorMessage = response;
+          this.isSubmitting = false;
+        }
+      },
+      error: (error) => {
+        console.error("Login Failed:", error);
+        this.errorMessage = error.error || "Login failed. Please check your credentials.";
+        this.isSubmitting = false;
+      },
+      complete: () => {
+        this.isSubmitting = false;
+      }
+    });
   }
 }
