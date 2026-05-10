@@ -15,8 +15,7 @@ export class Login implements OnInit {
 
   loginGroup = new FormGroup({
     email: new FormControl('', [Validators.required, Validators.email]),
-    password: new FormControl('', [Validators.required, Validators.minLength(6)]),
-    role: new FormControl('USER', [Validators.required])
+    password: new FormControl('', [Validators.required, Validators.minLength(6)])
   });
 
   constructor(private authService: Auth, private router: Router) {}
@@ -27,14 +26,12 @@ export class Login implements OnInit {
 
   get email() { return this.loginGroup.get('email'); }
   get password() { return this.loginGroup.get('password'); }
-  get role() { return this.loginGroup.get('role'); }
 
   onSubmit() {
     if (this.loginGroup.valid) {
       const loginData = {
         email: this.loginGroup.value.email!,
-        password: this.loginGroup.value.password!,
-        role: this.loginGroup.value.role!
+        password: this.loginGroup.value.password!
       };
 
       this.authService.login(loginData).subscribe({
