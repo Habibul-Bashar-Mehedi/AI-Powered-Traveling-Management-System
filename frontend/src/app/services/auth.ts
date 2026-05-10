@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -14,8 +15,13 @@ export class AuthService {
   private readonly baseUrl = environment.apiUrl;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  private isBrowser: boolean;
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
     this.loadUserFromStorage();
   }
 
@@ -55,8 +61,10 @@ export class AuthService {
    * User logout
    */
   logout(): void {
-    localStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.USER);
+    if (this.isBrowser) {
+      localStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.TOKEN);
+      localStorage.removeItem(APP_CONSTANTS.STORAGE_KEYS.USER);
+    }
     this.currentUserSubject.next(null);
   }
 
@@ -102,7 +110,9 @@ export class AuthService {
    * Set current user
    */
   private setCurrentUser(user: User): void {
-    localStorage.setItem(APP_CONSTANTS.STORAGE_KEYS.USER, JSON.stringify(user));
+    if (this.isBrowser) {
+      localStorage.setItem(APP_CONSTANTS.STORAGE_KEYS.USER, JSON.stringify(user));
+    }
     this.currentUserSubject.next(user);
   }
 
@@ -110,6 +120,10 @@ export class AuthService {
    * Load user from storage
    */
   private loadUserFromStorage(): void {
+    if (!this.isBrowser) {
+      return;
+    }
+    
     const userJson = localStorage.getItem(APP_CONSTANTS.STORAGE_KEYS.USER);
     if (userJson) {
       try {
@@ -126,7 +140,7 @@ export class AuthService {
    * Get authorization headers
    */
   getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem(APP_CONSTANTS.STORAGE_KEYS.TOKEN);
+    const token = this.isBrowser ? localStorage.getItem(APP_CONSTANTS.STORAGE_KEYS.TOKEN) : null;
     return new HttpHeaders({
       'Content-Type': 'application/json',
       ...(token && { 'Authorization': `Bearer ${token}` })

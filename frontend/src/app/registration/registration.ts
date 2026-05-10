@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormGroup, FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormGroup, FormControl, FormsModule, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../services/auth';
@@ -63,7 +63,8 @@ export class Registration implements OnInit {
   /**
    * Custom validator for password matching
    */
-  private passwordMatchValidator(group: FormGroup): { [key: string]: boolean } | null {
+  private passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+    const group = control as FormGroup;
     const password = group.get('password')?.value;
     const confirmPassword = group.get('confirmPassword')?.value;
     return password === confirmPassword ? null : { passwordMismatch: true };
