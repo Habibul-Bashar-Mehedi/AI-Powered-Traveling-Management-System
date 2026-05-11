@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../services/auth';
+import { AuthService } from '../services/auth.service';
 import { LoginRequest } from '../models/user.model';
 import { VALIDATION_MESSAGES } from '../constants/validation-messages';
 import { APP_CONSTANTS } from '../constants/app-constants';
@@ -18,12 +18,15 @@ export class Login implements OnInit {
   loginGroup: FormGroup;
   isSubmitting = false;
   errorMessage = '';
+  isAccountLocked = false;
+  retryAfter: string | null = null;
   
   validationMessages = VALIDATION_MESSAGES;
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.loginGroup = this.createForm();
   }
@@ -32,7 +35,7 @@ export class Login implements OnInit {
     console.log('Login initialized');
     
     // Redirect if already logged in
-    if (this.authService.isLoggedIn()) {
+    if (this.authService.isAuthenticated()) {
       this.router.navigate(['/dashboard']);
     }
   }
@@ -72,6 +75,8 @@ export class Login implements OnInit {
 
     this.isSubmitting = true;
     this.errorMessage = '';
+    this.isAccountLocked = false;
+    this.retryAfter = null;
 
     const loginData: LoginRequest = {
       email: this.loginGroup.value.email!,
@@ -79,23 +84,37 @@ export class Login implements OnInit {
     };
 
     this.authService.login(loginData).subscribe({
-      next: (response: string) => {
-        console.log("Backend Response:", response);
-        if (response.includes("Successful")) {
-          alert("Login Successful!");
-          this.router.navigate(['/dashboard']);
-        } else {
-          this.errorMessage = response;
-          this.isSubmitting = false;
-        }
+      next: (response) => {
+        console.log("Login successful:", response);
+        
+        // Get return URL from query params or default to dashboard
+        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+        this.router.navigate([returnUrl]);
       },
       error: (error) => {
-        console.error("Login Failed:", error);
-        this.errorMessage = error.error || "Login failed. Please check your credentials.";
+        console.error("Login failed:", error);
         this.isSubmitting = false;
-      },
-      complete: () => {
-        this.isSubmitting = false;
+        
+        // Handle different error types
+        if (error.status === 423) {
+          // Account locked
+          this.isAccountLocked = true;
+          this.errorMessage = "Account locked due to too many failed login attempts. Please try again later.";
+          
+          // Extract retry_after if available
+          if (error.error?.retry_after) {
+            this.retryAfter = new Date(error.error.retry_after).toLocaleString();
+          }
+        } else if (error.status === 401) {
+          // Invalid credentials
+          this.errorMessage = "Invalid email or password. Please try again.";
+        } else if (error.error?.message) {
+          // Server error message
+          this.errorMessage = error.error.message;
+        } else {
+          // Generic error
+          this.errorMessage = "Login failed. Please try again.";
+        }
       }
     });
   }

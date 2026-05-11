@@ -11,12 +11,21 @@ public class SecurityProperties {
     private Jwt jwt = new Jwt();
     private Cors cors = new Cors();
     private Password password = new Password();
+    private Account account = new Account();
 
     @Data
     public static class Jwt {
         private String secret;
-        private long expirationMs = 86400000; // 24 hours
-        private String issuer = "APTMS";
+        
+        // Legacy property (deprecated, use accessTokenTtl instead)
+        private long expirationMs = 900000; // 15 minutes
+        
+        // New JWT properties for token management
+        private long accessTokenTtl = 900000; // 15 minutes in milliseconds
+        private long refreshTokenTtl = 604800000; // 7 days in milliseconds
+        private String issuer = "com.aptms.auth";
+        private String audience = "com.aptms.api";
+        private String algorithm = "HS256";
     }
 
     @Data
@@ -31,5 +40,11 @@ public class SecurityProperties {
     public static class Password {
         private int strength = 10; // BCrypt strength
         private int minLength = 8;
+    }
+
+    @Data
+    public static class Account {
+        private int maxFailedAttempts = 5;
+        private int lockoutDurationMinutes = 15;
     }
 }

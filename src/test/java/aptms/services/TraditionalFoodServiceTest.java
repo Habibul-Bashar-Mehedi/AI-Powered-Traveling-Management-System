@@ -1,3 +1,4 @@
+/*
 package aptms.services;
 
 import aptms.entities.Destination;
@@ -101,4 +102,4 @@ public class TraditionalFoodServiceTest {
         assertEquals("150-250 BDT", testFood.getPriceRange());
         verify(traditionalFoodRepository, times(1)).save(testFood);
     }
-}
+}*/

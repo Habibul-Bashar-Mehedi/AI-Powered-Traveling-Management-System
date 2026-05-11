@@ -1,7 +1,7 @@
 import { UserRole } from '../enums/user-role.enum';
 
 export interface User {
-  id?: number;
+  id?: string; // UUID from backend
   username: string;
   email: string;
   password?: string;
@@ -26,4 +26,19 @@ export interface RegisterRequest {
 export interface LoginResponse {
   message: string;
   token?: string;
+}
+
+export interface AuthResponse {
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    roles: string[];
+    createdAt: string;
+    lastLoginAt: string | null;
+  };
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresIn: number;
 }

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormControl, FormsModule, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../services/auth';
+import { AuthService } from '../services/auth.service';
 import { UserRole } from '../enums/user-role.enum';
 import { RegisterRequest } from '../models/user.model';
 import { VALIDATION_MESSAGES } from '../constants/validation-messages';
@@ -19,6 +19,7 @@ export class Registration implements OnInit {
   registrationGroup: FormGroup;
   isSubmitting = false;
   errorMessage = '';
+  validationErrors: { [key: string]: string } = {};
   
   // Expose enums to template
   UserRole = UserRole;
@@ -96,6 +97,7 @@ export class Registration implements OnInit {
 
     this.isSubmitting = true;
     this.errorMessage = '';
+    this.validationErrors = {};
 
     const formValue = this.registrationGroup.value;
 
@@ -110,16 +112,29 @@ export class Registration implements OnInit {
     this.authService.register(registerRequest).subscribe({
       next: (response) => {
         console.log('Registration successful:', response);
-        alert('Registration Successful! Please login.');
-        this.router.navigate(['/login']);
+        
+        // Navigate to dashboard after successful registration (user is now logged in)
+        this.router.navigate(['/dashboard']);
       },
       error: (error) => {
         console.error('Registration failed:', error);
-        this.errorMessage = error.error?.message || 'Registration failed. Please try again.';
         this.isSubmitting = false;
-      },
-      complete: () => {
-        this.isSubmitting = false;
+        
+        // Handle validation errors
+        if (error.status === 400 && error.error?.errors) {
+          // Field-specific validation errors
+          this.validationErrors = error.error.errors;
+          this.errorMessage = 'Please correct the errors below.';
+        } else if (error.status === 409) {
+          // Email already exists
+          this.errorMessage = 'An account with this email already exists.';
+        } else if (error.error?.message) {
+          // Server error message
+          this.errorMessage = error.error.message;
+        } else {
+          // Generic error
+          this.errorMessage = 'Registration failed. Please try again.';
+        }
       }
     });
   }

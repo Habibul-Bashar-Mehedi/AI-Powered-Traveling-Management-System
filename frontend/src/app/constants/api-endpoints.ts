@@ -1,7 +1,14 @@
 export const API_ENDPOINTS = {
   AUTH: {
-    REGISTER: '/auth/user/register',
-    LOGIN: '/auth/user/login',
+    REGISTER: '/auth/register',
+    LOGIN: '/auth/login',
+    REFRESH: '/auth/refresh',
+    LOGOUT: '/auth/logout',
+    LOGOUT_ALL: '/auth/logout-all',
+    ME: '/auth/me',
+    // Legacy endpoints (deprecated)
+    LEGACY_REGISTER: '/auth/user/register',
+    LEGACY_LOGIN: '/auth/user/login',
     GET_ALL_USERS: '/auth/user',
     UPDATE_USER: (id: number) => `/auth/user/${id}`,
     DELETE_USER: (id: number) => `/auth/user/${id}`

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 import static aptms.constants.EntityConstants.*;
 import static aptms.constants.SecurityConstants.*;
@@ -60,7 +61,7 @@ public class RegistrationService {
 
     @Transactional
     @SecureAction(role = "ADMIN")
-    public String deleteUser(long id) {
+    public String deleteUser(UUID id) {
         if(!userRepository.existsById(id)) {
             throw new IdNotFoundException(
                 String.format(ENTITY_NOT_FOUND_MESSAGE, USER, id)
@@ -73,7 +74,7 @@ public class RegistrationService {
     @Transactional
     @SecureAction(role = "ADMIN")
     public boolean updateUser(
-            long id, String username,
+            UUID id, String username,
             String email, String password,
             UserRole role, String countryId) {
 

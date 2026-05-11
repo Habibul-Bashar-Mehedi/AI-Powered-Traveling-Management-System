@@ -5,14 +5,23 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.envers.Audited;
 
+import java.time.Instant;
+import java.util.UUID;
+
+/**
+ * Entity representing a user account with JWT authentication support.
+ * 
+ * Requirements: FR-LGN-003, 4.2.1
+ */
 @Table(name = "users")
 @Entity
 @Audited
 @Data
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "BINARY(16)")
+    private UUID id;
     
     @Version
     private Integer version;
@@ -32,4 +41,43 @@ public class User {
     
     @Column(length = 10)
     private String countryId;
+    
+    /**
+     * Counter for consecutive failed login attempts.
+     * Reset to 0 on successful login.
+     */
+    @Column(name = "failed_login_attempts", nullable = false)
+    private Integer failedLoginAttempts = 0;
+    
+    /**
+     * Timestamp until which the account is locked due to too many failed login attempts.
+     * Null if the account is not locked.
+     */
+    @Column(name = "lockout_until")
+    private Instant lockoutUntil;
+    
+    /**
+     * Timestamp of the last successful login.
+     */
+    @Column(name = "last_login_at")
+    private Instant lastLoginAt;
+    
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt = Instant.now();
+    
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt = Instant.now();
+    
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
+    }
+    
+    /**
+     * Check if the account is currently locked.
+     * @return true if the account is locked
+     */
+    public boolean isLocked() {
+        return lockoutUntil != null && lockoutUntil.isAfter(Instant.now());
+    }
 }

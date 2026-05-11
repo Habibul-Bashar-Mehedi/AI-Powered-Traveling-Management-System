@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    
+    <!-- Console appender with standard format for development -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+    
+    <!-- JSON appender for authentication events -->
+    <appender name="AUTH_EVENTS_JSON" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/auth-events.json</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/auth-events.%d{yyyy-MM-dd}.json</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>event_type</includeMdcKeyName>
+            <includeMdcKeyName>user_id</includeMdcKeyName>
+            <includeMdcKeyName>email</includeMdcKeyName>
+            <includeMdcKeyName>ip_address</includeMdcKeyName>
+            <includeMdcKeyName>user_agent</includeMdcKeyName>
+            <includeMdcKeyName>success</includeMdcKeyName>
+            <includeMdcKeyName>reason</includeMdcKeyName>
+            <includeMdcKeyName>failed_attempts</includeMdcKeyName>
+            <includeMdcKeyName>lockout_until</includeMdcKeyName>
+            <includeMdcKeyName>security_incident</includeMdcKeyName>
+            <includeMdcKeyName>error_code</includeMdcKeyName>
+            <includeMdcKeyName>path</includeMdcKeyName>
+            <includeMdcKeyName>logout_all</includeMdcKeyName>
+        </encoder>
+    </appender>
+    
+    <!-- Separate logger for authentication events -->
+    <logger name="AUTH_EVENTS" level="INFO" additivity="false">
+        <appender-ref ref="AUTH_EVENTS_JSON"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+    
+    <!-- Root logger -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+    
+    <!-- Spring Boot specific loggers -->
+    <logger name="org.springframework.web" level="INFO"/>
+    <logger name="org.springframework.security" level="INFO"/>
+    <logger name="org.hibernate" level="WARN"/>
+    
+    <!-- Application loggers -->
+    <logger name="aptms" level="DEBUG"/>
+</configuration>
