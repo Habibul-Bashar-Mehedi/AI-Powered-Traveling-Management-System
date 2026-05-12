@@ -195,6 +195,28 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * Handle illegal state exceptions (business rule violations).
+     * E.g. "Booking is not in PENDING state", "Insufficient wallet balance".
+     * Returns HTTP 409 Conflict.
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalState(
+            IllegalStateException ex,
+            WebRequest request) {
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+            .error("CONFLICT")
+            .message(ex.getMessage())
+            .timestamp(Instant.now())
+            .path(getRequestPath(request))
+            .build();
+
+        logger.warn("Business rule conflict: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    /**
      * Handle all other exceptions.
      * Returns HTTP 500 Internal Server Error.
      */

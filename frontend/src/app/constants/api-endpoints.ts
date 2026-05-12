@@ -37,5 +37,31 @@ export const API_ENDPOINTS = {
     GET_ALL: '/destination',
     UPDATE: (id: number) => `/destination/${id}`,
     DELETE: (id: number) => `/destination/${id}`
+  },
+  VENDOR: {
+    REGISTER: '/v1/vendor/register',
+    PROFILE: '/v1/vendor/profile',
+    SERVICES: '/v1/vendor/services',
+    SERVICE_BY_ID: (id: string) => `/v1/vendor/services/${id}`,
+    SERVICE_STATUS: (id: string) => `/v1/vendor/services/${id}/status`,
+    BOOKINGS: '/v1/vendor/bookings',
+    BOOKING_BY_ID: (id: string) => `/v1/vendor/bookings/${id}`,
+    BOOKING_CONFIRM: (id: string) => `/v1/vendor/bookings/${id}/confirm`,
+    BOOKING_REJECT: (id: string) => `/v1/vendor/bookings/${id}/reject`,
+    BOOKING_CANCEL: (id: string) => `/v1/vendor/bookings/${id}/cancel`,
+    WALLET: '/v1/vendor/wallet',
+    WALLET_TRANSACTIONS: '/v1/vendor/wallet/transactions',
+    WALLET_PAYOUT: '/v1/vendor/wallet/payout',
+    ANALYTICS_SUMMARY: '/v1/vendor/analytics/summary',
+  },
+  ADMIN_VENDOR: {
+    ALL: '/v1/admin/vendors',
+    PENDING: '/v1/admin/vendors/pending',
+    APPROVE: (id: string) => `/v1/admin/vendors/${id}/approve`,
+    REJECT: (id: string) => `/v1/admin/vendors/${id}/reject`,
+    SUSPEND: (id: string) => `/v1/admin/vendors/${id}/suspend`,
+    REINSTATE: (id: string) => `/v1/admin/vendors/${id}/reinstate`,
+    PENDING_PAYOUTS: '/v1/admin/vendors/payouts/pending',
+    PROCESS_PAYOUT: (id: string) => `/v1/admin/vendors/payouts/${id}/process`,
   }
 } as const;

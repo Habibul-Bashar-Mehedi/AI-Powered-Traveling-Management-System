@@ -92,19 +92,29 @@ public class SecurityConfig {
             // Configure authorization rules
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints (no authentication required)
+                // AuthController is mapped to /api/auth — these are the real paths.
+                // The /api/v1/auth/* and bare /auth/* variants are kept for forward-compat.
                 .requestMatchers(
-                    "/auth/login",
-                    "/auth/register",
-                    "/auth/refresh",
+                    // Actual controller paths  (AuthController @RequestMapping("/api/auth"))
                     "/api/auth/login",
                     "/api/auth/register",
                     "/api/auth/refresh",
-                    "/api/auth/user/login",
-                    "/api/auth/user/register",
+                    // Legacy / alternate prefixes kept for safety
+                    "/api/v1/auth/login",
+                    "/api/v1/auth/register",
+                    "/api/v1/auth/refresh",
+                    "/auth/login",
+                    "/auth/register",
+                    "/auth/refresh",
+                    // Misc public paths
                     "/actuator/**",
                     "/error"
                 ).permitAll()
-                
+                // Vendor registration requires any authenticated user (not yet VENDOR role)
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/vendor/register").authenticated()
+                .requestMatchers("/api/v1/vendor/**").hasRole("VENDOR")
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+
                 // All other endpoints require authentication
                 .anyRequest().authenticated()
             )

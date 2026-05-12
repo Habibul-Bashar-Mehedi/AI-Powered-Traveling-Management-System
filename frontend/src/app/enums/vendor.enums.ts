@@ -1,0 +1,64 @@
+export enum VendorType {
+  HOTEL = 'HOTEL',
+  TOUR_GUIDE = 'TOUR_GUIDE',
+  TRANSPORT = 'TRANSPORT'
+}
+
+export enum VendorStatus {
+  PENDING_REVIEW = 'PENDING_REVIEW',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  SUSPENDED = 'SUSPENDED'
+}
+
+export enum ServiceType {
+  HOTEL_ROOM = 'HOTEL_ROOM',
+  TOUR_PACKAGE = 'TOUR_PACKAGE',
+  TRANSPORT_ROUTE = 'TRANSPORT_ROUTE'
+}
+
+export enum ServiceStatus {
+  DRAFT = 'DRAFT',
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE'
+}
+
+export enum BookingMode {
+  INSTANT = 'INSTANT',
+  MANUAL = 'MANUAL'
+}
+
+export enum PricingUnit {
+  PER_NIGHT = 'PER_NIGHT',
+  PER_PERSON = 'PER_PERSON',
+  PER_SEAT = 'PER_SEAT',
+  PER_TRIP = 'PER_TRIP'
+}
+
+export enum VendorBookingStatus {
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+  REJECTED = 'REJECTED'
+}
+
+export enum PayoutMethod {
+  BANK_TRANSFER = 'BANK_TRANSFER',
+  MOBILE_WALLET = 'MOBILE_WALLET',
+  PLATFORM_CREDIT = 'PLATFORM_CREDIT'
+}
+
+export enum PayoutStatus {
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED'
+}
+
+export enum TransactionType {
+  CREDIT = 'CREDIT',
+  DEBIT = 'DEBIT'
+}
+

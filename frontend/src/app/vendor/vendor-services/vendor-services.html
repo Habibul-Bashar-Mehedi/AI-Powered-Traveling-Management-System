@@ -1,0 +1,190 @@
+<div class="page-wrap">
+
+  <!-- Top bar -->
+  <div class="page-topbar">
+    <div>
+      <h1 class="page-title">My Services</h1>
+      <p class="page-sub">Manage your service listings · {{ services.length }} total</p>
+    </div>
+    <button class="btn-primary" (click)="openCreate()">+ New Service</button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-row">
+    <div class="spinner"></div> Loading services…
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading && services.length === 0" class="empty-state">
+    <div class="empty-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+        <line x1="12" y1="22.08" x2="12" y2="12"/>
+      </svg>
+    </div>
+    <h3>No services yet</h3>
+    <p>Create your first service listing to start receiving bookings</p>
+    <button class="btn-primary" (click)="openCreate()">Create First Service</button>
+  </div>
+
+  <!-- Services grid -->
+  <div *ngIf="!loading && services.length > 0" class="services-grid">
+    <div *ngFor="let s of services" class="service-card">
+      <div class="service-card-header">
+        <span class="service-type-badge">{{ s.serviceType }}</span>
+        <span class="service-status-badge" [style.color]="statusBadgeColor(s.status)">
+          ● {{ s.status }}
+        </span>
+      </div>
+
+      <h3 class="service-name">{{ s.serviceName }}</h3>
+      <p class="service-desc">{{ s.description | slice:0:100 }}{{ s.description && s.description.length > 100 ? '…' : '' }}</p>
+
+      <div class="service-meta">
+        <span class="meta-pill"> {{ s.currencyCode }} {{ s.basePrice | number:'1.2-2' }}</span>
+        <span class="meta-pill"> {{ s.pricingUnit }}</span>
+        <span class="meta-pill"> Max {{ s.maxCapacity }}</span>
+      </div>
+
+      <div class="service-stats" *ngIf="s.totalBookings !== undefined">
+        <span> {{ s.totalBookings }} bookings</span>
+        <span *ngIf="s.averageRating">⭐ {{ s.averageRating | number:'1.1-1' }}</span>
+      </div>
+
+      <div class="service-actions">
+        <button class="action-btn edit-btn" (click)="openEdit(s)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Edit
+        </button>
+        <button class="action-btn"
+          [class.active-btn]="s.status !== 'ACTIVE'"
+          [class.inactive-btn]="s.status === 'ACTIVE'"
+          (click)="toggleStatus(s, s.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')">
+          <svg *ngIf="s.status === 'ACTIVE'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px">
+            <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+          </svg>
+          <svg *ngIf="s.status !== 'ACTIVE'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          {{ s.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+        </button>
+        <button class="action-btn delete-btn" (click)="delete(s.serviceId!)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6"/><path d="M14 11v6"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Service Form Modal ── -->
+  <div *ngIf="showForm" class="modal-backdrop" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingId ? 'Edit Service' : 'New Service Listing' }}</h2>
+        <button class="modal-close" (click)="closeForm()">✕</button>
+      </div>
+
+      <div *ngIf="error" class="error-msg">⚠️ {{ error }}</div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="modal-body">
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Service Name *</label>
+            <input class="field-input" formControlName="serviceName" type="text" placeholder="e.g. Deluxe Ocean View Room"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Service Type *</label>
+            <select class="field-input" formControlName="serviceType">
+              <option value="">Select…</option>
+              <option *ngFor="let t of serviceTypes" [value]="t">{{ t }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Description *</label>
+          <textarea class="field-input field-textarea" formControlName="description" rows="3" placeholder="Describe what travelers can expect…"></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Base Price *</label>
+            <input class="field-input" formControlName="basePrice" type="number" min="0" step="0.01" placeholder="0.00"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Currency</label>
+            <input class="field-input" formControlName="currencyCode" type="text" maxlength="3" placeholder="USD"/>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Pricing Unit *</label>
+            <select class="field-input" formControlName="pricingUnit">
+              <option value="">Select…</option>
+              <option *ngFor="let u of pricingUnits" [value]="u">{{ u }}</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Max Capacity *</label>
+            <input class="field-input" formControlName="maxCapacity" type="number" min="1" placeholder="e.g. 10"/>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Booking Mode</label>
+            <select class="field-input" formControlName="bookingMode">
+              <option *ngFor="let m of bookingModes" [value]="m">{{ m }}</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Confirmation Window (hrs)</label>
+            <input class="field-input" formControlName="confirmationWindow" type="number" min="1"/>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Status</label>
+            <select class="field-input" formControlName="status">
+              <option *ngFor="let st of serviceStatuses" [value]="st">{{ st }}</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Location Address</label>
+            <input class="field-input" formControlName="locationAddress" type="text" placeholder="Street / area"/>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Cancellation Policy (JSON)</label>
+          <textarea class="field-input field-textarea" formControlName="cancellationPolicy" rows="2"
+            placeholder='{"fullRefund":7,"partialRefund":3,"noRefund":0}'></textarea>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Tags (comma separated)</label>
+          <input class="field-input" formControlName="tags" type="text" placeholder="wifi, pool, ac"/>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" (click)="closeForm()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="form.invalid || submitting">
+            {{ submitting ? 'Saving…' : editingId ? 'Update Service' : 'Create Service' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+

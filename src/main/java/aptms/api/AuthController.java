@@ -3,6 +3,8 @@ package aptms.api;
 import aptms.dto.*;
 import aptms.entities.User;
 import aptms.enums.UserRole;
+import aptms.repositories.UserRepository;
+import aptms.repositories.VendorRepository;
 import aptms.services.AuthenticationService;
 import aptms.services.FeatureFlagService;
 import aptms.services.JwtService;
@@ -61,16 +63,22 @@ public class AuthController {
     private final RegistrationService registrationService;
     private final JwtService jwtService;
     private final FeatureFlagService featureFlagService;
+    private final UserRepository userRepository;
+    private final VendorRepository vendorRepository;
 
     public AuthController(
             AuthenticationService authenticationService,
             RegistrationService registrationService,
             JwtService jwtService,
-            FeatureFlagService featureFlagService) {
+            FeatureFlagService featureFlagService,
+            UserRepository userRepository,
+            VendorRepository vendorRepository) {
         this.authenticationService = authenticationService;
         this.registrationService = registrationService;
         this.jwtService = jwtService;
         this.featureFlagService = featureFlagService;
+        this.userRepository = userRepository;
+        this.vendorRepository = vendorRepository;
     }
 
     /**
@@ -635,20 +643,21 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getCurrentUser() {
         logger.info("Get current user request received");
-        
-        // Get access token from request header
-        String accessToken = extractAccessToken();
-        
-        // Extract user info from token
-        UUID userId = jwtService.extractUserId(accessToken);
-        String email = jwtService.extractEmail(accessToken);
-        List<String> roles = jwtService.extractRoles(accessToken);
-        
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = UUID.fromString(authentication.getName());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        if (user.getRole() != UserRole.VENDOR && vendorRepository.findByUserId(userId).isPresent()) {
+            user.setRole(UserRole.VENDOR);
+            user = userRepository.save(user);
+        }
+
         // Build UserDTO (we could also fetch from database for more complete info)
         UserDTO userDTO = UserDTO.builder()
             .id(userId)
-            .email(email)
-            .roles(roles)
+            .email(user.getEmail())
+            .roles(List.of(user.getRole().name()))
             .build();
         
         return ResponseEntity.ok(userDTO);

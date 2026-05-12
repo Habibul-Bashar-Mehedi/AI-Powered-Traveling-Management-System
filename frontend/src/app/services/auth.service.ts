@@ -1,22 +1,23 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, throwError } from 'rxjs';
-import { tap, catchError, map } from 'rxjs/operators';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, BehaviorSubject, throwError, of } from 'rxjs';
+import { tap, catchError, map, switchMap, finalize, shareReplay, take } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { API_ENDPOINTS } from '../constants/api-endpoints';
 import { User, LoginRequest, RegisterRequest, AuthResponse } from '../models/user.model';
 import { TokenStorageService } from './token-storage.service';
+import { UserRole } from '../enums/user-role.enum';
 
 /**
  * AuthService
- * 
+ *
  * Manages JWT authentication including:
  * - User registration and login
  * - Token refresh and rotation
  * - Logout (single session and all sessions)
  * - Current user state management
- * 
+ *
  * Requirements: 3.2.1
  */
 @Injectable({
@@ -27,6 +28,7 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   private isBrowser: boolean;
+  private sessionRestoreInFlight$: Observable<boolean> | null = null;
 
   constructor(
     private http: HttpClient,
@@ -74,23 +76,35 @@ export class AuthService {
 
   /**
    * Refresh access token using refresh token
-   * @returns Observable<AuthResponse> with new tokens
+   * @returns Observable<AuthResponse | null> with new tokens (or null when refresh is not possible)
    */
-  refreshToken(): Observable<AuthResponse> {
+  refreshToken(): Observable<AuthResponse | null> {
+    if (!this.isBrowser) {
+      return of(null);
+    }
+
     const refreshToken = this.tokenStorage.getRefreshToken();
-    
-    if (!refreshToken) {
-      return throwError(() => new Error('No refresh token available'));
+
+    if (!refreshToken || !refreshToken.trim()) {
+      this.clearAuthState();
+      return of(null);
     }
 
     const url = `${this.baseUrl}${API_ENDPOINTS.AUTH.REFRESH}`;
-    return this.http.post<AuthResponse>(url, { refreshToken: refreshToken }).pipe(
+    return this.http.post<AuthResponse>(url, { refreshToken }).pipe(
       tap(response => this.handleAuthResponse(response)),
       catchError(error => {
-        console.error('Token refresh failed:', error);
-        // Clear tokens on refresh failure
+        // Suppress noisy logs for expected cases:
+        // status 0  = network error / backend not running (ERR_CONNECTION_REFUSED)
+        // status 401 = refresh token expired — handled silently
+        const isExpectedError =
+          error instanceof HttpErrorResponse &&
+          (error.status === 0 || error.status === 401);
+        if (!isExpectedError) {
+          console.error('Token refresh failed:', error);
+        }
         this.clearAuthState();
-        return throwError(() => error);
+        return of(null);
       })
     );
   }
@@ -102,13 +116,16 @@ export class AuthService {
   logout(): Observable<void> {
     const url = `${this.baseUrl}${API_ENDPOINTS.AUTH.LOGOUT}`;
     return this.http.post<void>(url, {}).pipe(
-      tap(() => this.clearAuthState()),
       catchError(error => {
-        console.error('Logout failed:', error);
-        // Clear local state even if server request fails
-        this.clearAuthState();
-        return throwError(() => error);
-      })
+        const isSilent =
+          error instanceof HttpErrorResponse &&
+          (error.status === 0 || error.status === 401);
+        if (!isSilent) {
+          console.error('Logout failed:', error);
+        }
+        return of(void 0);
+      }),
+      finalize(() => this.clearAuthState())
     );
   }
 
@@ -119,13 +136,16 @@ export class AuthService {
   logoutAll(): Observable<void> {
     const url = `${this.baseUrl}${API_ENDPOINTS.AUTH.LOGOUT_ALL}`;
     return this.http.post<void>(url, {}).pipe(
-      tap(() => this.clearAuthState()),
       catchError(error => {
-        console.error('Logout all failed:', error);
-        // Clear local state even if server request fails
-        this.clearAuthState();
-        return throwError(() => error);
-      })
+        const isSilent =
+          error instanceof HttpErrorResponse &&
+          (error.status === 0 || error.status === 401);
+        if (!isSilent) {
+          console.error('Logout all failed:', error);
+        }
+        return of(void 0);
+      }),
+      finalize(() => this.clearAuthState())
     );
   }
 
@@ -139,7 +159,8 @@ export class AuthService {
     }
 
     const url = `${this.baseUrl}${API_ENDPOINTS.AUTH.ME}`;
-    return this.http.get<User>(url).pipe(
+    return this.http.get<unknown>(url).pipe(
+      map(apiUser => this.mapApiUser(apiUser)),
       tap(user => this.currentUserSubject.next(user)),
       catchError(error => {
         console.error('Get current user failed:', error);
@@ -173,21 +194,71 @@ export class AuthService {
   }
 
   /**
+   * Restore browser session after hard refresh using refresh token.
+   * Returns true on SSR to avoid server-side auth redirects.
+   */
+  restoreSession(): Observable<boolean> {
+    if (!this.isBrowser) {
+      return of(true);
+    }
+
+    if (this.isAuthenticated()) {
+      return of(true);
+    }
+
+    const refreshToken = this.tokenStorage.getRefreshToken();
+    if (!refreshToken) {
+      return of(false);
+    }
+
+    if (this.sessionRestoreInFlight$) {
+      return this.sessionRestoreInFlight$;
+    }
+
+    this.sessionRestoreInFlight$ = this.refreshToken().pipe(
+      switchMap((response) => {
+        if (!response) {
+          return of(false);
+        }
+        return this.getCurrentUser().pipe(map((user) => !!user));
+      }),
+      catchError(() => of(false)),
+      finalize(() => {
+        this.sessionRestoreInFlight$ = null;
+      }),
+      shareReplay(1)
+    );
+
+    return this.sessionRestoreInFlight$;
+  }
+
+  /**
    * Handle authentication response (store tokens and update user state)
    * @param response AuthResponse from server
    */
   private handleAuthResponse(response: AuthResponse): void {
     // Store tokens
     this.tokenStorage.setTokens(response.accessToken, response.refreshToken);
-    
+
     // Update current user
-    const user: User = {
-      id: response.user.id,
-      username: response.user.username,
-      email: response.user.email,
-      role: response.user.roles[0] as any // Use first role
-    };
+    const user = this.mapApiUser(response.user);
     this.currentUserSubject.next(user);
+  }
+
+  private mapApiUser(apiUser: any): User {
+    return {
+      id: apiUser?.id,
+      username: apiUser?.username ?? '',
+      email: apiUser?.email ?? '',
+      role: this.normalizeRole(Array.isArray(apiUser?.roles) ? apiUser.roles[0] : apiUser?.role)
+    };
+  }
+
+  private normalizeRole(rawRole: unknown): UserRole {
+    const role = String(rawRole ?? '').replace(/^ROLE_/, '').toUpperCase();
+    if (role === UserRole.ADMIN) return UserRole.ADMIN;
+    if (role === UserRole.VENDOR) return UserRole.VENDOR;
+    return UserRole.USER;
   }
 
   /**
@@ -199,24 +270,26 @@ export class AuthService {
   }
 
   /**
-   * Initialize user state on service creation
-   * If refresh token exists, attempt to get current user
+   * Initialize user state on service creation.
+   *
+   * IMPORTANT: must go through restoreSession() (not refreshToken() directly)
+   * so that sessionRestoreInFlight$ is set before the Angular Router evaluates
+   * any guards. Guards that call restoreSession() will then receive the same
+   * in-flight Observable (via shareReplay) instead of issuing a second refresh
+   * request that the backend would reject due to token rotation.
    */
   private initializeUserState(): void {
-    const refreshToken = this.tokenStorage.getRefreshToken();
-    
-    if (refreshToken) {
-      // Attempt to refresh token on app initialization
-      this.refreshToken().subscribe({
-        next: () => {
-          // Token refreshed successfully, fetch current user
-          this.getCurrentUser().subscribe();
-        },
-        error: () => {
-          // Refresh failed, clear state
-          this.clearAuthState();
-        }
-      });
+    const existingRefreshToken = this.tokenStorage.getRefreshToken();
+    if (!existingRefreshToken) {
+      return;
     }
+
+    this.restoreSession().pipe(
+      take(1),
+      catchError(() => {
+        this.clearAuthState();
+        return of(false);
+      })
+    ).subscribe();
   }
 }

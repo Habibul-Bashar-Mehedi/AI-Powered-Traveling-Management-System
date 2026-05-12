@@ -1,0 +1,87 @@
+package aptms.entities;
+
+import aptms.enums.CancelledBy;
+import aptms.enums.VendorBookingStatus;
+import aptms.enums.VendorPaymentStatus;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.UUID;
+
+/**
+ * VendorBooking entity for the vendor-centric booking lifecycle.
+ * Requirements: BRD §6.3 — booking table (vendor-relevant fields)
+ */
+@Entity
+@Table(name = "vendor_booking")
+@Data
+public class VendorBooking {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "BINARY(16)")
+    private UUID bookingId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_id", nullable = false)
+    private VendorService service;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vendor_id", nullable = false)
+    private Vendor vendor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "booking_status", nullable = false, length = 20)
+    private VendorBookingStatus bookingStatus = VendorBookingStatus.PENDING;
+
+    @Column(name = "start_date", nullable = false)
+    private LocalDate startDate;
+
+    @Column(name = "end_date")
+    private LocalDate endDate;
+
+    @Column(nullable = false)
+    private Integer quantity = 1;
+
+    @Column(name = "gross_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal grossAmount;
+
+    @Column(name = "commission_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal commissionAmount;
+
+    @Column(name = "net_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal netAmount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false, length = 25)
+    private VendorPaymentStatus paymentStatus = VendorPaymentStatus.PENDING;
+
+    @Column(name = "special_requests", columnDefinition = "TEXT")
+    private String specialRequests;
+
+    @Column(name = "cancellation_reason", columnDefinition = "TEXT")
+    private String cancellationReason;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cancelled_by", length = 10)
+    private CancelledBy cancelledBy;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "confirmed_at")
+    private Instant confirmedAt;
+
+    @Column(name = "completed_at")
+    private Instant completedAt;
+}
+

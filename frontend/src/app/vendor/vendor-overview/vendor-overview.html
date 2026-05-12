@@ -1,0 +1,155 @@
+<div class="page-wrap">
+
+  <div class="page-topbar">
+    <div>
+      <h1 class="page-title">Dashboard Overview</h1>
+      <p class="page-sub">{{ vendor?.businessName }} · Month-to-date performance snapshot</p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-row"><div class="spinner"></div> Loading overview…</div>
+
+  <ng-container *ngIf="!loading">
+
+    <div class="stats-grid">
+
+      <div class="stat-card stat-blue" (click)="navigate('/vendor/wallet')">
+        <div class="stat-glow"></div>
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-value">${{ analytics?.totalRevenue | number:'1.2-2' }}</div>
+          <div class="stat-label">Total Revenue</div>
+          <div class="stat-trend">Range total</div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-cyan" (click)="navigate('/vendor/bookings')">
+        <div class="stat-glow"></div>
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-value">{{ analytics?.totalBookings }}</div>
+          <div class="stat-label">Total Bookings</div>
+          <div class="stat-trend">{{ analytics?.confirmedBookings }} confirmed</div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-violet" (click)="navigate('/vendor/services')">
+        <div class="stat-glow"></div>
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-value">{{ analytics?.activeServices }}</div>
+          <div class="stat-label">Active Services</div>
+          <div class="stat-trend">Live listings</div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-amber" (click)="navigate('/vendor/wallet')">
+        <div class="stat-glow"></div>
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/>
+            <path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/>
+            <path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
+          </svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-value">${{ wallet?.availableBalance | number:'1.2-2' }}</div>
+          <div class="stat-label">Available Balance</div>
+          <div class="stat-trend">${{ wallet?.pendingBalance | number:'1.2-2' }} pending</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="section-header">
+      <h2 class="section-title">Quick Actions</h2>
+    </div>
+
+    <div class="actions-grid">
+
+      <button class="action-card" (click)="navigate('/vendor/services')">
+        <span class="ac-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+        </span>
+        <div class="ac-title">Add Service</div>
+        <div class="ac-desc">Create a new service listing</div>
+      </button>
+
+      <button class="action-card" (click)="navigate('/vendor/bookings')">
+        <span class="ac-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </span>
+        <div class="ac-title">View Bookings</div>
+        <div class="ac-desc">Review pending requests</div>
+      </button>
+
+      <button class="action-card" (click)="navigate('/vendor/wallet')">
+        <span class="ac-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="8 12 12 8 16 12"/>
+            <line x1="12" y1="8" x2="12" y2="16"/>
+          </svg>
+        </span>
+        <div class="ac-title">Request Payout</div>
+        <div class="ac-desc">Withdraw your earnings</div>
+      </button>
+
+      <button class="action-card" (click)="navigate('/vendor/analytics')">
+        <span class="ac-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </span>
+        <div class="ac-title">View Analytics</div>
+        <div class="ac-desc">Performance reports</div>
+      </button>
+
+    </div>
+
+    <div *ngIf="analytics?.topServices?.length" class="section-header" style="margin-top:36px;">
+      <h2 class="section-title">Top Services</h2>
+    </div>
+
+    <div *ngIf="analytics?.topServices?.length" class="top-services">
+      <div *ngFor="let s of analytics!.topServices; let i = index" class="top-service-row">
+        <span class="rank-badge">#{{ i + 1 }}</span>
+        <div class="ts-info">
+          <div class="ts-name">{{ s.serviceName }}</div>
+          <div class="ts-meta">{{ s.bookingCount }} bookings</div>
+        </div>
+        <div class="ts-revenue">${{ s.revenue | number:'1.2-2' }}</div>
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>
+

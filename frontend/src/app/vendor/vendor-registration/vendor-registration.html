@@ -1,0 +1,197 @@
+<!-- ═══════════════════════════════════════════
+   VENDOR REGISTRATION — Multi-Step Form
+   Matches existing dark luxury aesthetic
+   ═══════════════════════════════════════════ -->
+<div class="reg-root">
+
+  <!-- Left brand panel -->
+  <div class="reg-brand">
+    <div class="brand-inner">
+      <div class="brand-logo">
+        <div class="logo-icon">🏪</div>
+        <span class="logo-text">VOYAGR</span>
+      </div>
+      <h1 class="brand-title">Become a<br/>Vendor Partner</h1>
+      <p class="brand-sub">List your hotel, tours or transport services on the platform and reach millions of travelers.</p>
+
+      <div class="brand-steps">
+        <div class="step-item" [class.done]="currentStep > 1" [class.active]="currentStep === 1">
+          <div class="step-dot">{{ currentStep > 1 ? '✓' : '1' }}</div>
+          <div>
+            <div class="step-label">Business Identity</div>
+            <div class="step-desc">Name, type & registration</div>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item" [class.done]="currentStep > 2" [class.active]="currentStep === 2">
+          <div class="step-dot">{{ currentStep > 2 ? '✓' : '2' }}</div>
+          <div>
+            <div class="step-label">Contact & Location</div>
+            <div class="step-desc">Email, phone & address</div>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item" [class.active]="currentStep === 3">
+          <div class="step-dot">3</div>
+          <div>
+            <div class="step-label">About Your Business</div>
+            <div class="step-desc">Profile description</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right form panel -->
+  <div class="reg-form-panel">
+    <div class="form-wrap">
+
+      <!-- Progress bar -->
+      <div class="prog-bar-wrap">
+        <div class="prog-bar-fill" [style.width.%]="stepProgress"></div>
+      </div>
+      <div class="step-counter">Step {{ currentStep }} of {{ totalSteps }}</div>
+
+      <!-- Success -->
+      <div *ngIf="success" class="success-msg">
+        <div class="success-icon">🎉</div>
+        <h2>Registration Submitted!</h2>
+        <p>Your application is under review. We'll notify you via email once approved.</p>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="error" class="error-msg">⚠️ {{ error }}</div>
+
+      <!-- ─── STEP 1 ─── -->
+      <form *ngIf="!success && currentStep === 1" [formGroup]="step1Form" (ngSubmit)="nextStep()">
+        <h2 class="form-title">Business Identity</h2>
+        <p class="form-sub">Tell us about your business</p>
+
+        <div class="field-group">
+          <label class="field-label">Business Name *</label>
+          <input class="field-input" type="text" formControlName="businessName" placeholder="e.g. Sunset Beach Resort"/>
+          <span class="field-error" *ngIf="step1Form.get('businessName')?.touched && step1Form.get('businessName')?.invalid">
+            Business name is required
+          </span>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Vendor Type *</label>
+          <select class="field-input" formControlName="vendorType">
+            <option value="">Select type…</option>
+            <option *ngFor="let t of vendorTypes" [value]="t">{{ t | titlecase }}</option>
+          </select>
+          <span class="field-error" *ngIf="step1Form.get('vendorType')?.touched && step1Form.get('vendorType')?.invalid">
+            Please select a vendor type
+          </span>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Registration Number</label>
+            <input class="field-input" type="text" formControlName="registrationNumber" placeholder="Trade license no."/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Tax ID</label>
+            <input class="field-input" type="text" formControlName="taxId" placeholder="TIN / VAT number"/>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="!step1Form.valid">
+          Continue <span>→</span>
+        </button>
+      </form>
+
+      <!-- ─── STEP 2 ─── -->
+      <form *ngIf="!success && currentStep === 2" [formGroup]="step2Form" (ngSubmit)="nextStep()">
+        <h2 class="form-title">Contact & Location</h2>
+        <p class="form-sub">Where can travelers reach you?</p>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Email *</label>
+            <input class="field-input" type="email" formControlName="email" placeholder="business@example.com"/>
+            <span class="field-error" *ngIf="step2Form.get('email')?.touched && step2Form.get('email')?.invalid">Valid email required</span>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Phone *</label>
+            <input class="field-input" type="tel" formControlName="phone" placeholder="+880 1700 000000"/>
+            <span class="field-error" *ngIf="step2Form.get('phone')?.touched && step2Form.get('phone')?.invalid">Phone is required</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Website URL</label>
+          <input class="field-input" type="url" formControlName="websiteUrl" placeholder="https://yourbusiness.com"/>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Address Line 1 *</label>
+          <input class="field-input" type="text" formControlName="addressLine1" placeholder="Street address"/>
+          <span class="field-error" *ngIf="step2Form.get('addressLine1')?.touched && step2Form.get('addressLine1')?.invalid">Address is required</span>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Address Line 2</label>
+          <input class="field-input" type="text" formControlName="addressLine2" placeholder="Suite, floor, etc."/>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">City *</label>
+            <input class="field-input" type="text" formControlName="city" placeholder="Dhaka"/>
+            <span class="field-error" *ngIf="step2Form.get('city')?.touched && step2Form.get('city')?.invalid">City is required</span>
+          </div>
+          <div class="field-group">
+            <label class="field-label">State / Division</label>
+            <input class="field-input" type="text" formControlName="stateProvince" placeholder="Dhaka Division"/>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label">Country Code * (2 letters)</label>
+            <input class="field-input" type="text" formControlName="countryCode" placeholder="BD" maxlength="2"/>
+            <span class="field-error" *ngIf="step2Form.get('countryCode')?.touched && step2Form.get('countryCode')?.invalid">2-letter country code required</span>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Postal Code</label>
+            <input class="field-input" type="text" formControlName="postalCode" placeholder="1212"/>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" class="btn-outline" (click)="prevStep()">← Back</button>
+          <button type="submit" class="btn-primary" [disabled]="!step2Form.valid">Continue →</button>
+        </div>
+      </form>
+
+      <!-- ─── STEP 3 ─── -->
+      <form *ngIf="!success && currentStep === 3" [formGroup]="step3Form" (ngSubmit)="submit()">
+        <h2 class="form-title">About Your Business</h2>
+        <p class="form-sub">Help travelers understand what you offer</p>
+
+        <div class="field-group">
+          <label class="field-label">Business Description</label>
+          <textarea class="field-input field-textarea" formControlName="description"
+            placeholder="Describe your services, specialties, experience…" rows="6"></textarea>
+        </div>
+
+        <div class="info-box">
+          <span class="info-icon">ℹ️</span>
+          <span>Your application will be reviewed by our team. You'll receive an email notification within 24–48 hours.</span>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" class="btn-outline" (click)="prevStep()">← Back</button>
+          <button type="submit" class="btn-primary" [disabled]="loading">
+            <span *ngIf="!loading">Submit Application ✓</span>
+            <span *ngIf="loading">Submitting…</span>
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+

@@ -20,7 +20,7 @@ export class Registration implements OnInit {
   isSubmitting = false;
   errorMessage = '';
   validationErrors: { [key: string]: string } = {};
-  
+
   // Expose enums to template
   UserRole = UserRole;
   validationMessages = VALIDATION_MESSAGES;
@@ -112,14 +112,22 @@ export class Registration implements OnInit {
     this.authService.register(registerRequest).subscribe({
       next: (response) => {
         console.log('Registration successful:', response);
-        
-        // Navigate to dashboard after successful registration (user is now logged in)
-        this.router.navigate(['/dashboard']);
+
+        // Role-based redirect after successful registration
+        const role = response.user?.roles?.[0];
+        if (role === UserRole.VENDOR) {
+          this.router.navigate(['/vendor/dashboard']);
+        } else if (role === UserRole.ADMIN) {
+          this.router.navigate(['/admin/vendors']);
+        } else {
+          // USER role or default
+          this.router.navigate(['/dashboard']);
+        }
       },
       error: (error) => {
         console.error('Registration failed:', error);
         this.isSubmitting = false;
-        
+
         // Handle validation errors
         if (error.status === 400 && error.error?.errors) {
           // Field-specific validation errors

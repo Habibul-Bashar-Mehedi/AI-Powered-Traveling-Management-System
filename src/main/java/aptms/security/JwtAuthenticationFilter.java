@@ -186,15 +186,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     
     /**
      * Check if the request path is a public endpoint that doesn't require authentication.
-     * 
+     *
+     * Matches all known auth endpoint prefixes used by the AuthController
+     * (mapped to /api/auth). Paths intentionally covered:
+     *   /api/auth/login, /api/auth/register, /api/auth/refresh
+     *   Legacy variations kept for safety.
+     *
      * @param path Request path
      * @return true if public endpoint
      */
     private boolean isPublicEndpoint(String path) {
-        return path.startsWith("/auth/login") ||
-               path.startsWith("/auth/register") ||
-               path.startsWith("/auth/refresh") ||
-               path.startsWith("/actuator") ||
+        return path.startsWith("/api/auth/login")     ||
+               path.startsWith("/api/auth/register")  ||
+               path.startsWith("/api/auth/refresh")   ||
+               // Legacy / alternate prefixes
+               path.startsWith("/api/v1/auth/login")  ||
+               path.startsWith("/api/v1/auth/register") ||
+               path.startsWith("/api/v1/auth/refresh") ||
+               path.startsWith("/auth/login")         ||
+               path.startsWith("/auth/register")      ||
+               path.startsWith("/auth/refresh")       ||
+               path.startsWith("/actuator")           ||
                path.startsWith("/error");
     }
     

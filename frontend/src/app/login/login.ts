@@ -4,8 +4,8 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../services/auth.service';
 import { LoginRequest } from '../models/user.model';
-import { VALIDATION_MESSAGES } from '../constants/validation-messages';
 import { APP_CONSTANTS } from '../constants/app-constants';
+import { UserRole } from '../enums/user-role.enum';
 
 @Component({
   selector: 'app-login',
@@ -20,8 +20,7 @@ export class Login implements OnInit {
   errorMessage = '';
   isAccountLocked = false;
   retryAfter: string | null = null;
-  
-  validationMessages = VALIDATION_MESSAGES;
+
 
   constructor(
     private authService: AuthService,
@@ -33,10 +32,17 @@ export class Login implements OnInit {
 
   ngOnInit() {
     console.log('Login initialized');
-    
-    // Redirect if already logged in
+
+    // Redirect if already logged in — route by role
     if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/dashboard']);
+      const user = this.authService.getCurrentUserValue();
+      if (user?.role === UserRole.VENDOR) {
+        this.router.navigate(['/vendor/dashboard']);
+      } else if (user?.role === UserRole.ADMIN) {
+        this.router.navigate(['/admin/vendors']);
+      } else {
+        this.router.navigate(['/dashboard']);
+      }
     }
   }
 
@@ -86,21 +92,29 @@ export class Login implements OnInit {
     this.authService.login(loginData).subscribe({
       next: (response) => {
         console.log("Login successful:", response);
-        
-        // Get return URL from query params or default to dashboard
-        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
-        this.router.navigate([returnUrl]);
+
+        // Role-based redirect
+        const role = response.user?.roles?.[0];
+        if (role === UserRole.VENDOR) {
+          this.router.navigate(['/vendor/dashboard']);
+        } else if (role === UserRole.ADMIN) {
+          this.router.navigate(['/admin/vendors']);
+        } else {
+          // Get return URL from query params or default to dashboard
+          const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+          this.router.navigate([returnUrl]);
+        }
       },
       error: (error) => {
         console.error("Login failed:", error);
         this.isSubmitting = false;
-        
+
         // Handle different error types
         if (error.status === 423) {
           // Account locked
           this.isAccountLocked = true;
           this.errorMessage = "Account locked due to too many failed login attempts. Please try again later.";
-          
+
           // Extract retry_after if available
           if (error.error?.retry_after) {
             this.retryAfter = new Date(error.error.retry_after).toLocaleString();

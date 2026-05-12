@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, BehaviorSubject } from 'rxjs';
+import { Observable, throwError, BehaviorSubject, EMPTY } from 'rxjs';
 import { catchError, filter, take, switchMap } from 'rxjs/operators';
 import { TokenStorageService } from '../services/token-storage.service';
 import { AuthService } from '../services/auth.service';
@@ -8,32 +8,43 @@ import { AuthResponse } from '../models/user.model';
 
 /**
  * JwtInterceptor
- * 
+ *
  * Automatically attaches JWT Bearer tokens to outgoing HTTP requests and handles token refresh on 401 errors.
- * 
+ *
  * Features:
  * - Adds Authorization: Bearer <token> header to all requests except auth endpoints
  * - Intercepts 401 errors and attempts token refresh
  * - Queues failed requests during refresh and retries after new token obtained
  * - Prevents multiple simultaneous refresh calls using BehaviorSubject
  * - Logs out user if refresh fails
- * 
+ *
  * Requirements: 3.2.2
  */
 @Injectable()
 export class JwtInterceptor implements HttpInterceptor {
-  
+
   private isRefreshing = false;
   private refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
 
+  /**
+   * AuthService is resolved lazily via Injector to avoid the circular dependency:
+   * JwtInterceptor → AuthService → HttpClient → HTTP_INTERCEPTORS → JwtInterceptor
+   */
+  private get authService(): AuthService {
+    return this.injector.get(AuthService);
+  }
+
   constructor(
     private tokenStorage: TokenStorageService,
-    private authService: AuthService
+    private injector: Injector
   ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Skip token attachment for auth endpoints
-    if (this.isAuthEndpoint(request.url)) {
+    const isAuthRequest = this.isAuthEndpoint(request.url);
+    const shouldSkipToken = this.isPublicAuthEndpoint(request.url);
+
+    // Skip token attachment only for public auth endpoints.
+    if (shouldSkipToken) {
       return next.handle(request);
     }
 
@@ -45,7 +56,8 @@ export class JwtInterceptor implements HttpInterceptor {
 
     return next.handle(request).pipe(
       catchError(error => {
-        if (error instanceof HttpErrorResponse && error.status === 401) {
+        // Never attempt refresh for /auth/* endpoints; this avoids auth loops.
+        if (!isAuthRequest && error instanceof HttpErrorResponse && error.status === 401) {
           return this.handle401Error(request, next);
         }
         return throwError(() => error);
@@ -67,9 +79,13 @@ export class JwtInterceptor implements HttpInterceptor {
   /**
    * Check if URL is an auth endpoint that should not have token attached
    */
-  private isAuthEndpoint(url: string): boolean {
-    const authEndpoints = ['/auth/login', '/auth/register'];
+  private isPublicAuthEndpoint(url: string): boolean {
+    const authEndpoints = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'];
     return authEndpoints.some(endpoint => url.includes(endpoint));
+  }
+
+  private isAuthEndpoint(url: string): boolean {
+    return url.includes('/auth/');
   }
 
   /**
@@ -81,22 +97,33 @@ export class JwtInterceptor implements HttpInterceptor {
       this.refreshTokenSubject.next(null);
 
       return this.authService.refreshToken().pipe(
-        switchMap((response: AuthResponse) => {
+        switchMap((response: AuthResponse | null) => {
+          if (!response?.accessToken) {
+            this.isRefreshing = false;
+
+            // End queued retries and clear local auth state without throwing hard errors.
+            this.refreshTokenSubject.complete();
+            this.refreshTokenSubject = new BehaviorSubject<string | null>(null);
+            this.authService.logout().subscribe();
+            return EMPTY;
+          }
+
           this.isRefreshing = false;
           this.refreshTokenSubject.next(response.accessToken);
-          
+
           // Retry original request with new token
           return next.handle(this.addToken(request, response.accessToken));
         }),
         catchError(error => {
           this.isRefreshing = false;
-          
-          // Refresh failed, logout user
-          this.authService.logout().subscribe({
-            error: (logoutError) => console.error('Logout after refresh failure failed:', logoutError)
-          });
-          
-          return throwError(() => error);
+
+          // End queued retries and clear local auth state without bubbling uncaught exceptions.
+          this.refreshTokenSubject.complete();
+          this.refreshTokenSubject = new BehaviorSubject<string | null>(null);
+          this.authService.logout().subscribe();
+
+          console.error('Refresh flow failed:', error);
+          return EMPTY;
         })
       );
     } else {
@@ -106,7 +133,8 @@ export class JwtInterceptor implements HttpInterceptor {
         take(1),
         switchMap(token => {
           return next.handle(this.addToken(request, token!));
-        })
+        }),
+        catchError(() => EMPTY)
       );
     }
   }

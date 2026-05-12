@@ -1,0 +1,229 @@
+<div class="adm-root">
+
+  <!-- ── Header ── -->
+  <header class="adm-header">
+    <div class="header-left">
+      <div class="logo-icon">️</div>
+      <div>
+        <div class="header-title">Admin Panel</div>
+        <div class="header-sub">Vendor Management</div>
+      </div>
+    </div>
+    <button class="logout-btn" (click)="logout()"> Logout</button>
+  </header>
+
+  <!-- ── Tabs ── -->
+  <div class="tab-bar">
+    <button class="tab-btn" [class.active]="activeTab === 'pending'" (click)="loadTab('pending')">
+      ⏳ Pending Review
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'all'" (click)="loadTab('all')">
+       All Vendors
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'payouts'" (click)="loadTab('payouts')">
+       Payout Requests
+    </button>
+  </div>
+
+  <div class="adm-body">
+
+    <!-- Error -->
+    <div *ngIf="error" class="alert-error">⚠️ {{ error }}</div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading-wrap">
+      <div class="spinner"></div>
+      <span>Loading…</span>
+    </div>
+
+    <!-- ── Vendors Table ── -->
+    <div *ngIf="!loading && activeTab !== 'payouts'">
+      <div *ngIf="vendors.length === 0" class="empty-state">
+        <div class="empty-icon"></div>
+        <div>No vendors found.</div>
+      </div>
+
+      <div class="table-wrap" *ngIf="vendors.length > 0">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Business</th>
+              <th>Type</th>
+              <th>Email</th>
+              <th>City</th>
+              <th>Status</th>
+              <th>Registered</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let v of vendors">
+              <td>
+                <div class="business-cell">
+                  <div class="biz-avatar">{{ v.businessName.charAt(0) || 'V' }}</div>
+                  <div>
+                    <div class="biz-name">{{ v.businessName }}</div>
+                    <div class="biz-reg" *ngIf="v.registrationNumber">Reg: {{ v.registrationNumber }}</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge type-badge">{{ v.vendorType }}</span></td>
+              <td class="text-muted">{{ v.email }}</td>
+              <td class="text-muted">{{ v.city }}, {{ v.countryCode }}</td>
+              <td>
+                <span class="status-dot" [style.color]="statusColor(v.status)">
+                  ● {{ v.status | titlecase }}
+                </span>
+              </td>
+              <td class="text-muted">{{ v.createdAt | date:'mediumDate' }}</td>
+              <td>
+                <div class="action-row">
+                  <button
+                    *ngIf="v.status === 'PENDING_REVIEW'"
+                    class="btn btn-approve"
+                    [disabled]="actionLoading === v.vendorId"
+                    (click)="approve(v.vendorId!)">
+                    ✅ Approve
+                  </button>
+                  <button
+                    *ngIf="v.status === 'PENDING_REVIEW'"
+                    class="btn btn-reject"
+                    [disabled]="actionLoading === v.vendorId"
+                    (click)="openReject(v.vendorId!)">
+                    ❌ Reject
+                  </button>
+                  <button
+                    *ngIf="v.status === 'APPROVED'"
+                    class="btn btn-suspend"
+                    [disabled]="actionLoading === v.vendorId"
+                    (click)="openSuspend(v.vendorId!)">
+                     Suspend
+                  </button>
+                  <button
+                    *ngIf="v.status === 'SUSPENDED'"
+                    class="btn btn-reinstate"
+                    [disabled]="actionLoading === v.vendorId"
+                    (click)="reinstate(v.vendorId!)">
+                    ♻️ Reinstate
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Payouts Table ── -->
+    <div *ngIf="!loading && activeTab === 'payouts'">
+      <div *ngIf="payouts.length === 0" class="empty-state">
+        <div class="empty-icon"></div>
+        <div>No pending payout requests.</div>
+      </div>
+
+      <div class="table-wrap" *ngIf="payouts.length > 0">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Payout ID</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Requested At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of payouts">
+              <td class="text-muted mono">{{ p.payoutId?.substring(0, 8) }}…</td>
+              <td class="amount">{{ p.amount | currency }}</td>
+              <td><span class="badge">{{ p.payoutMethod }}</span></td>
+              <td>
+                <span class="status-dot" [style.color]="statusColor(p.status)">
+                  ● {{ p.status | titlecase }}
+                </span>
+              </td>
+              <td class="text-muted">{{ p.requestedAt | date:'medium' }}</td>
+              <td>
+                <div class="action-row">
+                  <button
+                    class="btn btn-approve"
+                    [disabled]="actionLoading === p.payoutId"
+                    (click)="openPayoutModal(p.payoutId!, true)">
+                    ✅ Approve
+                  </button>
+                  <button
+                    class="btn btn-reject"
+                    [disabled]="actionLoading === p.payoutId"
+                    (click)="openPayoutModal(p.payoutId!, false)">
+                    ❌ Deny
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /adm-body -->
+
+  <!-- ── Vendor Action Modal (Reject / Suspend) ── -->
+  <div class="modal-overlay" *ngIf="modalType" (click)="closeModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-title">
+        {{ modalType === 'reject' ? '❌ Reject Vendor' : ' Suspend Vendor' }}
+      </div>
+      <div class="modal-body">
+        <label class="form-label">
+          {{ modalType === 'reject' ? 'Rejection Reason' : 'Suspension Reason' }}
+          <span class="required">*</span>
+        </label>
+        <textarea
+          class="form-textarea"
+          [(ngModel)]="modalReason"
+          rows="3"
+          placeholder="Enter reason…"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" (click)="closeModal()">Cancel</button>
+        <button
+          class="btn"
+          [class.btn-reject]="modalType === 'reject'"
+          [class.btn-suspend]="modalType === 'suspend'"
+          [disabled]="!modalReason.trim()"
+          (click)="confirmModal()">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Payout Modal ── -->
+  <div class="modal-overlay" *ngIf="payoutModalId" (click)="closePayoutModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-title">
+        {{ payoutApprove ? '✅ Approve Payout' : '❌ Deny Payout' }}
+      </div>
+      <div class="modal-body">
+        <label class="form-label">Note (optional)</label>
+        <textarea
+          class="form-textarea"
+          [(ngModel)]="payoutNote"
+          rows="2"
+          placeholder="Optional admin note…"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" (click)="closePayoutModal()">Cancel</button>
+        <button
+          class="btn"
+          [class.btn-approve]="payoutApprove"
+          [class.btn-reject]="!payoutApprove"
+          (click)="confirmPayout()">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
