@@ -34,8 +34,13 @@ public class AdminVendorServiceImpl implements AdminVendorService {
     @Override
     @Transactional(readOnly = true)
     public List<VendorProfileDTO> getPendingVendors() {
-        return vendorRepository.findByStatus(VendorStatus.PENDING_REVIEW)
-                .stream().map(VendorRegistrationServiceImpl::toDTO).collect(Collectors.toList());
+        return vendorRepository.searchByStatuses(
+                        List.of(VendorStatus.PENDING, VendorStatus.PENDING_REVIEW),
+                        null,
+                        org.springframework.data.domain.Pageable.unpaged())
+                .stream()
+                .map(VendorRegistrationServiceImpl::toDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -61,6 +66,9 @@ public class AdminVendorServiceImpl implements AdminVendorService {
     @Override
     @Transactional
     public VendorProfileDTO rejectVendor(UUID vendorId, UUID adminUserId, String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("Rejection reason is required");
+        }
         Vendor vendor = getVendor(vendorId);
         vendor.setStatus(VendorStatus.REJECTED);
         vendor.setRejectionReason(reason);

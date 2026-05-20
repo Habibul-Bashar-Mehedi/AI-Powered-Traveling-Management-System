@@ -22,7 +22,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/admin/vendors")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
 @RequiredArgsConstructor
 @Tag(name = "Admin — Vendor Management", description = "Approve, reject, suspend vendors and manage payouts")
 public class AdminVendorController {

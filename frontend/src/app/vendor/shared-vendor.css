@@ -264,6 +264,19 @@
   box-shadow: 0 -2px 8px rgba(34,211,238,.15);
 }
 
+.bar-h-1  { height: 10px; }
+.bar-h-2  { height: 20px; }
+.bar-h-3  { height: 30px; }
+.bar-h-4  { height: 40px; }
+.bar-h-5  { height: 50px; }
+.bar-h-6  { height: 60px; }
+.bar-h-7  { height: 70px; }
+.bar-h-8  { height: 80px; }
+.bar-h-9  { height: 90px; }
+.bar-h-10 { height: 100px; }
+.bar-h-11 { height: 110px; }
+.bar-h-12 { height: 120px; }
+
 .bar-tip   { font-size: 9px; color: var(--text-muted); margin-bottom: 4px; }
 .bar-label { font-size: 9px; color: var(--text-muted); margin-top: 4px; }
 .empty-chart { color: var(--text-muted); font-size: 13px; padding: 24px 0; }
@@ -413,6 +426,10 @@
 
 .service-status-badge { font-size: 11px; font-weight: 600; }
 
+.service-status-active   { color: #10b981; }
+.service-status-inactive { color: #f59e0b; }
+.service-status-default  { color: #8a9bbf; }
+
 .service-name {
   font-family: var(--font-display);
   font-size: 15px; font-weight: 700;
@@ -502,6 +519,11 @@
 .amount-gross   { font-weight: 700; color: var(--text-primary); font-size: 13.5px; }
 .amount-net     { font-size: 11.5px; color: var(--emerald); margin-top: 3px; font-weight: 500; }
 .status-badge   { font-size: 12px; font-weight: 600; }
+.status-badge-confirmed { color: #10b981; }
+.status-badge-pending   { color: #f59e0b; }
+.status-badge-completed { color: #3b82f6; }
+.status-badge-cancelled { color: #8a9bbf; }
+.status-badge-rejected  { color: #f43f5e; }
 .no-action      { color: var(--text-muted); }
 
 .action-row { display: flex; gap: 6px; }
@@ -592,7 +614,10 @@
 .tx-desc   { font-size: 13px; color: var(--text-primary); font-weight: 500; }
 .tx-date   { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 .tx-amount { font-weight: 700; font-size: 14px; min-width: 80px; text-align: right; }
+.tx-amount-credit { color: #10b981; }
+.tx-amount-debit  { color: #f43f5e; }
 .tx-balance { font-size: 12px; color: var(--text-sec); min-width: 80px; text-align: right; }
+.tx-type-icon { width: 16px; height: 16px; }
 
 /* ─────────────────────────────────
    QUICK ACTION CARDS (Overview)
@@ -768,6 +793,18 @@ select.field-input option { background: #091422; color: var(--text-primary); }
 .modal-body   { padding: 28px; }
 .modal-footer { display: flex; gap: 10px; justify-content: flex-end; padding-top: 18px; border-top: 1px solid var(--border); margin-top: 8px; }
 .modal-sub    { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.5; }
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+  letter-spacing: -0.2px;
+}
+
+.action-icon-sm { width: 13px; height: 13px; }
+
+.section-header-spaced { margin-top: 36px; }
 
 /* ─────────────────────────────────
    FILTERS

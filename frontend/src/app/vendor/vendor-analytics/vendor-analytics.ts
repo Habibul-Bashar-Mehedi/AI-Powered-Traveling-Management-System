@@ -51,5 +51,10 @@ export class VendorAnalytics implements OnInit {
   barHeight(value: number): number {
     return Math.max(4, (value / this.maxRevenue) * 120);
   }
+
+  barHeightClass(value: number): string {
+    const bucket = Math.max(1, Math.min(12, Math.round(this.barHeight(value) / 10)));
+    return `bar-h-${bucket}`;
+  }
 }
 

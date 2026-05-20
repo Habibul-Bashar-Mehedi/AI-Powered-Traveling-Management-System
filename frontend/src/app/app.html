@@ -1,6 +1,6 @@
 <div class="flex flex-col min-h-screen">
 
-  <nav class="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-md mb-9">
+  <nav *ngIf="showMainNavbar" class="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-md mb-9">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="flex h-16 items-center justify-between">
 
@@ -16,7 +16,7 @@
 
           <div class="hidden md:flex md:items-center md:gap-6">
             <a routerLink="/" class="text-sm font-medium text-gray-600 transition hover:text-indigo-600" routerLinkActive="active">Home</a>
-            <a routerLink="/dashboard" class="text-sm font-medium text-gray-600 transition hover:text-indigo-600" routerLinkActive="active">Dashboard</a>
+            <a (click)="navigateToDashboard($event)" class="text-sm font-medium text-gray-600 transition hover:text-indigo-600 cursor-pointer">Dashboard</a>
             <a href="#" class="text-sm font-medium text-gray-600 transition hover:text-indigo-600">Explore</a>
             <a href="#" class="text-sm font-medium text-gray-600 transition hover:text-indigo-600">My Bookings</a>
             <a href="#" class="text-sm font-medium text-gray-600 transition hover:text-indigo-600">Packages</a>
@@ -65,7 +65,7 @@
   <main class="flex-grow">
     <router-outlet></router-outlet>
   </main>
-  <footer class="bg-white border-t border-gray-200 dark:bg-gray-900 dark:border-gray-800">
+  <footer *ngIf="showMainNavbar" class="bg-white border-t border-gray-200 dark:bg-gray-900 dark:border-gray-800">
     <div class="mx-auto max-w-7xl px-4 pt-16 pb-8 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 gap-12 lg:grid-cols-4 sm:grid-cols-2">
 
@@ -91,7 +91,7 @@
           <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Quick Links</h3>
           <ul class="mt-4 space-y-2">
             <li><a routerLink="/" class="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400">Home</a></li>
-            <li><a routerLink="/dashboard" class="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400">Dashboard</a></li>
+            <li><a (click)="navigateToDashboard($event)" class="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400 cursor-pointer">Dashboard</a></li>
             <li><a href="#" class="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400">Explore Destinations</a></li>
             <li><a href="#" class="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400">Travel Packages</a></li>
           </ul>

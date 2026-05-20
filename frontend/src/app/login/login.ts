@@ -21,7 +21,6 @@ export class Login implements OnInit {
   isAccountLocked = false;
   retryAfter: string | null = null;
 
-
   constructor(
     private authService: AuthService,
     private router: Router,

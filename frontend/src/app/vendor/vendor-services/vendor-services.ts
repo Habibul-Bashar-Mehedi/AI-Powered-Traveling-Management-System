@@ -134,11 +134,11 @@ export class VendorServices implements OnInit {
     this.vendorService.toggleServiceStatus(s.serviceId!, newStatus).subscribe({ complete: () => this.loadServices() });
   }
 
-  statusBadgeColor(status?: ServiceStatus): string {
+  statusBadgeClass(status?: ServiceStatus): string {
     switch (status) {
-      case ServiceStatus.ACTIVE: return '#10b981';
-      case ServiceStatus.INACTIVE: return '#f59e0b';
-      default: return '#8a9bbf';
+      case ServiceStatus.ACTIVE: return 'service-status-active';
+      case ServiceStatus.INACTIVE: return 'service-status-inactive';
+      default: return 'service-status-default';
     }
   }
 }

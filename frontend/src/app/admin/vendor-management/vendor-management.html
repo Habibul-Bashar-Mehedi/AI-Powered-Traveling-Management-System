@@ -1,34 +1,133 @@
 <div class="adm-root">
 
-  <!-- ── Header ── -->
-  <header class="adm-header">
-    <div class="header-left">
-      <div class="logo-icon">️</div>
-      <div>
-        <div class="header-title">Admin Panel</div>
-        <div class="header-sub">Vendor Management</div>
+  <!-- ══ Top Navbar (Same as Vendor Navbar) ══ -->
+  <nav class="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-md">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex h-16 items-center justify-between">
+
+        <div class="flex items-center gap-8">
+          <a href="/" class="flex items-center gap-2">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
+              <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-gray-900">AIPTMS</span>
+          </a>
+
+          <div class="hidden md:flex md:items-center md:gap-6">
+            <button
+              class="text-sm font-medium transition"
+              [class.text-indigo-600]="activeTab === 'pending'"
+              [class.text-gray-600]="activeTab !== 'pending'"
+              [class.hover:text-indigo-600]="activeTab !== 'pending'"
+              (click)="loadTab('pending')"
+            >
+              Pending Review
+            </button>
+            <button
+              class="text-sm font-medium transition"
+              [class.text-indigo-600]="activeTab === 'all'"
+              [class.text-gray-600]="activeTab !== 'all'"
+              [class.hover:text-indigo-600]="activeTab !== 'all'"
+              (click)="loadTab('all')"
+            >
+              All Vendors
+            </button>
+            <button
+              class="text-sm font-medium transition"
+              [class.text-indigo-600]="activeTab === 'payouts'"
+              [class.text-gray-600]="activeTab !== 'payouts'"
+              [class.hover:text-indigo-600]="activeTab !== 'payouts'"
+              (click)="loadTab('payouts')"
+            >
+              Payout Requests
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <!-- Admin Badge -->
+          <div class="hidden lg:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-red-50 border border-red-200">
+            <div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white font-semibold text-sm">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-xs font-semibold text-gray-900">Administrator</span>
+              <span class="text-xs text-red-600">Full Access</span>
+            </div>
+          </div>
+
+          <button type="button" class="flex items-center gap-2 rounded-full border border-gray-200 p-1 pr-3 transition hover:bg-gray-50">
+            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/>
+              </svg>
+            </div>
+            <span class="text-xs font-semibold text-gray-700">Account</span>
+          </button>
+
+          <button (click)="logout()" class="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span>Sign Out</span>
+          </button>
+
+          <button class="rounded-lg p-2 text-gray-600 hover:bg-gray-100 md:hidden">
+            <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+
       </div>
     </div>
-    <button class="logout-btn" (click)="logout()"> Logout</button>
-  </header>
+  </nav>
 
-  <!-- ── Tabs ── -->
-  <div class="tab-bar">
-    <button class="tab-btn" [class.active]="activeTab === 'pending'" (click)="loadTab('pending')">
-      ⏳ Pending Review
-    </button>
-    <button class="tab-btn" [class.active]="activeTab === 'all'" (click)="loadTab('all')">
-       All Vendors
-    </button>
-    <button class="tab-btn" [class.active]="activeTab === 'payouts'" (click)="loadTab('payouts')">
-       Payout Requests
-    </button>
-  </div>
+  <!-- ══ Main Content ══ -->
+  <main class="main-content">
 
-  <div class="adm-body">
+    <!-- Header -->
+    <header class="content-header">
+      <div class="header-left">
+        <p class="header-eyebrow">
+          <svg class="eyebrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          Admin Control Panel
+        </p>
+        <h1 class="content-title">{{ getTabTitle() }}</h1>
+        <p class="content-subtitle">{{ getTabSubtitle() }}</p>
+      </div>
 
-    <!-- Error -->
-    <div *ngIf="error" class="alert-error">⚠️ {{ error }}</div>
+      <div class="header-right">
+        <div class="header-meta-card">
+          <span class="meta-label">Total Vendors</span>
+          <span class="meta-value">{{ vendors.length }}</span>
+        </div>
+        <div class="header-meta-card" *ngIf="activeTab === 'pending'">
+          <span class="meta-label">Pending</span>
+          <span class="meta-value">{{ vendors.length }}</span>
+        </div>
+        <div class="header-meta-card" *ngIf="activeTab === 'payouts'">
+          <span class="meta-label">Requests</span>
+          <span class="meta-value">{{ payouts.length }}</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Error Alert -->
+    <div *ngIf="error" class="alert alert-error">
+      <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>{{ error }}</span>
+    </div>
 
     <!-- Loading -->
     <div *ngIf="loading" class="loading-wrap">
@@ -39,8 +138,11 @@
     <!-- ── Vendors Table ── -->
     <div *ngIf="!loading && activeTab !== 'payouts'">
       <div *ngIf="vendors.length === 0" class="empty-state">
-        <div class="empty-icon"></div>
-        <div>No vendors found.</div>
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+        <div class="empty-text">No vendors found</div>
+        <div class="empty-subtext">There are no vendors to display at this time.</div>
       </div>
 
       <div class="table-wrap" *ngIf="vendors.length > 0">
@@ -71,8 +173,9 @@
               <td class="text-muted">{{ v.email }}</td>
               <td class="text-muted">{{ v.city }}, {{ v.countryCode }}</td>
               <td>
-                <span class="status-dot" [style.color]="statusColor(v.status)">
-                  ● {{ v.status | titlecase }}
+                <span class="status-badge" [attr.data-status]="v.status">
+                  <span class="status-dot"></span>
+                  {{ v.status | titlecase }}
                 </span>
               </td>
               <td class="text-muted">{{ v.createdAt | date:'mediumDate' }}</td>
@@ -83,28 +186,44 @@
                     class="btn btn-approve"
                     [disabled]="actionLoading === v.vendorId"
                     (click)="approve(v.vendorId!)">
-                    ✅ Approve
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Approve
                   </button>
                   <button
                     *ngIf="v.status === 'PENDING_REVIEW'"
                     class="btn btn-reject"
                     [disabled]="actionLoading === v.vendorId"
                     (click)="openReject(v.vendorId!)">
-                    ❌ Reject
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="6" x2="6" y2="18"/>
+                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                    Reject
                   </button>
                   <button
                     *ngIf="v.status === 'APPROVED'"
                     class="btn btn-suspend"
                     [disabled]="actionLoading === v.vendorId"
                     (click)="openSuspend(v.vendorId!)">
-                     Suspend
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="15" y1="9" x2="9" y2="15"/>
+                      <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                    Suspend
                   </button>
                   <button
                     *ngIf="v.status === 'SUSPENDED'"
                     class="btn btn-reinstate"
                     [disabled]="actionLoading === v.vendorId"
                     (click)="reinstate(v.vendorId!)">
-                    ♻️ Reinstate
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="23 4 23 10 17 10"/>
+                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                    </svg>
+                    Reinstate
                   </button>
                 </div>
               </td>
@@ -117,8 +236,11 @@
     <!-- ── Payouts Table ── -->
     <div *ngIf="!loading && activeTab === 'payouts'">
       <div *ngIf="payouts.length === 0" class="empty-state">
-        <div class="empty-icon"></div>
-        <div>No pending payout requests.</div>
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div class="empty-text">No pending payout requests</div>
+        <div class="empty-subtext">All payout requests have been processed.</div>
       </div>
 
       <div class="table-wrap" *ngIf="payouts.length > 0">
@@ -139,8 +261,9 @@
               <td class="amount">{{ p.amount | currency }}</td>
               <td><span class="badge">{{ p.payoutMethod }}</span></td>
               <td>
-                <span class="status-dot" [style.color]="statusColor(p.status)">
-                  ● {{ p.status | titlecase }}
+                <span class="status-badge" [attr.data-status]="p.status">
+                  <span class="status-dot"></span>
+                  {{ p.status | titlecase }}
                 </span>
               </td>
               <td class="text-muted">{{ p.requestedAt | date:'medium' }}</td>
@@ -150,13 +273,20 @@
                     class="btn btn-approve"
                     [disabled]="actionLoading === p.payoutId"
                     (click)="openPayoutModal(p.payoutId!, true)">
-                    ✅ Approve
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Approve
                   </button>
                   <button
                     class="btn btn-reject"
                     [disabled]="actionLoading === p.payoutId"
                     (click)="openPayoutModal(p.payoutId!, false)">
-                    ❌ Deny
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="6" x2="6" y2="18"/>
+                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                    Deny
                   </button>
                 </div>
               </td>
@@ -166,13 +296,30 @@
       </div>
     </div>
 
-  </div><!-- /adm-body -->
+  </main><!-- /main-content -->
 
   <!-- ── Vendor Action Modal (Reject / Suspend) ── -->
   <div class="modal-overlay" *ngIf="modalType" (click)="closeModal()">
     <div class="modal-box" (click)="$event.stopPropagation()">
-      <div class="modal-title">
-        {{ modalType === 'reject' ? '❌ Reject Vendor' : ' Suspend Vendor' }}
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg *ngIf="modalType === 'reject'" class="modal-icon modal-icon-reject" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          <svg *ngIf="modalType === 'suspend'" class="modal-icon modal-icon-suspend" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+          </svg>
+          <span>{{ modalType === 'reject' ? 'Reject Vendor' : 'Suspend Vendor' }}</span>
+        </div>
+        <button class="modal-close" (click)="closeModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <div class="modal-body">
         <label class="form-label">
@@ -182,8 +329,9 @@
         <textarea
           class="form-textarea"
           [(ngModel)]="modalReason"
-          rows="3"
+          rows="4"
           placeholder="Enter reason…"></textarea>
+        <p class="form-hint">This reason will be visible to the vendor.</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" (click)="closeModal()">Cancel</button>
@@ -193,7 +341,7 @@
           [class.btn-suspend]="modalType === 'suspend'"
           [disabled]="!modalReason.trim()"
           (click)="confirmModal()">
-          Confirm
+          Confirm {{ modalType === 'reject' ? 'Rejection' : 'Suspension' }}
         </button>
       </div>
     </div>
@@ -202,16 +350,34 @@
   <!-- ── Payout Modal ── -->
   <div class="modal-overlay" *ngIf="payoutModalId" (click)="closePayoutModal()">
     <div class="modal-box" (click)="$event.stopPropagation()">
-      <div class="modal-title">
-        {{ payoutApprove ? '✅ Approve Payout' : '❌ Deny Payout' }}
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg *ngIf="payoutApprove" class="modal-icon modal-icon-approve" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <svg *ngIf="!payoutApprove" class="modal-icon modal-icon-reject" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          <span>{{ payoutApprove ? 'Approve Payout' : 'Deny Payout' }}</span>
+        </div>
+        <button class="modal-close" (click)="closePayoutModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <div class="modal-body">
-        <label class="form-label">Note (optional)</label>
+        <label class="form-label">Admin Note (optional)</label>
         <textarea
           class="form-textarea"
           [(ngModel)]="payoutNote"
-          rows="2"
+          rows="3"
           placeholder="Optional admin note…"></textarea>
+        <p class="form-hint">Add any internal notes about this payout decision.</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" (click)="closePayoutModal()">Cancel</button>
@@ -220,7 +386,7 @@
           [class.btn-approve]="payoutApprove"
           [class.btn-reject]="!payoutApprove"
           (click)="confirmPayout()">
-          Confirm
+          Confirm {{ payoutApprove ? 'Approval' : 'Denial' }}
         </button>
       </div>
     </div>

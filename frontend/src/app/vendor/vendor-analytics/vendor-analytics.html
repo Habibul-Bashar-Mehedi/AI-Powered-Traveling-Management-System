@@ -129,7 +129,7 @@
       <div class="bar-chart" *ngIf="revenueEntries.length > 0">
         <div *ngFor="let e of revenueEntries" class="bar-col">
           <div class="bar-tip">${{ e.value | number:'1.0-0' }}</div>
-          <div class="bar" [style.height.px]="barHeight(e.value)"></div>
+          <div class="bar" [ngClass]="barHeightClass(e.value)"></div>
           <div class="bar-label">{{ e.date | slice:5 }}</div>
         </div>
       </div>
@@ -163,4 +163,3 @@
   </ng-container>
 
 </div>
-

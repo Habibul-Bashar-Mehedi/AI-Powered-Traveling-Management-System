@@ -6,17 +6,25 @@
     <!-- TOP HEADER -->
     <header class="topbar">
       <div class="topbar-left">
-        <h1 class="page-title">Dashboard</h1>
+        <h1 class="page-title">Welcome Back!</h1>
         <p class="page-sub">Friday, 10 April 2026</p>
       </div>
       <div class="topbar-right">
         <button class="icon-btn notif-btn">
-          🔔
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
           @if (user.notifications > 0) {
             <span class="notif-dot">{{ user.notifications }}</span>
           }
         </button>
-        <button class="icon-btn">⚙️</button>
+        <button class="icon-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"></path>
+          </svg>
+        </button>
         <div class="topbar-avatar-wrap">
           <img [src]="user.avatar" class="topbar-avatar" alt="User" />
           <div class="avatar-ring"></div>
@@ -27,9 +35,9 @@
     <!-- HERO SLIDER -->
     <section class="slider-section">
       <div class="slider-track-wrap">
-        <div class="slider-track" [style.transform]="'translateX(-' + currentIndex * 100 + '%)'">
+        <div class="slider-track" [ngClass]="'slider-index-' + currentIndex">
           @for (slide of slides; track $index) {
-            <div class="slide">
+            <div class="slide" [ngClass]="slide.accentClass">
               <span class="slide-tag">{{ slide.tag }}</span>
               <div class="slide-content">
                 <div class="slide-text">
@@ -39,8 +47,8 @@
                 </div>
                 <img [src]="slide.img" class="slide-img" alt="" />
               </div>
-              <div class="slide-accent" [style.background]="slide.accent + '22'"></div>
-              <div class="slide-bar" [style.background]="'linear-gradient(90deg, ' + slide.accent + ', transparent)'"></div>
+              <div class="slide-accent"></div>
+              <div class="slide-bar"></div>
             </div>
           }
         </div>

@@ -69,14 +69,14 @@ export class VendorBookings implements OnInit {
     return this.bookings.reduce((sum, booking) => sum + (booking.netAmount || 0), 0);
   }
 
-  statusColor(status: VendorBookingStatus): string {
+  statusBadgeClass(status: VendorBookingStatus): string {
     switch (status) {
-      case VendorBookingStatus.CONFIRMED: return '#10b981';
-      case VendorBookingStatus.PENDING: return '#f59e0b';
-      case VendorBookingStatus.COMPLETED: return '#3b82f6';
-      case VendorBookingStatus.CANCELLED: return '#8a9bbf';
-      case VendorBookingStatus.REJECTED: return '#f43f5e';
-      default: return '#8a9bbf';
+      case VendorBookingStatus.CONFIRMED: return 'status-badge-confirmed';
+      case VendorBookingStatus.PENDING: return 'status-badge-pending';
+      case VendorBookingStatus.COMPLETED: return 'status-badge-completed';
+      case VendorBookingStatus.CANCELLED: return 'status-badge-cancelled';
+      case VendorBookingStatus.REJECTED: return 'status-badge-rejected';
+      default: return 'status-badge-cancelled';
     }
   }
 }

@@ -44,7 +44,7 @@ public class AdminController {
      * @return Response with number of passwords migrated
      */
     @PostMapping("/migrate-passwords")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Map<String, Object>> migratePasswords() {
         logger.info("Password migration triggered by admin");
         

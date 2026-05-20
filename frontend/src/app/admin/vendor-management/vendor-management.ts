@@ -46,6 +46,32 @@ export class VendorManagement implements OnInit {
     this.loadTab('pending');
   }
 
+  getTabTitle(): string {
+    switch (this.activeTab) {
+      case 'pending':
+        return 'Pending Review';
+      case 'all':
+        return 'All Vendors';
+      case 'payouts':
+        return 'Payout Requests';
+      default:
+        return 'Vendor Management';
+    }
+  }
+
+  getTabSubtitle(): string {
+    switch (this.activeTab) {
+      case 'pending':
+        return 'Review and approve new vendor applications';
+      case 'all':
+        return 'Manage all registered vendors and their status';
+      case 'payouts':
+        return 'Process vendor payout requests and transactions';
+      default:
+        return 'Manage vendors and payouts';
+    }
+  }
+
   loadTab(tab: TabId): void {
     this.activeTab = tab;
     this.vendors = [];

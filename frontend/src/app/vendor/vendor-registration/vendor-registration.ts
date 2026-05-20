@@ -98,5 +98,14 @@ export class VendorRegistration implements OnInit {
     if (step === 2) return this.step2Form.valid;
     return true;
   }
+
+  goToDashboard(): void {
+    this.router.navigate(['/vendor/dashboard']);
+  }
+
+  viewApplication(): void {
+    // Navigate to vendor application status page or show application details
+    this.router.navigate(['/vendor/application-status']);
+  }
 }
 

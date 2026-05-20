@@ -113,7 +113,7 @@ public class SecurityConfig {
                 // Vendor registration requires any authenticated user (not yet VENDOR role)
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/vendor/register").authenticated()
                 .requestMatchers("/api/v1/vendor/**").hasRole("VENDOR")
-                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
 
                 // All other endpoints require authentication
                 .anyRequest().authenticated()

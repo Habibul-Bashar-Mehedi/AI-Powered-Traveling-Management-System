@@ -79,7 +79,7 @@
             <div class="amount-net">Net: ${{ b.netAmount | number:'1.2-2' }}</div>
           </td>
           <td>
-            <span class="status-badge" [style.color]="statusColor(b.bookingStatus)">
+            <span class="status-badge" [ngClass]="statusBadgeClass(b.bookingStatus)">
               {{ b.bookingStatus }}
             </span>
           </td>

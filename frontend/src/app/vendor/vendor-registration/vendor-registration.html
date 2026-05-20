@@ -1,6 +1,6 @@
 <!-- ═══════════════════════════════════════════
-   VENDOR REGISTRATION — Multi-Step Form
-   Matches existing dark luxury aesthetic
+   VENDOR REGISTRATION — Enterprise Multi-Step Form
+   Professional dark luxury aesthetic with enhanced UX
    ═══════════════════════════════════════════ -->
 <div class="reg-root">
 
@@ -8,35 +8,70 @@
   <div class="reg-brand">
     <div class="brand-inner">
       <div class="brand-logo">
-        <div class="logo-icon">🏪</div>
+        <div class="logo-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
         <span class="logo-text">VOYAGR</span>
       </div>
       <h1 class="brand-title">Become a<br/>Vendor Partner</h1>
-      <p class="brand-sub">List your hotel, tours or transport services on the platform and reach millions of travelers.</p>
+      <p class="brand-sub">List your hotel, tours or transport services on the platform and reach millions of travelers worldwide.</p>
 
       <div class="brand-steps">
         <div class="step-item" [class.done]="currentStep > 1" [class.active]="currentStep === 1">
-          <div class="step-dot">{{ currentStep > 1 ? '✓' : '1' }}</div>
-          <div>
+          <div class="step-dot">
+            <span class="step-number">{{ currentStep > 1 ? '' : '1' }}</span>
+            <svg *ngIf="currentStep > 1" class="step-check" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="step-content">
             <div class="step-label">Business Identity</div>
             <div class="step-desc">Name, type & registration</div>
           </div>
         </div>
-        <div class="step-connector"></div>
+        <div class="step-connector" [class.completed]="currentStep > 1"></div>
         <div class="step-item" [class.done]="currentStep > 2" [class.active]="currentStep === 2">
-          <div class="step-dot">{{ currentStep > 2 ? '✓' : '2' }}</div>
-          <div>
+          <div class="step-dot">
+            <span class="step-number">{{ currentStep > 2 ? '' : '2' }}</span>
+            <svg *ngIf="currentStep > 2" class="step-check" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="step-content">
             <div class="step-label">Contact & Location</div>
             <div class="step-desc">Email, phone & address</div>
           </div>
         </div>
-        <div class="step-connector"></div>
-        <div class="step-item" [class.active]="currentStep === 3">
-          <div class="step-dot">3</div>
-          <div>
+        <div class="step-connector" [class.completed]="currentStep > 2"></div>
+        <div class="step-item" [class.done]="currentStep > 3" [class.active]="currentStep === 3">
+          <div class="step-dot">
+            <span class="step-number">3</span>
+          </div>
+          <div class="step-content">
             <div class="step-label">About Your Business</div>
             <div class="step-desc">Profile description</div>
           </div>
+        </div>
+      </div>
+
+      <!-- Trust indicators -->
+      <div class="trust-badges">
+        <div class="trust-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 16V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Secure & Encrypted</span>
+        </div>
+        <div class="trust-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Verified Partners</span>
         </div>
       </div>
     </div>
@@ -48,39 +83,79 @@
 
       <!-- Progress bar -->
       <div class="prog-bar-wrap">
-        <div class="prog-bar-fill" [style.width.%]="stepProgress"></div>
+        <div class="prog-bar-fill" [class.prog-step-1]="currentStep === 1" [class.prog-step-2]="currentStep === 2" [class.prog-step-3]="currentStep === 3">
+          <div class="prog-bar-glow"></div>
+        </div>
       </div>
-      <div class="step-counter">Step {{ currentStep }} of {{ totalSteps }}</div>
+      <div class="step-counter">
+        <span class="counter-text">Step {{ currentStep }} of {{ totalSteps }}</span>
+        <span class="counter-percent">{{ stepProgress }}% Complete</span>
+      </div>
 
       <!-- Success -->
       <div *ngIf="success" class="success-msg">
-        <div class="success-icon">🎉</div>
-        <h2>Registration Submitted!</h2>
-        <p>Your application is under review. We'll notify you via email once approved.</p>
+        <div class="success-icon-wrap">
+          <svg class="success-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2>Registration Submitted Successfully!</h2>
+        <p>Your application is under review by our team. We'll notify you via email within 24-48 hours once your vendor account is approved.</p>
+        <div class="success-actions">
+          <button class="btn-primary" (click)="goToDashboard()">Go to Dashboard</button>
+          <button class="btn-outline" (click)="viewApplication()">View Application</button>
+        </div>
       </div>
 
       <!-- Error -->
-      <div *ngIf="error" class="error-msg">⚠️ {{ error }}</div>
+      <div *ngIf="error" class="error-msg">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>{{ error }}</span>
+      </div>
 
       <!-- ─── STEP 1 ─── -->
-      <form *ngIf="!success && currentStep === 1" [formGroup]="step1Form" (ngSubmit)="nextStep()">
-        <h2 class="form-title">Business Identity</h2>
-        <p class="form-sub">Tell us about your business</p>
+      <form *ngIf="!success && currentStep === 1" [formGroup]="step1Form" (ngSubmit)="nextStep()" class="form-step">
+        <div class="form-header">
+          <h2 class="form-title">Business Identity</h2>
+          <p class="form-sub">Tell us about your business to get started</p>
+        </div>
 
         <div class="field-group">
-          <label class="field-label">Business Name *</label>
-          <input class="field-input" type="text" formControlName="businessName" placeholder="e.g. Sunset Beach Resort"/>
+          <label class="field-label" for="businessName">
+            Business Name *
+            <span class="field-hint">Legal or trading name</span>
+          </label>
+          <div class="field-wrapper" [class.has-error]="step1Form.get('businessName')?.touched && step1Form.get('businessName')?.invalid" [class.has-value]="step1Form.get('businessName')?.value">
+            <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <input class="field-input" id="businessName" type="text" formControlName="businessName" placeholder="e.g. Sunset Beach Resort" autocomplete="organization"/>
+          </div>
           <span class="field-error" *ngIf="step1Form.get('businessName')?.touched && step1Form.get('businessName')?.invalid">
             Business name is required
           </span>
         </div>
 
         <div class="field-group">
-          <label class="field-label">Vendor Type *</label>
-          <select class="field-input" formControlName="vendorType">
-            <option value="">Select type…</option>
-            <option *ngFor="let t of vendorTypes" [value]="t">{{ t | titlecase }}</option>
-          </select>
+          <label class="field-label" for="vendorType">
+            Vendor Type *
+            <span class="field-hint">Select your primary service</span>
+          </label>
+          <div class="field-wrapper" [class.has-error]="step1Form.get('vendorType')?.touched && step1Form.get('vendorType')?.invalid" [class.has-value]="step1Form.get('vendorType')?.value">
+            <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M22 6L12 13L2 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <select class="field-input" id="vendorType" formControlName="vendorType">
+              <option value="">Select type…</option>
+              <option *ngFor="let t of vendorTypes" [value]="t">{{ t | titlecase }}</option>
+            </select>
+          </div>
           <span class="field-error" *ngIf="step1Form.get('vendorType')?.touched && step1Form.get('vendorType')?.invalid">
             Please select a vendor type
           </span>
@@ -88,105 +163,220 @@
 
         <div class="field-row">
           <div class="field-group">
-            <label class="field-label">Registration Number</label>
-            <input class="field-input" type="text" formControlName="registrationNumber" placeholder="Trade license no."/>
+            <label class="field-label" for="registrationNumber">
+              Registration Number
+              <span class="field-hint">Optional</span>
+            </label>
+            <div class="field-wrapper" [class.has-value]="step1Form.get('registrationNumber')?.value">
+              <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <input class="field-input" id="registrationNumber" type="text" formControlName="registrationNumber" placeholder="Trade license no."/>
+            </div>
           </div>
           <div class="field-group">
-            <label class="field-label">Tax ID</label>
-            <input class="field-input" type="text" formControlName="taxId" placeholder="TIN / VAT number"/>
+            <label class="field-label" for="taxId">
+              Tax ID
+              <span class="field-hint">Optional</span>
+            </label>
+            <div class="field-wrapper" [class.has-value]="step1Form.get('taxId')?.value">
+              <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <input class="field-input" id="taxId" type="text" formControlName="taxId" placeholder="TIN / VAT number"/>
+            </div>
           </div>
         </div>
 
         <button type="submit" class="btn-primary" [disabled]="!step1Form.valid">
-          Continue <span>→</span>
+          <span>Continue</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 5L19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </button>
       </form>
 
       <!-- ─── STEP 2 ─── -->
-      <form *ngIf="!success && currentStep === 2" [formGroup]="step2Form" (ngSubmit)="nextStep()">
-        <h2 class="form-title">Contact & Location</h2>
-        <p class="form-sub">Where can travelers reach you?</p>
+      <form *ngIf="!success && currentStep === 2" [formGroup]="step2Form" (ngSubmit)="nextStep()" class="form-step">
+        <div class="form-header">
+          <h2 class="form-title">Contact & Location</h2>
+          <p class="form-sub">Where can travelers and our team reach you?</p>
+        </div>
 
         <div class="field-row">
           <div class="field-group">
-            <label class="field-label">Email *</label>
-            <input class="field-input" type="email" formControlName="email" placeholder="business@example.com"/>
+            <label class="field-label" for="email">Email *</label>
+            <div class="field-wrapper" [class.has-error]="step2Form.get('email')?.touched && step2Form.get('email')?.invalid" [class.has-value]="step2Form.get('email')?.value">
+              <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M22 6L12 13L2 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <input class="field-input" id="email" type="email" formControlName="email" placeholder="business@example.com" autocomplete="email"/>
+            </div>
             <span class="field-error" *ngIf="step2Form.get('email')?.touched && step2Form.get('email')?.invalid">Valid email required</span>
           </div>
           <div class="field-group">
-            <label class="field-label">Phone *</label>
-            <input class="field-input" type="tel" formControlName="phone" placeholder="+880 1700 000000"/>
+            <label class="field-label" for="phone">Phone *</label>
+            <div class="field-wrapper" [class.has-error]="step2Form.get('phone')?.touched && step2Form.get('phone')?.invalid" [class.has-value]="step2Form.get('phone')?.value">
+              <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22 16.92V19.92C22 20.4696 21.7893 20.9968 21.4142 21.3869C21.0391 21.777 20.5304 21.9992 20 22C16.7428 21.7613 13.5979 20.7049 10.85 19C8.23981 17.3915 6.01127 15.1629 4.40001 12.55C2.69001 9.79704 1.63326 6.64588 1.40001 3.38C1.40001 2.85 1.62001 2.34 2.01001 1.97C2.40001 1.6 2.93001 1.39 3.48001 1.39H6.48001C7.48001 1.39 8.30001 2.11 8.43001 3.09C8.56001 4.07 8.78001 5.03 9.09001 5.96C9.36001 6.74 9.15001 7.61 8.56001 8.2L7.21001 9.55C8.71001 12.18 10.82 14.29 13.45 15.79L14.8 14.44C15.39 13.85 16.26 13.64 17.04 13.91C17.97 14.22 18.93 14.44 19.91 14.57C20.9 14.7 21.62 15.53 21.62 16.54L22 16.92Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <input class="field-input" id="phone" type="tel" formControlName="phone" placeholder="+880 1700 000000" autocomplete="tel"/>
+            </div>
             <span class="field-error" *ngIf="step2Form.get('phone')?.touched && step2Form.get('phone')?.invalid">Phone is required</span>
           </div>
         </div>
 
         <div class="field-group">
-          <label class="field-label">Website URL</label>
-          <input class="field-input" type="url" formControlName="websiteUrl" placeholder="https://yourbusiness.com"/>
+          <label class="field-label" for="websiteUrl">
+            Website URL
+            <span class="field-hint">Optional</span>
+          </label>
+          <div class="field-wrapper" [class.has-value]="step2Form.get('websiteUrl')?.value">
+            <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 12H22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 2C14.5 4.5 16 8 16 12C16 16 14.5 19.5 12 22C9.5 19.5 8 16 8 12C8 8 9.5 4.5 12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <input class="field-input" id="websiteUrl" type="url" formControlName="websiteUrl" placeholder="https://yourbusiness.com" autocomplete="url"/>
+          </div>
         </div>
 
         <div class="field-group">
-          <label class="field-label">Address Line 1 *</label>
-          <input class="field-input" type="text" formControlName="addressLine1" placeholder="Street address"/>
+          <label class="field-label" for="addressLine1">Address Line 1 *</label>
+          <div class="field-wrapper" [class.has-error]="step2Form.get('addressLine1')?.touched && step2Form.get('addressLine1')?.invalid" [class.has-value]="step2Form.get('addressLine1')?.value">
+            <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <input class="field-input" id="addressLine1" type="text" formControlName="addressLine1" placeholder="Street address" autocomplete="address-line1"/>
+          </div>
           <span class="field-error" *ngIf="step2Form.get('addressLine1')?.touched && step2Form.get('addressLine1')?.invalid">Address is required</span>
         </div>
 
         <div class="field-group">
-          <label class="field-label">Address Line 2</label>
-          <input class="field-input" type="text" formControlName="addressLine2" placeholder="Suite, floor, etc."/>
+          <label class="field-label" for="addressLine2">
+            Address Line 2
+            <span class="field-hint">Optional</span>
+          </label>
+          <div class="field-wrapper" [class.has-value]="step2Form.get('addressLine2')?.value">
+            <input class="field-input field-input-plain" id="addressLine2" type="text" formControlName="addressLine2" placeholder="Suite, floor, etc." autocomplete="address-line2"/>
+          </div>
         </div>
 
         <div class="field-row">
           <div class="field-group">
-            <label class="field-label">City *</label>
-            <input class="field-input" type="text" formControlName="city" placeholder="Dhaka"/>
+            <label class="field-label" for="city">City *</label>
+            <div class="field-wrapper" [class.has-error]="step2Form.get('city')?.touched && step2Form.get('city')?.invalid" [class.has-value]="step2Form.get('city')?.value">
+              <input class="field-input field-input-plain" id="city" type="text" formControlName="city" placeholder="Dhaka" autocomplete="address-level2"/>
+            </div>
             <span class="field-error" *ngIf="step2Form.get('city')?.touched && step2Form.get('city')?.invalid">City is required</span>
           </div>
           <div class="field-group">
-            <label class="field-label">State / Division</label>
-            <input class="field-input" type="text" formControlName="stateProvince" placeholder="Dhaka Division"/>
+            <label class="field-label" for="stateProvince">
+              State / Division
+              <span class="field-hint">Optional</span>
+            </label>
+            <div class="field-wrapper" [class.has-value]="step2Form.get('stateProvince')?.value">
+              <input class="field-input field-input-plain" id="stateProvince" type="text" formControlName="stateProvince" placeholder="Dhaka Division" autocomplete="address-level1"/>
+            </div>
           </div>
         </div>
 
         <div class="field-row">
           <div class="field-group">
-            <label class="field-label">Country Code * (2 letters)</label>
-            <input class="field-input" type="text" formControlName="countryCode" placeholder="BD" maxlength="2"/>
+            <label class="field-label" for="countryCode">Country Code * (2 letters)</label>
+            <div class="field-wrapper" [class.has-error]="step2Form.get('countryCode')?.touched && step2Form.get('countryCode')?.invalid" [class.has-value]="step2Form.get('countryCode')?.value">
+              <input class="field-input field-input-plain" id="countryCode" type="text" formControlName="countryCode" placeholder="BD" maxlength="2" autocomplete="country"/>
+            </div>
             <span class="field-error" *ngIf="step2Form.get('countryCode')?.touched && step2Form.get('countryCode')?.invalid">2-letter country code required</span>
           </div>
           <div class="field-group">
-            <label class="field-label">Postal Code</label>
-            <input class="field-input" type="text" formControlName="postalCode" placeholder="1212"/>
+            <label class="field-label" for="postalCode">
+              Postal Code
+              <span class="field-hint">Optional</span>
+            </label>
+            <div class="field-wrapper" [class.has-value]="step2Form.get('postalCode')?.value">
+              <input class="field-input field-input-plain" id="postalCode" type="text" formControlName="postalCode" placeholder="1212" autocomplete="postal-code"/>
+            </div>
           </div>
         </div>
 
         <div class="btn-row">
-          <button type="button" class="btn-outline" (click)="prevStep()">← Back</button>
-          <button type="submit" class="btn-primary" [disabled]="!step2Form.valid">Continue →</button>
+          <button type="button" class="btn-outline" (click)="prevStep()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Back</span>
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="!step2Form.valid">
+            <span>Continue</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 5L19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </div>
       </form>
 
       <!-- ─── STEP 3 ─── -->
-      <form *ngIf="!success && currentStep === 3" [formGroup]="step3Form" (ngSubmit)="submit()">
-        <h2 class="form-title">About Your Business</h2>
-        <p class="form-sub">Help travelers understand what you offer</p>
+      <form *ngIf="!success && currentStep === 3" [formGroup]="step3Form" (ngSubmit)="submit()" class="form-step">
+        <div class="form-header">
+          <h2 class="form-title">About Your Business</h2>
+          <p class="form-sub">Help travelers understand what makes your business unique</p>
+        </div>
 
         <div class="field-group">
-          <label class="field-label">Business Description</label>
-          <textarea class="field-input field-textarea" formControlName="description"
-            placeholder="Describe your services, specialties, experience…" rows="6"></textarea>
+          <label class="field-label" for="description">
+            Business Description
+            <span class="field-hint">Optional - Tell us about your services</span>
+          </label>
+          <div class="field-wrapper field-wrapper-textarea" [class.has-value]="step3Form.get('description')?.value">
+            <textarea class="field-input field-textarea" id="description" formControlName="description"
+              placeholder="Describe your services, specialties, experience, unique offerings…" rows="6"></textarea>
+            <div class="textarea-counter">
+              <span>{{ step3Form.get('description')?.value?.length || 0 }}</span> / 1000 characters
+            </div>
+          </div>
         </div>
 
         <div class="info-box">
-          <span class="info-icon">ℹ️</span>
-          <span>Your application will be reviewed by our team. You'll receive an email notification within 24–48 hours.</span>
+          <svg class="info-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 16V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="info-content">
+            <strong>Application Review Process</strong>
+            <p>Your application will be reviewed by our team within 24–48 hours. You'll receive an email notification once your vendor account is approved.</p>
+          </div>
         </div>
 
         <div class="btn-row">
-          <button type="button" class="btn-outline" (click)="prevStep()">← Back</button>
-          <button type="submit" class="btn-primary" [disabled]="loading">
-            <span *ngIf="!loading">Submit Application ✓</span>
-            <span *ngIf="loading">Submitting…</span>
+          <button type="button" class="btn-outline" (click)="prevStep()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Back</span>
+          </button>
+          <button type="submit" class="btn-primary btn-submit" [disabled]="loading">
+            <span *ngIf="!loading" class="btn-content">
+              <span>Submit Application</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <span *ngIf="loading" class="btn-loading">
+              <svg class="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-opacity="0.25"/>
+                <path d="M12 2C6.47715 2 2 6.47715 2 12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              </svg>
+              <span>Submitting…</span>
+            </span>
           </button>
         </div>
       </form>
@@ -194,4 +384,3 @@
     </div>
   </div>
 </div>
-

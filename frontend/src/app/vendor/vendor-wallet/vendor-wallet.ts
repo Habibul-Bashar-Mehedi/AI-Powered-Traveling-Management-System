@@ -62,8 +62,5 @@ export class VendorWallet implements OnInit {
     });
   }
 
-  txTypeColor(type: string): string {
-    return type === 'CREDIT' ? '#10b981' : '#f43f5e';
-  }
 }
 

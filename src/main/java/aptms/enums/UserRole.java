@@ -3,6 +3,7 @@ package aptms.enums;
 public enum UserRole {
     USER("USER"),
     ADMIN("ADMIN"),
+    SUPER_ADMIN("SUPER_ADMIN"),
     VENDOR("VENDOR");
 
     private final String value;

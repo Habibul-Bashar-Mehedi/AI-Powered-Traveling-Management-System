@@ -78,7 +78,7 @@ public class Vendor {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private VendorStatus status = VendorStatus.PENDING_REVIEW;
+    private VendorStatus status = VendorStatus.PENDING;
 
     @Column(name = "rejection_reason", columnDefinition = "TEXT")
     private String rejectionReason;

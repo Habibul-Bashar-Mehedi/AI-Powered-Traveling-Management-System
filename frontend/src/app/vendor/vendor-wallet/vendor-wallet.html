@@ -59,11 +59,11 @@
         <div class="tx-type"
           [class.tx-type-credit]="tx.transactionType === 'CREDIT'"
           [class.tx-type-debit]="tx.transactionType !== 'CREDIT'">
-          <svg *ngIf="tx.transactionType === 'CREDIT'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+          <svg *ngIf="tx.transactionType === 'CREDIT'" class="tx-type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <polyline points="19 12 12 19 5 12"/>
           </svg>
-          <svg *ngIf="tx.transactionType !== 'CREDIT'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+          <svg *ngIf="tx.transactionType !== 'CREDIT'" class="tx-type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="19" x2="12" y2="5"/>
             <polyline points="5 12 12 5 19 12"/>
           </svg>
@@ -72,7 +72,7 @@
           <div class="tx-desc">{{ tx.description }}</div>
           <div class="tx-date">{{ tx.createdAt | date:'medium' }}</div>
         </div>
-        <div class="tx-amount" [style.color]="txTypeColor(tx.transactionType)">
+        <div class="tx-amount" [class.tx-amount-credit]="tx.transactionType === 'CREDIT'" [class.tx-amount-debit]="tx.transactionType !== 'CREDIT'">
           {{ tx.transactionType === 'CREDIT' ? '+' : '-' }}${{ tx.amount | number:'1.2-2' }}
         </div>
         <div class="tx-balance">${{ tx.balanceAfter | number:'1.2-2' }}</div>
@@ -84,7 +84,7 @@
   <!-- Payout modal -->
   <div *ngIf="showPayoutForm" class="modal-backdrop" (click)="showPayoutForm = false">
     <div class="modal-sm" (click)="$event.stopPropagation()">
-      <h3 style="font-family:var(--font-display);font-size:17px;font-weight:800;color:var(--text-primary);margin:0 0 6px;letter-spacing:-0.2px;">Request Payout</h3>
+      <h3 class="modal-title">Request Payout</h3>
       <p class="modal-sub">Minimum payout: $50.00</p>
 
       <div *ngIf="payoutError" class="error-msg">{{ payoutError }}</div>
@@ -116,4 +116,3 @@
   </div>
 
 </div>
-
