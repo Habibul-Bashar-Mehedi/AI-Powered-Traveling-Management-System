@@ -32,7 +32,7 @@ export class App {
    */
   navigateToDashboard(event: Event): void {
     event.preventDefault();
-    
+
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/login']);
       return;
@@ -43,7 +43,7 @@ export class App {
 
     if (role === UserRole.VENDOR) {
       this.router.navigate(['/vendor/dashboard']);
-    } else if (role === UserRole.ADMIN) {
+    } else if (role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN) {
       this.router.navigate(['/admin/vendors']);
     } else {
       this.router.navigate(['/dashboard']);

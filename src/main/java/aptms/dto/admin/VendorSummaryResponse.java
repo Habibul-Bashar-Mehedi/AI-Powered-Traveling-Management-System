@@ -20,4 +20,3 @@ public record VendorSummaryResponse(
         UUID approvedBy
 ) {
 }
-

@@ -15,4 +15,3 @@ public record SystemSettingResponse(
         Instant updatedAt
 ) {
 }
-

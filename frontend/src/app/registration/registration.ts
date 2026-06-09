@@ -117,7 +117,7 @@ export class Registration implements OnInit {
         const role = response.user?.roles?.[0];
         if (role === UserRole.VENDOR) {
           this.router.navigate(['/vendor/dashboard']);
-        } else if (role === UserRole.ADMIN) {
+        } else if (role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN) {
           this.router.navigate(['/admin/vendors']);
         } else {
           // USER role or default

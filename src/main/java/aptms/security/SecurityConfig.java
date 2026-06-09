@@ -91,6 +91,8 @@ public class SecurityConfig {
             
             // Configure authorization rules
             .authorizeHttpRequests(auth -> auth
+                // Always allow preflight requests
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 // Public endpoints (no authentication required)
                 // AuthController is mapped to /api/auth — these are the real paths.
                 // The /api/v1/auth/* and bare /auth/* variants are kept for forward-compat.

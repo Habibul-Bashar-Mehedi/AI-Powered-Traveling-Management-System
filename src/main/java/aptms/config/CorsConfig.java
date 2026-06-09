@@ -6,13 +6,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
-public class CorsConfig implements WebMvcConfigurer {
+public class CorsConfig {
 
     private final SecurityProperties securityProperties;
 
@@ -20,23 +20,20 @@ public class CorsConfig implements WebMvcConfigurer {
         this.securityProperties = securityProperties;
     }
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins(securityProperties.getCors().getAllowedOrigins())
-                .allowedMethods(securityProperties.getCors().getAllowedMethods())
-                .allowedHeaders(securityProperties.getCors().getAllowedHeaders())
-                .allowCredentials(securityProperties.getCors().isAllowCredentials())
-                .maxAge(3600);
-    }
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        configuration.setAllowedOrigins(
-            Arrays.asList(securityProperties.getCors().getAllowedOrigins())
-        );
+
+        List<String> configuredOrigins = Arrays.asList(securityProperties.getCors().getAllowedOrigins());
+        List<String> allowedOriginPatterns = new ArrayList<>(configuredOrigins);
+        if (!allowedOriginPatterns.contains("http://localhost:*")) {
+            allowedOriginPatterns.add("http://localhost:*");
+        }
+        if (!allowedOriginPatterns.contains("http://127.0.0.1:*")) {
+            allowedOriginPatterns.add("http://127.0.0.1:*");
+        }
+
+        configuration.setAllowedOriginPatterns(allowedOriginPatterns);
         configuration.setAllowedMethods(
             Arrays.asList(securityProperties.getCors().getAllowedMethods())
         );
@@ -46,6 +43,7 @@ public class CorsConfig implements WebMvcConfigurer {
         configuration.setAllowCredentials(
             securityProperties.getCors().isAllowCredentials()
         );
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

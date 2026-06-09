@@ -37,7 +37,7 @@ export class Login implements OnInit {
       const user = this.authService.getCurrentUserValue();
       if (user?.role === UserRole.VENDOR) {
         this.router.navigate(['/vendor/dashboard']);
-      } else if (user?.role === UserRole.ADMIN) {
+      } else if (user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN) {
         this.router.navigate(['/admin/vendors']);
       } else {
         this.router.navigate(['/dashboard']);
@@ -96,7 +96,7 @@ export class Login implements OnInit {
         const role = response.user?.roles?.[0];
         if (role === UserRole.VENDOR) {
           this.router.navigate(['/vendor/dashboard']);
-        } else if (role === UserRole.ADMIN) {
+        } else if (role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN) {
           this.router.navigate(['/admin/vendors']);
         } else {
           // Get return URL from query params or default to dashboard
@@ -121,6 +121,9 @@ export class Login implements OnInit {
         } else if (error.status === 401) {
           // Invalid credentials
           this.errorMessage = "Invalid email or password. Please try again.";
+        } else if (error.status === 0) {
+          // Browser-level network/CORS failure
+          this.errorMessage = "Cannot reach the server. Check backend is running and CORS origin matches your frontend URL.";
         } else if (error.error?.message) {
           // Server error message
           this.errorMessage = error.error.message;

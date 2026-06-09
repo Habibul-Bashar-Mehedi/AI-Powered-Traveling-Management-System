@@ -7,4 +7,3 @@ public interface VendorAnalyticsProjection {
     Long getRejectedVendors();
     Long getSuspendedVendors();
 }
-

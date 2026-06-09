@@ -17,4 +17,3 @@ public record UserManagementResponse(
         Instant updatedAt
 ) {
 }
-

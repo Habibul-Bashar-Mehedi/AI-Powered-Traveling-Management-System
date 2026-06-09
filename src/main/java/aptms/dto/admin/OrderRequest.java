@@ -13,4 +13,3 @@ public record OrderRequest(
         @NotNull AdminOrderStatus status
 ) {
 }
-

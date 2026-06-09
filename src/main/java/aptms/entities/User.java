@@ -39,7 +39,7 @@ public class User {
     @Column(nullable = false, length = 20)
     private UserRole role = UserRole.USER;
     
-    @Column(length = 10)
+    @Column(length = 100)
     private String countryId;
     
     /**

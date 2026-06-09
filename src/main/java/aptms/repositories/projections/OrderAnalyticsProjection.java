@@ -8,4 +8,3 @@ public interface OrderAnalyticsProjection {
     Long getPendingOrders();
     Long getCompletedOrders();
 }
-

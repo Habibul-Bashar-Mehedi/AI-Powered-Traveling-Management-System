@@ -21,4 +21,3 @@ public record OrderResponse(
         Instant updatedAt
 ) {
 }
-

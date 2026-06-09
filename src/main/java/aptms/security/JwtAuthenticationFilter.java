@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
@@ -60,7 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         // Skip authentication for public endpoints
         String requestPath = request.getRequestURI();
-        if (isPublicEndpoint(requestPath)) {
+        if (HttpMethod.OPTIONS.matches(request.getMethod()) || isPublicEndpoint(requestPath)) {
             log.debug("Skipping JWT authentication for public endpoint: {}", requestPath);
             filterChain.doFilter(request, response);
             return;

@@ -5,14 +5,14 @@ import { AdminVendorService } from '../../services/admin-vendor.service';
 import { VendorProfile, PayoutRequest } from '../../models/vendor.model';
 import { VendorStatus } from '../../enums/vendor.enums';
 import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 type TabId = 'pending' | 'all' | 'payouts';
 
 @Component({
   selector: 'app-vendor-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './vendor-management.html',
   styleUrls: ['./vendor-management.css']
 })
@@ -127,10 +127,11 @@ export class VendorManagement implements OnInit {
     if (!this.modalVendorId || !this.modalReason.trim()) return;
     const id = this.modalVendorId;
     const reason = this.modalReason;
+    const actionType = this.modalType;
     this.actionLoading = id;
     this.closeModal();
 
-    const obs = this.modalType === 'reject'
+    const obs = actionType === 'reject'
       ? this.adminVendorService.rejectVendor(id, reason)
       : this.adminVendorService.suspendVendor(id, reason);
 

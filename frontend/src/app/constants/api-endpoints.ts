@@ -63,5 +63,9 @@ export const API_ENDPOINTS = {
     REINSTATE: (id: string) => `/v1/admin/vendors/${id}/reinstate`,
     PENDING_PAYOUTS: '/v1/admin/vendors/payouts/pending',
     PROCESS_PAYOUT: (id: string) => `/v1/admin/vendors/payouts/${id}/process`,
+  },
+  ADMIN_MANAGEMENT: {
+    USERS: '/v1/admin/management/users',
+    USER_BY_ID: (id: string) => `/v1/admin/management/users/${id}`,
   }
 } as const;

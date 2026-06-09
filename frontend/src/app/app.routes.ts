@@ -77,6 +77,10 @@ export const routes: Routes = [
       {
         path: 'vendors',
         loadComponent: () => import('./admin/vendor-management/vendor-management').then(m => m.VendorManagement)
+      },
+      {
+        path: 'users',
+        loadComponent: () => import('./admin/user-management/user-management').then(m => m.UserManagement)
       }
     ]
   },

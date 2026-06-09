@@ -53,6 +53,8 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     @Override
     @Transactional
     public UserManagementResponse createUser(UserManagementRequest request) {
+        validatePasswordForCreate(request.password());
+
         if (userRepository.existsByEmail(request.email())) {
             throw new DuplicateValueFoundExceptions("Email already in use: " + request.email());
         }
@@ -69,6 +71,8 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     @Override
     @Transactional
     public UserManagementResponse updateUser(UUID userId, UserManagementRequest request) {
+        validatePasswordForUpdate(request.password());
+
         User user = getUser(userId);
         if (userRepository.existsByEmailAndIdNot(request.email().trim().toLowerCase(), userId)) {
             throw new DuplicateValueFoundExceptions("Email already in use: " + request.email());
@@ -332,6 +336,26 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     private String generateOrderNumber() {
         return "ORD-" + Instant.now().toEpochMilli() + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private void validatePasswordForCreate(String rawPassword) {
+        if (rawPassword == null || rawPassword.isBlank()) {
+            throw new IllegalArgumentException("Password is required");
+        }
+        validatePasswordLength(rawPassword);
+    }
+
+    private void validatePasswordForUpdate(String rawPassword) {
+        if (rawPassword == null || rawPassword.isBlank()) {
+            return;
+        }
+        validatePasswordLength(rawPassword);
+    }
+
+    private void validatePasswordLength(String rawPassword) {
+        if (rawPassword.length() < 8) {
+            throw new IllegalArgumentException("Password must be at least 8 characters long");
+        }
     }
 
     private User getUser(UUID userId) {

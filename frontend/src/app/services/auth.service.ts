@@ -257,6 +257,7 @@ export class AuthService {
   private normalizeRole(rawRole: unknown): UserRole {
     const role = String(rawRole ?? '').replace(/^ROLE_/, '').toUpperCase();
     if (role === UserRole.ADMIN) return UserRole.ADMIN;
+    if (role === UserRole.SUPER_ADMIN) return UserRole.SUPER_ADMIN;
     if (role === UserRole.VENDOR) return UserRole.VENDOR;
     return UserRole.USER;
   }

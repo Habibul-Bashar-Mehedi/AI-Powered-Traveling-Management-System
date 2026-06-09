@@ -29,36 +29,36 @@ export class Dashboard implements OnInit, OnDestroy {
   // ─── Stats ───────────────────────────────────────────────────────
   stats = [
     { label: 'Trips Booked', value: '24', icon: '✈️', trend: '+3 this month', color: 'cyan' },
-    { label: 'Countries Visited', value: '11', icon: '🌍', trend: '+2 this year', color: 'violet' },
-    { label: 'Total Spent', value: '৳2.4L', icon: '💳', trend: '↑ 12% vs last yr', color: 'amber' },
+    { label: 'Countries Visited', value: '11', icon: '', trend: '+2 this year', color: 'violet' },
+    { label: 'Total Spent', value: '৳2.4L', icon: '', trend: '↑ 12% vs last yr', color: 'amber' },
     { label: 'Reward Points', value: '8,420', icon: '⭐', trend: '340 pts expiring', color: 'rose' },
   ];
 
   // ─── Slides ──────────────────────────────────────────────────────
   slides = [
     {
-      title: 'Welcome Back, Aryan 👋',
+      title: 'Welcome Back, Aryan ',
       subtitle: 'Your next adventure is just one booking away.',
       img: 'https://cdn-icons-png.flaticon.com/512/201/201623.png',
       accentClass: 'slide-theme-blue',
       tag: 'Dashboard',
     },
     {
-      title: 'New Destinations 🌍',
+      title: 'New Destinations ',
       subtitle: 'Explore 40+ trending travel spots added this week.',
       img: 'https://cdn-icons-png.flaticon.com/512/854/854878.png',
       accentClass: 'slide-theme-cyan',
       tag: 'Explore',
     },
     {
-      title: 'Flash Sale — 30% Off 💰',
+      title: 'Flash Sale — 30% Off ',
       subtitle: 'Limited time offers on international packages.',
       img: 'https://cdn-icons-png.flaticon.com/512/2910/2910791.png',
       accentClass: 'slide-theme-amber',
       tag: 'Offers',
     },
     {
-      title: 'Your Itinerary 🗓️',
+      title: 'Your Itinerary ️',
       subtitle: 'Cox\'s Bazar trip starts in 5 days. All confirmed!',
       img: 'https://cdn-icons-png.flaticon.com/512/854/854878.png',
       accentClass: 'slide-theme-violet',
@@ -137,9 +137,9 @@ export class Dashboard implements OnInit, OnDestroy {
   navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '⊞' },
     { id: 'trips', label: 'My Trips', icon: '✈️' },
-    { id: 'explore', label: 'Explore', icon: '🧭' },
-    { id: 'offers', label: 'Offers', icon: '🏷️' },
-    { id: 'profile', label: 'Profile', icon: '👤' },
+    { id: 'explore', label: 'Explore', icon: '' },
+    { id: 'offers', label: 'Offers', icon: '️' },
+    { id: 'profile', label: 'Profile', icon: '' },
   ];
 
   // ─── Slider ───────────────────────────────────────────────────────
@@ -190,7 +190,7 @@ export class Dashboard implements OnInit, OnDestroy {
     if (this.showChatbot && this.messages.length === 0) {
       this.messages.push({
         sender: 'bot',
-        text: `Hello Aryan! 👋 I'm your AI Travel Assistant. I can help you plan trips, find deals, suggest destinations, or build custom itineraries. What would you like to explore today?`,
+        text: `Hello Aryan!  I'm your AI Travel Assistant. I can help you plan trips, find deals, suggest destinations, or build custom itineraries. What would you like to explore today?`,
         timestamp: new Date(),
       });
     }
@@ -247,7 +247,7 @@ export class Dashboard implements OnInit, OnDestroy {
       if (isPlatformBrowser(this.platformId)) localStorage.removeItem('chatHist');
       this.messages.push({
         sender: 'bot',
-        text: '🗑️ Chat cleared. Ready to help you plan your next adventure!',
+        text: '️ Chat cleared. Ready to help you plan your next adventure!',
         timestamp: new Date(),
       });
       this.cdr.detectChanges();

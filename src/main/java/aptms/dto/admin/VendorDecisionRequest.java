@@ -7,4 +7,3 @@ public record VendorDecisionRequest(
         @NotBlank @Size(max = 1000) String reason
 ) {
 }
-
