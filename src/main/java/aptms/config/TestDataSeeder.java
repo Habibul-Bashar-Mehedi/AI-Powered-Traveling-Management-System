@@ -2,12 +2,18 @@ package aptms.config;
 
 import aptms.entities.User;
 import aptms.entities.Vendor;
+import aptms.entities.VendorService;
+import aptms.enums.BookingMode;
+import aptms.enums.PayoutMethod;
+import aptms.enums.PricingUnit;
+import aptms.enums.ServiceStatus;
+import aptms.enums.ServiceType;
 import aptms.enums.UserRole;
 import aptms.enums.VendorStatus;
 import aptms.enums.VendorType;
-import aptms.enums.PayoutMethod;
 import aptms.repositories.UserRepository;
 import aptms.repositories.VendorRepository;
+import aptms.repositories.VendorServiceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
@@ -40,6 +46,7 @@ public class TestDataSeeder implements CommandLineRunner {
 
     private final UserRepository    userRepository;
     private final VendorRepository  vendorRepository;
+    private final VendorServiceRepository vendorServiceRepository;
     private final PasswordEncoder   passwordEncoder;
 
     @Override
@@ -48,12 +55,21 @@ public class TestDataSeeder implements CommandLineRunner {
         seedAdmin();
         seedRegularUser();
         seedVendorUser();
+        // Always ensure services exist, even if vendor was seeded in a prior run
+        seedVendorServicesForExistingVendor();
         log.info("─────────────────────────────────────────────────────");
         log.info("  TEST ACCOUNTS READY");
         log.info("  VENDOR : vendor@test.com  /  Vendor@123");
         log.info("  ADMIN  : admin@test.com   /  Admin@123");
         log.info("  USER   : user@test.com    /  User@1234");
         log.info("─────────────────────────────────────────────────────");
+    }
+
+    /** Idempotent: seeds services for the test vendor regardless of when the vendor was created. */
+    private void seedVendorServicesForExistingVendor() {
+        userRepository.findByEmail("vendor@test.com").ifPresent(vendorUser ->
+            vendorRepository.findByUserId(vendorUser.getId()).ifPresent(this::seedVendorServices)
+        );
     }
 
     // ── Admin ────────────────────────────────────────────────────────────────
@@ -129,7 +145,67 @@ public class TestDataSeeder implements CommandLineRunner {
         vendor.setIsEmailVerified(true);
         vendorRepository.save(vendor);
 
+        // 3. Seed active vendor services so user dashboard requests work immediately
+        seedVendorServices(vendor);
+
         log.info("Seeded VENDOR : vendor@test.com  (profile: '{}')", vendor.getBusinessName());
+    }
+
+    // ── Vendor Services ───────────────────────────────────────────────────────
+
+    private void seedVendorServices(Vendor vendor) {
+        if (!vendorServiceRepository.findByVendorVendorId(vendor.getVendorId()).isEmpty()) return;
+
+        // Hotel Room service — covers "Hotel Booking" dashboard action
+        VendorService hotel = new VendorService();
+        hotel.setVendor(vendor);
+        hotel.setServiceName("Standard Hotel Room");
+        hotel.setServiceType(ServiceType.HOTEL_ROOM);
+        hotel.setDescription("Comfortable hotel room with all modern amenities in Dhaka city center.");
+        hotel.setBasePrice(new BigDecimal("3500.00"));
+        hotel.setCurrencyCode("BDT");
+        hotel.setPricingUnit(PricingUnit.PER_NIGHT);
+        hotel.setMaxCapacity(2);
+        hotel.setBookingMode(BookingMode.MANUAL);
+        hotel.setStatus(ServiceStatus.ACTIVE);
+        hotel.setCancellationPolicy("Free cancellation up to 24 hours before check-in.");
+        hotel.setLocationAddress("12 Gulshan Avenue, Dhaka, BD");
+        vendorServiceRepository.save(hotel);
+
+        // Tour Package service — covers "Explore Tourist Places" & "Order Traditional Food & Items"
+        VendorService tour = new VendorService();
+        tour.setVendor(vendor);
+        tour.setServiceName("Bangladesh Heritage Tour Package");
+        tour.setServiceType(ServiceType.TOUR_PACKAGE);
+        tour.setDescription("Guided cultural tour through Dhaka's heritage sites, local markets, and traditional food spots.");
+        tour.setBasePrice(new BigDecimal("5000.00"));
+        tour.setCurrencyCode("BDT");
+        tour.setPricingUnit(PricingUnit.PER_PERSON);
+        tour.setMaxCapacity(10);
+        tour.setBookingMode(BookingMode.MANUAL);
+        tour.setStatus(ServiceStatus.ACTIVE);
+        tour.setCancellationPolicy("Free cancellation up to 48 hours before the tour date.");
+        tour.setLocationAddress("Dhaka, Bangladesh");
+        tour.setIsFeatured(true);
+        vendorServiceRepository.save(tour);
+
+        // Transport service
+        VendorService transport = new VendorService();
+        transport.setVendor(vendor);
+        transport.setServiceName("Airport Pickup & Drop-off");
+        transport.setServiceType(ServiceType.TRANSPORT_ROUTE);
+        transport.setDescription("Reliable AC vehicle airport transfer service across Dhaka.");
+        transport.setBasePrice(new BigDecimal("1200.00"));
+        transport.setCurrencyCode("BDT");
+        transport.setPricingUnit(PricingUnit.PER_TRIP);
+        transport.setMaxCapacity(4);
+        transport.setBookingMode(BookingMode.MANUAL);
+        transport.setStatus(ServiceStatus.ACTIVE);
+        transport.setCancellationPolicy("Cancel at least 2 hours before pickup.");
+        transport.setLocationAddress("Hazrat Shahjalal International Airport, Dhaka");
+        vendorServiceRepository.save(transport);
+
+        log.info("Seeded 3 active VendorServices for vendor '{}'", vendor.getBusinessName());
     }
 }
 

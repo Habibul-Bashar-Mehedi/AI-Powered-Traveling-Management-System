@@ -81,6 +81,35 @@
       }
     </section>
 
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Book Instantly</h2>
+        <p class="section-sub">Submit requests directly to available vendors</p>
+      </div>
+    </div>
+
+    <section class="dest-grid">
+      @for (action of quickActions; track action.label) {
+        <div class="dest-card">
+          <div class="dest-body">
+            <div class="dest-top">
+              <h3 class="dest-name">{{ action.label }}</h3>
+              <p class="dest-desc">One click creates a booking request for vendor response.</p>
+            </div>
+            <button class="dest-btn" [disabled]="actionLoading[action.label]" (click)="onQuickActionClick(action)">
+              {{ actionLoading[action.label] ? 'Submitting...' : 'Book Now' }}
+            </button>
+            @if (actionMessage[action.label]) {
+              <p class="dest-desc">{{ actionMessage[action.label] }}</p>
+            }
+            @if (actionError[action.label]) {
+              <p class="dest-desc">{{ actionError[action.label] }}</p>
+            }
+          </div>
+        </div>
+      }
+    </section>
+
     <!-- SECTION HEADER -->
     <div class="section-header">
       <div>
@@ -148,9 +177,16 @@
         </div>
 
         <!-- BUTTON ALWAYS BOTTOM -->
-        <button class="dest-btn">
+        <button class="dest-btn" [disabled]="actionLoading[dest.name]" (click)="onDestinationAction(dest)">
           {{ dest.type === 'tour' ? 'Book Now' : 'Discover' }}
         </button>
+
+        @if (actionMessage[dest.name]) {
+          <p class="dest-desc">{{ actionMessage[dest.name] }}</p>
+        }
+        @if (actionError[dest.name]) {
+          <p class="dest-desc">{{ actionError[dest.name] }}</p>
+        }
 
       </div>
     </div>

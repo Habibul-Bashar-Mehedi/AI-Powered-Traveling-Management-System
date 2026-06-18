@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class FeatureFlagServiceImpl implements FeatureFlagService {
     
-    @Value("${app.security.jwt.enabled:false}")
+    @Value("${app.security.jwt.enabled:true}")
     private boolean jwtEnabled;
     
     /**

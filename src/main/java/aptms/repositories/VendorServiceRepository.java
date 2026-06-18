@@ -2,6 +2,7 @@ package aptms.repositories;
 
 import aptms.entities.VendorService;
 import aptms.enums.ServiceStatus;
+import aptms.enums.ServiceType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,6 +18,13 @@ public interface VendorServiceRepository extends JpaRepository<VendorService, UU
     List<VendorService> findByVendorVendorIdAndStatus(UUID vendorId, ServiceStatus status);
 
     Optional<VendorService> findByServiceIdAndVendorVendorId(UUID serviceId, UUID vendorId);
+
+    Optional<VendorService> findFirstByServiceTypeAndStatusOrderByUpdatedAtDesc(
+            ServiceType serviceType, ServiceStatus status);
+
+    Optional<VendorService> findFirstByStatusOrderByUpdatedAtDesc(ServiceStatus status);
+
+    Optional<VendorService> findFirstByVendorVendorIdAndServiceType(UUID vendorId, ServiceType serviceType);
 
     long countByVendorVendorIdAndStatus(UUID vendorId, ServiceStatus status);
 }

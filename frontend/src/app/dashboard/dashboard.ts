@@ -2,6 +2,12 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, Inject, PLATFORM_ID } 
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
+import {
+  UserServiceRequestPayload,
+  UserServiceRequestType,
+  VendorBookingService
+} from '../services/vendor-booking.service';
+import { VendorBooking } from '../models/vendor.model';
 
 @Component({
   selector: 'app-dashboard',
@@ -13,8 +19,42 @@ import { HttpClientModule } from '@angular/common/http';
 export class Dashboard implements OnInit, OnDestroy {
   constructor(
     private cdr: ChangeDetectorRef,
+    private vendorBookingService: VendorBookingService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
+
+  quickActions: Array<{ label: string; requestType: UserServiceRequestType; note: string }> = [
+    {
+      label: 'Hotel Booking',
+      requestType: 'HOTEL_BOOKING',
+      note: 'Need a hotel room booking from dashboard.'
+    },
+    {
+      label: 'Explore Tourist Places',
+      requestType: 'EXPLORE_TOURIST_PLACES',
+      note: 'Need guided support for exploring tourist places.'
+    },
+    {
+      label: 'Order Traditional Food & Items',
+      requestType: 'ORDER_TRADITIONAL_FOOD_ITEMS',
+      note: 'Need traditional food and item order assistance.'
+    }
+  ];
+
+  actionLoading: Record<string, boolean> = {};
+  actionMessage: Record<string, string> = {};
+  actionError: Record<string, string> = {};
+
+  // ─── Eid Pass ─────────────────────────────────────────────────────
+  eidPassLoading = false;
+  eidPassMessage = '';
+  eidPassError = '';
+  eidPassBooked = false;
+
+  // ─── My Bookings ──────────────────────────────────────────────────
+  myBookings: VendorBooking[] = [];
+  myBookingsLoading = false;
+  showMyBookings = false;
 
   // ─── User Profile ───────────────────────────────────────────────
   user = {
@@ -149,6 +189,7 @@ export class Dashboard implements OnInit, OnDestroy {
   ngOnInit() {
     this.startAutoSlide();
     this.loadChatHistory();
+    this.loadMyBookings();
   }
 
   ngOnDestroy() {
@@ -289,5 +330,97 @@ export class Dashboard implements OnInit, OnDestroy {
 
   getStars(rating: number): string[] {
     return Array.from({ length: 5 }, (_, i) => (i < Math.floor(rating) ? '★' : '☆'));
+  }
+
+  onQuickActionClick(action: { label: string; requestType: UserServiceRequestType; note: string }): void {
+    this.submitServiceRequest(action.requestType, action.label, action.note);
+  }
+
+  onDestinationAction(dest: any): void {
+    if (dest.type === 'tour') {
+      this.submitServiceRequest('EXPLORE_TOURIST_PLACES', dest.name, `Tour request for ${dest.name}`);
+      return;
+    }
+    this.submitServiceRequest('ORDER_TRADITIONAL_FOOD_ITEMS', dest.name, `Special request for ${dest.name}`);
+  }
+
+  // ─── Eid Pass ──────────────────────────────────────────────────
+  claimEidPass(): void {
+    this.eidPassLoading = true;
+    this.eidPassMessage = '';
+    this.eidPassError = '';
+    const payload: UserServiceRequestPayload = {
+      requestType: 'EXPLORE_TOURIST_PLACES',
+      title: '🌙 Eid Special Pass',
+      quantity: 1,
+      specialRequests: 'EID_SPECIAL_PASS | 30% Eid discount applied. Request for Eid ul-Adha 2026 travel package.'
+    };
+    this.vendorBookingService.createUserServiceRequest(payload).subscribe({
+      next: () => {
+        this.eidPassLoading = false;
+        this.eidPassBooked = true;
+        this.eidPassMessage = '🎉 Your Eid Pass has been issued! The vendor will confirm your special Eid package shortly.';
+        this.loadMyBookings();
+      },
+      error: (err) => {
+        this.eidPassLoading = false;
+        this.eidPassError = err?.error?.message || 'Could not claim Eid Pass. Please try again.';
+      }
+    });
+  }
+
+  // ─── My Bookings ───────────────────────────────────────────────
+  loadMyBookings(): void {
+    this.myBookingsLoading = true;
+    this.vendorBookingService.getMyBookings().subscribe({
+      next: (bookings) => {
+        this.myBookings = bookings;
+        this.myBookingsLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.myBookingsLoading = false; }
+    });
+  }
+
+  toggleMyBookings(): void {
+    this.showMyBookings = !this.showMyBookings;
+    if (this.showMyBookings && this.myBookings.length === 0) {
+      this.loadMyBookings();
+    }
+  }
+
+  bookingStatusClass(status: string): string {
+    switch (status) {
+      case 'CONFIRMED':  return 'badge-confirmed';
+      case 'PENDING':    return 'badge-pending';
+      case 'COMPLETED':  return 'badge-completed';
+      case 'CANCELLED':  return 'badge-cancelled';
+      case 'REJECTED':   return 'badge-rejected';
+      default:           return 'badge-pending';
+    }
+  }
+
+  private submitServiceRequest(requestType: UserServiceRequestType, key: string, note: string): void {
+    const payload: UserServiceRequestPayload = {
+      requestType,
+      title: key,
+      quantity: 1,
+      specialRequests: note
+    };
+
+    this.actionLoading[key] = true;
+    this.actionMessage[key] = '';
+    this.actionError[key] = '';
+
+    this.vendorBookingService.createUserServiceRequest(payload).subscribe({
+      next: () => {
+        this.actionLoading[key] = false;
+        this.actionMessage[key] = 'Request sent. Vendor will review and respond from the vendor dashboard.';
+      },
+      error: (err) => {
+        this.actionLoading[key] = false;
+        this.actionError[key] = err?.error?.message || 'Could not submit request right now.';
+      }
+    });
   }
 }

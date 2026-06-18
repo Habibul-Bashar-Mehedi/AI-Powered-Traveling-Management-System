@@ -6,6 +6,18 @@ import { API_ENDPOINTS } from '../constants/api-endpoints';
 import { VendorBooking } from '../models/vendor.model';
 import { VendorBookingStatus } from '../enums/vendor.enums';
 
+export type UserServiceRequestType =
+  | 'HOTEL_BOOKING'
+  | 'EXPLORE_TOURIST_PLACES'
+  | 'ORDER_TRADITIONAL_FOOD_ITEMS';
+
+export interface UserServiceRequestPayload {
+  requestType: UserServiceRequestType;
+  title?: string;
+  quantity?: number;
+  specialRequests?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class VendorBookingService {
   private base = environment.apiUrl;
@@ -32,6 +44,14 @@ export class VendorBookingService {
 
   cancelBooking(id: string, reason: string): Observable<VendorBooking> {
     return this.http.post<VendorBooking>(`${this.base}${API_ENDPOINTS.VENDOR.BOOKING_CANCEL(id)}`, { reason });
+  }
+
+  createUserServiceRequest(payload: UserServiceRequestPayload): Observable<VendorBooking> {
+    return this.http.post<VendorBooking>(`${this.base}${API_ENDPOINTS.USER.SERVICE_REQUESTS}`, payload);
+  }
+
+  getMyBookings(): Observable<VendorBooking[]> {
+    return this.http.get<VendorBooking[]>(`${this.base}${API_ENDPOINTS.USER.MY_BOOKINGS}`);
   }
 }
 

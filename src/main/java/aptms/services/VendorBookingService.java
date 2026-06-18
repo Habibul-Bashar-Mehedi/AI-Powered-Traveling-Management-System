@@ -6,9 +6,6 @@ import aptms.enums.VendorBookingStatus;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Service interface for vendor booking lifecycle management.
- */
 public interface VendorBookingService {
 
     List<VendorBookingDTO> getBookings(UUID userId, VendorBookingStatus status);
@@ -20,5 +17,8 @@ public interface VendorBookingService {
     VendorBookingDTO rejectBooking(UUID userId, UUID bookingId, String reason);
 
     VendorBookingDTO cancelBooking(UUID userId, UUID bookingId, String reason);
+
+    /** Returns all bookings placed by a traveller (user-facing, not vendor-scoped). */
+    List<VendorBookingDTO> getUserBookings(UUID userId);
 }
 

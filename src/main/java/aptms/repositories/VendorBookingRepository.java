@@ -4,6 +4,7 @@ import aptms.entities.VendorBooking;
 import aptms.enums.VendorBookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -30,5 +31,17 @@ public interface VendorBookingRepository extends JpaRepository<VendorBooking, UU
     List<VendorBooking> findBookingsToComplete();
 
     List<VendorBooking> findByVendorVendorIdAndCreatedAtBetween(UUID vendorId, Instant from, Instant to);
+
+    /** Returns all bookings submitted by a specific user, newest first — eagerly fetches vendor+service+user. */
+    @Query("""
+        SELECT b FROM VendorBooking b
+        JOIN FETCH b.vendor v
+        JOIN FETCH v.user vu
+        JOIN FETCH b.service s
+        JOIN FETCH b.user u
+        WHERE b.user.id = :userId
+        ORDER BY b.createdAt DESC
+    """)
+    List<VendorBooking> findByUserIdWithDetailsOrderByCreatedAtDesc(@Param("userId") UUID userId);
 }
 

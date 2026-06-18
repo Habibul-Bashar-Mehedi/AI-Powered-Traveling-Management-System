@@ -54,6 +54,10 @@ export const API_ENDPOINTS = {
     WALLET_PAYOUT: '/v1/vendor/wallet/payout',
     ANALYTICS_SUMMARY: '/v1/vendor/analytics/summary',
   },
+  USER: {
+    SERVICE_REQUESTS: '/v1/user/service-requests',
+    MY_BOOKINGS: '/v1/user/service-requests',
+  },
   ADMIN_VENDOR: {
     ALL: '/v1/admin/vendors',
     PENDING: '/v1/admin/vendors/pending',

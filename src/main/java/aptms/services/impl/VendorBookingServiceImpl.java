@@ -107,6 +107,16 @@ public class VendorBookingServiceImpl implements VendorBookingService {
         return toDTO(bookingRepository.save(booking));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<VendorBookingDTO> getUserBookings(UUID userId) {
+        return bookingRepository
+                .findByUserIdWithDetailsOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     private Vendor getVendorByUserId(UUID userId) {
         return vendorRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Vendor not found for user: " + userId));
