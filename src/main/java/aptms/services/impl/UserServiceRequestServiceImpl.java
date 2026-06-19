@@ -1,5 +1,6 @@
 package aptms.services.impl;
 
+import aptms.dto.vendor.UserBookingStatusSummaryDTO;
 import aptms.dto.vendor.UserServiceRequestDTO;
 import aptms.dto.vendor.VendorBookingDTO;
 import aptms.entities.User;
@@ -9,6 +10,7 @@ import aptms.entities.VendorService;
 import aptms.enums.ServiceStatus;
 import aptms.enums.ServiceType;
 import aptms.enums.UserServiceRequestType;
+import aptms.enums.VendorBookingStatus;
 import aptms.exceptions.IdNotFoundException;
 import aptms.repositories.UserRepository;
 import aptms.repositories.VendorBookingRepository;
@@ -22,9 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -73,13 +75,38 @@ public class UserServiceRequestServiceImpl implements UserServiceRequestService 
         booking.setSpecialRequests(note);
 
         VendorBooking saved = vendorBookingRepository.save(booking);
-        return vendorBookingService.getBookingDetail(vendor.getUser().getId(), saved.getBookingId());
+        return vendorBookingService.mapBookingForUser(saved, user);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<VendorBookingDTO> getMyBookings(UUID userId) {
-        return vendorBookingService.getUserBookings(userId);
+    public List<VendorBookingDTO> getMyBookings(UUID userId, VendorBookingStatus status) {
+        return vendorBookingService.getUserBookings(userId, status);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserBookingStatusSummaryDTO getMyBookingStatusSummary(UUID userId) {
+        UserBookingStatusSummaryDTO summary = new UserBookingStatusSummaryDTO();
+        EnumMap<VendorBookingStatus, Long> counts = new EnumMap<>(VendorBookingStatus.class);
+        long total = 0L;
+
+        for (Object[] row : vendorBookingRepository.countByUserIdGroupByStatus(userId)) {
+            VendorBookingStatus status = (VendorBookingStatus) row[0];
+            long count = ((Number) row[1]).longValue();
+            counts.put(status, count);
+            total += count;
+        }
+
+        summary.setCounts(counts);
+        summary.setTotal(total);
+        return summary;
+    }
+
+    @Override
+    @Transactional
+    public VendorBookingDTO cancelMyBooking(UUID userId, UUID bookingId, String reason) {
+        return vendorBookingService.cancelUserBooking(userId, bookingId, reason);
     }
 
     private VendorService resolveService(UserServiceRequestType requestType) {
@@ -95,7 +122,3 @@ public class UserServiceRequestServiceImpl implements UserServiceRequestService 
                         "No active vendor service found. Ask a vendor to publish an ACTIVE service first."));
     }
 }
-
-
-
-

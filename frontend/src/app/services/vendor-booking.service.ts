@@ -18,6 +18,11 @@ export interface UserServiceRequestPayload {
   specialRequests?: string;
 }
 
+export interface UserBookingStatusSummary {
+  total: number;
+  counts: Partial<Record<VendorBookingStatus, number>>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class VendorBookingService {
   private base = environment.apiUrl;
@@ -50,8 +55,22 @@ export class VendorBookingService {
     return this.http.post<VendorBooking>(`${this.base}${API_ENDPOINTS.USER.SERVICE_REQUESTS}`, payload);
   }
 
-  getMyBookings(): Observable<VendorBooking[]> {
-    return this.http.get<VendorBooking[]>(`${this.base}${API_ENDPOINTS.USER.MY_BOOKINGS}`);
+  getMyBookings(status?: VendorBookingStatus): Observable<VendorBooking[]> {
+    let params = new HttpParams();
+    if (status) params = params.set('status', status);
+    return this.http.get<VendorBooking[]>(`${this.base}${API_ENDPOINTS.USER.MY_BOOKINGS}`, { params });
+  }
+
+  getMyBookingStatusSummary(): Observable<UserBookingStatusSummary> {
+    return this.http.get<UserBookingStatusSummary>(
+      `${this.base}${API_ENDPOINTS.USER.MY_BOOKINGS_STATUS_SUMMARY}`
+    );
+  }
+
+  cancelMyBooking(id: string, reason: string): Observable<VendorBooking> {
+    return this.http.post<VendorBooking>(
+      `${this.base}${API_ENDPOINTS.USER.MY_BOOKING_CANCEL(id)}`,
+      { reason }
+    );
   }
 }
-

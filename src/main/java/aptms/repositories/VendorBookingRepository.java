@@ -15,10 +15,25 @@ import java.util.UUID;
 @Repository
 public interface VendorBookingRepository extends JpaRepository<VendorBooking, UUID> {
 
-    List<VendorBooking> findByVendorVendorIdOrderByCreatedAtDesc(UUID vendorId);
+    @Query("""
+        SELECT b FROM VendorBooking b
+        JOIN FETCH b.service s
+        JOIN FETCH b.user u
+        WHERE b.vendor.vendorId = :vendorId
+        ORDER BY b.createdAt DESC
+    """)
+    List<VendorBooking> findByVendorVendorIdWithDetailsOrderByCreatedAtDesc(@Param("vendorId") UUID vendorId);
 
-    List<VendorBooking> findByVendorVendorIdAndBookingStatusOrderByCreatedAtDesc(
-            UUID vendorId, VendorBookingStatus status);
+    @Query("""
+        SELECT b FROM VendorBooking b
+        JOIN FETCH b.service s
+        JOIN FETCH b.user u
+        WHERE b.vendor.vendorId = :vendorId AND b.bookingStatus = :status
+        ORDER BY b.createdAt DESC
+    """)
+    List<VendorBooking> findByVendorVendorIdAndStatusWithDetailsOrderByCreatedAtDesc(
+            @Param("vendorId") UUID vendorId,
+            @Param("status") VendorBookingStatus status);
 
     Optional<VendorBooking> findByBookingIdAndVendorVendorId(UUID bookingId, UUID vendorId);
 
@@ -30,18 +45,47 @@ public interface VendorBookingRepository extends JpaRepository<VendorBooking, UU
     @Query("SELECT b FROM VendorBooking b WHERE b.bookingStatus = 'CONFIRMED' AND b.completedAt IS NULL AND b.endDate < CURRENT_DATE")
     List<VendorBooking> findBookingsToComplete();
 
-    List<VendorBooking> findByVendorVendorIdAndCreatedAtBetween(UUID vendorId, Instant from, Instant to);
-
-    /** Returns all bookings submitted by a specific user, newest first — eagerly fetches vendor+service+user. */
     @Query("""
         SELECT b FROM VendorBooking b
         JOIN FETCH b.vendor v
-        JOIN FETCH v.user vu
+        WHERE b.bookingStatus = 'COMPLETED'
+          AND b.completedAt IS NOT NULL
+          AND b.completedAt < :cutoff
+          AND b.netAmount > 0
+    """)
+    List<VendorBooking> findSettleableBookings(@Param("cutoff") Instant cutoff);
+
+    List<VendorBooking> findByVendorVendorIdAndCreatedAtBetween(UUID vendorId, Instant from, Instant to);
+
+    /** User dashboard: service + vendor only (user row is known from auth context). */
+    @Query("""
+        SELECT b FROM VendorBooking b
         JOIN FETCH b.service s
-        JOIN FETCH b.user u
+        JOIN FETCH b.vendor v
         WHERE b.user.id = :userId
         ORDER BY b.createdAt DESC
     """)
     List<VendorBooking> findByUserIdWithDetailsOrderByCreatedAtDesc(@Param("userId") UUID userId);
+
+    @Query("""
+        SELECT b FROM VendorBooking b
+        JOIN FETCH b.service s
+        JOIN FETCH b.vendor v
+        WHERE b.user.id = :userId AND b.bookingStatus = :status
+        ORDER BY b.createdAt DESC
+    """)
+    List<VendorBooking> findByUserIdAndStatusWithDetailsOrderByCreatedAtDesc(
+            @Param("userId") UUID userId,
+            @Param("status") VendorBookingStatus status);
+
+    @Query("""
+        SELECT b.bookingStatus, COUNT(b)
+        FROM VendorBooking b
+        WHERE b.user.id = :userId
+        GROUP BY b.bookingStatus
+    """)
+    List<Object[]> countByUserIdGroupByStatus(@Param("userId") UUID userId);
+
+    Optional<VendorBooking> findByBookingIdAndUserId(UUID bookingId, UUID userId);
 }
 

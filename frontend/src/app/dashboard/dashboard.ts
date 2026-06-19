@@ -5,14 +5,17 @@ import { HttpClientModule } from '@angular/common/http';
 import {
   UserServiceRequestPayload,
   UserServiceRequestType,
+  UserBookingStatusSummary,
   VendorBookingService
 } from '../services/vendor-booking.service';
 import { VendorBooking } from '../models/vendor.model';
+import { VendorBookingStatus } from '../enums/vendor.enums';
+import { FooterComponent } from '../shared/app-footer/app-footer';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FormsModule, HttpClientModule, CommonModule],
+  imports: [FormsModule, HttpClientModule, CommonModule, FooterComponent],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css'],
 })
@@ -55,6 +58,12 @@ export class Dashboard implements OnInit, OnDestroy {
   myBookings: VendorBooking[] = [];
   myBookingsLoading = false;
   showMyBookings = false;
+  bookingStatusFilter: VendorBookingStatus | '' = '';
+  bookingStatusSummary: UserBookingStatusSummary | null = null;
+  bookingCancelLoading: string | null = null;
+  bookingStatusOptions = Object.values(VendorBookingStatus);
+  private bookingsPollId?: ReturnType<typeof setInterval>;
+  private readonly bookingsPollMs = 15000;
 
   // ─── User Profile ───────────────────────────────────────────────
   user = {
@@ -189,11 +198,14 @@ export class Dashboard implements OnInit, OnDestroy {
   ngOnInit() {
     this.startAutoSlide();
     this.loadChatHistory();
-    this.loadMyBookings();
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadBookingStatusSummary();
+    }
   }
 
   ngOnDestroy() {
     if (this.intervalId) clearInterval(this.intervalId);
+    this.stopBookingsPolling();
   }
 
   startAutoSlide() {
@@ -360,7 +372,8 @@ export class Dashboard implements OnInit, OnDestroy {
         this.eidPassLoading = false;
         this.eidPassBooked = true;
         this.eidPassMessage = '🎉 Your Eid Pass has been issued! The vendor will confirm your special Eid package shortly.';
-        this.loadMyBookings();
+        this.showMyBookings = true;
+        this.refreshBookingsAfterMutation();
       },
       error: (err) => {
         this.eidPassLoading = false;
@@ -370,33 +383,130 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   // ─── My Bookings ───────────────────────────────────────────────
-  loadMyBookings(): void {
-    this.myBookingsLoading = true;
-    this.vendorBookingService.getMyBookings().subscribe({
+  loadBookingStatusSummary(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    this.vendorBookingService.getMyBookingStatusSummary().subscribe({
+      next: (summary) => {
+        this.bookingStatusSummary = summary;
+        this.user.notifications = summary.counts?.PENDING ?? 0;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  loadMyBookings(silent = false): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    if (!silent) {
+      this.myBookingsLoading = true;
+      this.cdr.detectChanges();
+    }
+    const status = this.bookingStatusFilter
+      ? (this.bookingStatusFilter as VendorBookingStatus)
+      : undefined;
+
+    this.vendorBookingService.getMyBookings(status).subscribe({
       next: (bookings) => {
         this.myBookings = bookings;
         this.myBookingsLoading = false;
         this.cdr.detectChanges();
       },
-      error: () => { this.myBookingsLoading = false; }
+      error: () => {
+        this.myBookingsLoading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
   toggleMyBookings(): void {
     this.showMyBookings = !this.showMyBookings;
-    if (this.showMyBookings && this.myBookings.length === 0) {
+    this.cdr.detectChanges();
+    if (this.showMyBookings) {
       this.loadMyBookings();
+      this.startBookingsPolling();
+      return;
     }
+    this.stopBookingsPolling();
+  }
+
+  onBookingStatusFilterChange(): void {
+    this.loadMyBookings();
+  }
+
+  onStatusChipClick(status: VendorBookingStatus): void {
+    this.bookingStatusFilter = this.bookingStatusFilter === status ? '' : status;
+    this.showMyBookings = true;
+    this.cdr.detectChanges();
+    this.loadMyBookings();
+    if (!this.bookingsPollId) {
+      this.startBookingsPolling();
+    }
+  }
+
+  statusCount(status: VendorBookingStatus): number {
+    return this.bookingStatusSummary?.counts?.[status] ?? 0;
+  }
+
+  canCancelBooking(status: VendorBookingStatus): boolean {
+    return status === VendorBookingStatus.PENDING || status === VendorBookingStatus.CONFIRMED;
+  }
+
+  cancelMyBooking(booking: VendorBooking): void {
+    const reason = 'Cancelled from user dashboard';
+    this.bookingCancelLoading = booking.bookingId;
+    this.vendorBookingService.cancelMyBooking(booking.bookingId, reason).subscribe({
+      next: () => {
+        this.bookingCancelLoading = null;
+        this.refreshBookingsAfterMutation();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.bookingCancelLoading = null;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  bookingStatusLabel(status: string): string {
+    return status.charAt(0) + status.slice(1).toLowerCase();
   }
 
   bookingStatusClass(status: string): string {
     switch (status) {
-      case 'CONFIRMED':  return 'badge-confirmed';
-      case 'PENDING':    return 'badge-pending';
-      case 'COMPLETED':  return 'badge-completed';
-      case 'CANCELLED':  return 'badge-cancelled';
-      case 'REJECTED':   return 'badge-rejected';
+      case VendorBookingStatus.CONFIRMED:  return 'badge-confirmed';
+      case VendorBookingStatus.PENDING:    return 'badge-pending';
+      case VendorBookingStatus.COMPLETED:  return 'badge-completed';
+      case VendorBookingStatus.CANCELLED:  return 'badge-cancelled';
+      case VendorBookingStatus.REJECTED:   return 'badge-rejected';
       default:           return 'badge-pending';
+    }
+  }
+
+  refreshBookings(): void {
+    this.refreshBookingsAfterMutation();
+  }
+
+  private refreshBookingsAfterMutation(): void {
+    this.loadBookingStatusSummary();
+    if (this.showMyBookings) {
+      this.loadMyBookings(true);
+    }
+  }
+
+  private startBookingsPolling(): void {
+    this.stopBookingsPolling();
+    if (!isPlatformBrowser(this.platformId)) return;
+    this.bookingsPollId = setInterval(() => {
+      if (this.showMyBookings) {
+        this.loadMyBookings(true);
+        this.loadBookingStatusSummary();
+      }
+    }, this.bookingsPollMs);
+  }
+
+  private stopBookingsPolling(): void {
+    if (this.bookingsPollId) {
+      clearInterval(this.bookingsPollId);
+      this.bookingsPollId = undefined;
     }
   }
 
@@ -416,10 +526,17 @@ export class Dashboard implements OnInit, OnDestroy {
       next: () => {
         this.actionLoading[key] = false;
         this.actionMessage[key] = 'Request sent. Vendor will review and respond from the vendor dashboard.';
+        this.showMyBookings = true;
+        this.refreshBookingsAfterMutation();
+        if (!this.bookingsPollId) {
+          this.startBookingsPolling();
+        }
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.actionLoading[key] = false;
         this.actionError[key] = err?.error?.message || 'Could not submit request right now.';
+        this.cdr.detectChanges();
       }
     });
   }

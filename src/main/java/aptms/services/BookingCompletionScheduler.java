@@ -68,12 +68,7 @@ public class BookingCompletionScheduler {
     public void settleWalletEarnings() {
         Instant cutoff = Instant.now().minus(48, ChronoUnit.HOURS);
 
-        List<VendorBooking> settleableBookings = bookingRepository.findAll().stream()
-                .filter(b -> b.getBookingStatus() == VendorBookingStatus.COMPLETED
-                        && b.getCompletedAt() != null
-                        && b.getCompletedAt().isBefore(cutoff)
-                        && b.getNetAmount() != null
-                        && b.getNetAmount().compareTo(BigDecimal.ZERO) > 0)
+        List<VendorBooking> settleableBookings = bookingRepository.findSettleableBookings(cutoff).stream()
                 .filter(b -> !hasWalletCreditForBooking(b))
                 .toList();
 

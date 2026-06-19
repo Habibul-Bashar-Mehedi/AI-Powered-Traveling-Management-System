@@ -81,6 +81,99 @@
       }
     </section>
 
+    <!-- MY BOOKINGS -->
+    <section class="my-bookings-section">
+      <div class="section-header my-bookings-header">
+        <div>
+          <h2 class="section-title">My Vendor Requests</h2>
+          <p class="section-sub">Track pending, confirmed, completed, rejected, and cancelled bookings</p>
+        </div>
+        <button class="view-all-btn" (click)="toggleMyBookings()">
+          {{ showMyBookings ? 'Hide' : 'View' }} Bookings →
+        </button>
+      </div>
+
+      @if (bookingStatusSummary) {
+        <div class="booking-status-strip">
+          @for (status of bookingStatusOptions; track status) {
+            <button
+              type="button"
+              class="booking-status-chip"
+              [class.booking-status-chip-active]="bookingStatusFilter === status"
+              (click)="onStatusChipClick(status)">
+              <span class="booking-status-chip-label">{{ bookingStatusLabel(status) }}</span>
+              <span class="booking-status-chip-count">{{ statusCount(status) }}</span>
+            </button>
+          }
+        </div>
+      }
+
+      @if (showMyBookings) {
+        <div class="my-bookings-panel">
+          <div class="my-bookings-toolbar">
+            <label class="booking-filter-label" for="bookingStatusFilter">Filter by status</label>
+            <select
+              id="bookingStatusFilter"
+              class="booking-filter-select"
+              [(ngModel)]="bookingStatusFilter"
+              (change)="onBookingStatusFilterChange()">
+              <option value="">All statuses</option>
+              @for (status of bookingStatusOptions; track status) {
+                <option [value]="status">{{ bookingStatusLabel(status) }}</option>
+              }
+            </select>
+            <button class="booking-refresh-btn" type="button" (click)="refreshBookings()">
+              Refresh
+            </button>
+          </div>
+
+          @if (myBookingsLoading) {
+            <p class="bookings-loading">Loading your bookings…</p>
+          } @else if (myBookings.length === 0) {
+            <p class="bookings-empty">No bookings yet. Use Book Instantly to send a request to vendors.</p>
+          } @else {
+            <div class="bookings-list">
+              @for (booking of myBookings; track booking.bookingId) {
+                <article class="booking-card">
+                  <div class="booking-card-main">
+                    <h3 class="booking-service">{{ booking.serviceName }}</h3>
+                    <p class="booking-meta">
+                      {{ booking.startDate }}
+                      @if (booking.endDate) {
+                        <span> → {{ booking.endDate }}</span>
+                      }
+                      · Qty {{ booking.quantity }}
+                    </p>
+                    @if (booking.specialRequests) {
+                      <p class="booking-note">{{ booking.specialRequests }}</p>
+                    }
+                    @if (booking.cancellationReason) {
+                      <p class="booking-cancel-reason">Reason: {{ booking.cancellationReason }}</p>
+                    }
+                  </div>
+                  <div class="booking-card-side">
+                    <span class="status-badge" [class]="bookingStatusClass(booking.bookingStatus)">
+                      {{ bookingStatusLabel(booking.bookingStatus) }}
+                    </span>
+                    <div class="booking-amount">৳{{ booking.grossAmount | number:'1.0-0' }}</div>
+                    @if (canCancelBooking(booking.bookingStatus)) {
+                      <button
+                        type="button"
+                        class="booking-cancel-btn"
+                        [disabled]="bookingCancelLoading === booking.bookingId"
+                        (click)="cancelMyBooking(booking)">
+                        {{ bookingCancelLoading === booking.bookingId ? 'Cancelling…' : 'Cancel' }}
+                      </button>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          }
+        </div>
+      }
+    </section>
+
     <div class="section-header">
       <div>
         <h2 class="section-title">Book Instantly</h2>
@@ -283,3 +376,5 @@
     <span class="fab-pulse"></span>
   }
 </button>
+
+

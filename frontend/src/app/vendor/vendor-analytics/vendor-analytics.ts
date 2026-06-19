@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VendorAnalyticsService } from '../../services/vendor-analytics.service';
 import { AnalyticsSummary } from '../../models/vendor.model';
@@ -13,26 +13,44 @@ import { AnalyticsSummary } from '../../models/vendor.model';
 })
 export class VendorAnalytics implements OnInit {
   summary: AnalyticsSummary | null = null;
-  loading = true;
+  loading = false;
   fromDate = '';
   toDate = '';
   error = '';
 
-  constructor(private analyticsService: VendorAnalyticsService) {}
+  constructor(
+    private analyticsService: VendorAnalyticsService,
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   ngOnInit(): void {
-    // Default: this month
     const now = new Date();
     this.fromDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
     this.toDate = now.toISOString().split('T')[0];
+    if (!isPlatformBrowser(this.platformId)) return;
     this.load();
+  }
+
+  private applyViewState(update: () => void): void {
+    setTimeout(() => {
+      update();
+      this.cdr.markForCheck();
+    }, 0);
   }
 
   load(): void {
     this.loading = true;
+    this.error = '';
     this.analyticsService.getSummary(this.fromDate, this.toDate).subscribe({
-      next: (s) => { this.summary = s; this.loading = false; },
-      error: (err) => { this.error = 'Failed to load analytics'; this.loading = false; }
+      next: (s) => this.applyViewState(() => {
+        this.summary = s;
+        this.loading = false;
+      }),
+      error: () => this.applyViewState(() => {
+        this.error = 'Failed to load analytics';
+        this.loading = false;
+      })
     });
   }
 

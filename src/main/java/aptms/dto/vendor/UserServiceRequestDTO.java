@@ -27,4 +27,3 @@ public class UserServiceRequestDTO {
     @Size(max = 1000)
     private String specialRequests;
 }
-

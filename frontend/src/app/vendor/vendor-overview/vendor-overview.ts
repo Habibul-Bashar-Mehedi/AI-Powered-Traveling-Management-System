@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError, defaultIfEmpty } from 'rxjs/operators';
 import { VendorService } from '../../services/vendor.service';
 import { VendorWalletService } from '../../services/vendor-wallet.service';
 import { VendorAnalyticsService } from '../../services/vendor-analytics.service';
@@ -17,25 +19,63 @@ export class VendorOverview implements OnInit {
   vendor: VendorProfile | null = null;
   wallet: WalletSummary | null = null;
   analytics: AnalyticsSummary | null = null;
-  loading = true;
+  loading = false;
 
   constructor(
     private vendorService: VendorService,
     private walletService: VendorWalletService,
     private analyticsService: VendorAnalyticsService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit(): void {
-    this.vendorService.getProfile().subscribe({ next: (v) => { this.vendor = v; } });
-    this.walletService.getWalletSummary().subscribe({ next: (w) => { this.wallet = w; } });
+    if (!isPlatformBrowser(this.platformId)) return;
+    this.loadOverview();
+  }
+
+  private applyViewState(update: () => void): void {
+    setTimeout(() => {
+      update();
+      this.cdr.markForCheck();
+    });
+  }
+
+  private loadOverview(): void {
+    this.loading = true;
 
     const now = new Date();
     const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
     const to = now.toISOString().split('T')[0];
-    this.analyticsService.getSummary(from, to).subscribe({
-      next: (a) => { this.analytics = a; this.loading = false; },
-      error: () => { this.loading = false; }
+
+    forkJoin({
+      vendor: this.vendorService.getProfile().pipe(
+        defaultIfEmpty(null as VendorProfile | null),
+        catchError(() => of(null as VendorProfile | null))
+      ),
+      wallet: this.walletService.getWalletSummary().pipe(
+        defaultIfEmpty(null as WalletSummary | null),
+        catchError(() => of(null as WalletSummary | null))
+      ),
+      analytics: this.analyticsService.getSummary(from, to).pipe(
+        defaultIfEmpty(null as AnalyticsSummary | null),
+        catchError(() => of(null as AnalyticsSummary | null))
+      ),
+    }).subscribe({
+      next: ({ vendor, wallet, analytics }: {
+        vendor: VendorProfile | null;
+        wallet: WalletSummary | null;
+        analytics: AnalyticsSummary | null;
+      }) => this.applyViewState(() => {
+        this.vendor = vendor;
+        this.wallet = wallet;
+        this.analytics = analytics;
+        this.loading = false;
+      }),
+      error: () => this.applyViewState(() => {
+        this.loading = false;
+      }),
     });
   }
 

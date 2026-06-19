@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VendorBookingService } from '../../services/vendor-booking.service';
 import { VendorBooking } from '../../models/vendor.model';
@@ -14,7 +14,7 @@ import { VendorBookingStatus } from '../../enums/vendor.enums';
 })
 export class VendorBookings implements OnInit {
   bookings: VendorBooking[] = [];
-  loading = true;
+  loading = false;
   selectedStatus: VendorBookingStatus | '' = '';
   actionLoading: string | null = null;
   rejectReason = '';
@@ -23,16 +23,35 @@ export class VendorBookings implements OnInit {
 
   statuses = ['', ...Object.values(VendorBookingStatus)];
 
-  constructor(private bookingService: VendorBookingService) {}
+  constructor(
+    private bookingService: VendorBookingService,
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    this.load();
+  }
+
+  private applyViewState(update: () => void): void {
+    setTimeout(() => {
+      update();
+      this.cdr.markForCheck();
+    });
+  }
 
   load(): void {
     this.loading = true;
     const status = this.selectedStatus ? this.selectedStatus as VendorBookingStatus : undefined;
     this.bookingService.getBookings(status).subscribe({
-      next: (b) => { this.bookings = b; this.loading = false; },
-      error: () => { this.loading = false; }
+      next: (b) => this.applyViewState(() => {
+        this.bookings = b;
+        this.loading = false;
+      }),
+      error: () => this.applyViewState(() => {
+        this.loading = false;
+      })
     });
   }
 
@@ -41,8 +60,13 @@ export class VendorBookings implements OnInit {
   confirm(id: string): void {
     this.actionLoading = id;
     this.bookingService.confirmBooking(id).subscribe({
-      next: () => { this.actionLoading = null; this.load(); },
-      error: () => { this.actionLoading = null; }
+      next: () => this.applyViewState(() => {
+        this.actionLoading = null;
+        this.load();
+      }),
+      error: () => this.applyViewState(() => {
+        this.actionLoading = null;
+      })
     });
   }
 
@@ -52,8 +76,14 @@ export class VendorBookings implements OnInit {
     if (!this.rejectingId) return;
     this.actionLoading = this.rejectingId;
     this.bookingService.rejectBooking(this.rejectingId, this.rejectReason).subscribe({
-      next: () => { this.actionLoading = null; this.rejectingId = null; this.load(); },
-      error: () => { this.actionLoading = null; }
+      next: () => this.applyViewState(() => {
+        this.actionLoading = null;
+        this.rejectingId = null;
+        this.load();
+      }),
+      error: () => this.applyViewState(() => {
+        this.actionLoading = null;
+      })
     });
   }
 

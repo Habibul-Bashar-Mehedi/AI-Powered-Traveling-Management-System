@@ -10,21 +10,21 @@
   --brand-amber:   #f59e0b;
   --brand-rose:    #f43f5e;
 
-  /* ── Surfaces ── */
-  --bg-root:     #060c16;
-  --bg-card:     #0c1828;
-  --bg-card-2:   #0f1d30;
-  --bg-elevated: #122038;
+  /* ── Surfaces (LIGHT THEME) ── */
+  --bg-root:     #f9fafb;
+  --bg-card:     #ffffff;
+  --bg-card-2:   #f3f4f6;
+  --bg-elevated: #e5e7eb;
 
-  /* ── Borders ── */
-  --border:       rgba(255,255,255,0.06);
-  --border-md:    rgba(255,255,255,0.09);
+  /* ── Borders (LIGHT THEME) ── */
+  --border:       #e5e7eb;
+  --border-md:    #d1d5db;
   --border-brand: rgba(59,130,246,0.3);
 
-  /* ── Text ── */
-  --text-primary: #dde6f5;
-  --text-sec:     #7a96bc;
-  --text-muted:   #3a5272;
+  /* ── Text (LIGHT THEME) ── */
+  --text-primary: #111827;
+  --text-sec:     #6b7280;
+  --text-muted:   #9ca3af;
 
   /* ── Fonts ── */
   --font-display: 'Plus Jakarta Sans', sans-serif;
@@ -49,16 +49,13 @@
 }
 
 /* ═══════════════════════════════════
-   MAIN CONTENT
+   MAIN CONTENT (LIGHT THEME)
 ═══════════════════════════════════ */
 .main-content {
   flex: 1;
   padding: 32px 40px 48px;
   min-height: calc(100vh - 64px);
-  background:
-    radial-gradient(ellipse 70% 55% at 90% -5%, rgba(59,130,246,.07) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 30% at 5% 100%, rgba(139,92,246,.05) 0%, transparent 50%),
-    var(--bg-root);
+  background: var(--bg-root);
 }
 
 /* Header */
@@ -89,10 +86,7 @@
   font-size: 30px; font-weight: 700;
   letter-spacing: -0.6px;
   margin: 0 0 7px;
-  background: linear-gradient(135deg, #e2eeff 0%, #8ab0d8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
 
 .content-subtitle {
@@ -185,7 +179,7 @@
   width: 40px; height: 40px;
   border-radius: 11px;
   border: 1px solid var(--border-md);
-  background: rgba(255,255,255,0.025);
+  background: var(--bg-card-2);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
@@ -251,7 +245,7 @@
   background: linear-gradient(
     90deg,
     var(--bg-card) 25%,
-    var(--bg-elevated) 50%,
+    var(--bg-card-2) 50%,
     var(--bg-card) 75%
   );
   background-size: 200% 100%;
@@ -274,7 +268,7 @@
   background: linear-gradient(
     90deg,
     var(--bg-card) 25%,
-    var(--bg-elevated) 50%,
+    var(--bg-card-2) 50%,
     var(--bg-card) 75%
   );
   background-size: 200% 100%;

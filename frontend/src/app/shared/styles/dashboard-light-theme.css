@@ -1,0 +1,45 @@
+/* Shared light design tokens for User, Vendor, and Admin dashboards */
+
+:root,
+:host {
+  --bg-root: #f9fafb;
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-2: #f3f4f6;
+  --bg-card-hover: #f3f4f6;
+  --bg-input: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-overlay: rgba(15, 23, 42, 0.45);
+
+  --border: #e5e7eb;
+  --border-md: #d1d5db;
+  --border-hover: #d1d5db;
+  --border-glow: rgba(79, 70, 229, 0.25);
+  --border-brand: rgba(79, 70, 229, 0.2);
+
+  --blue: #4f46e5;
+  --blue-dk: #4338ca;
+  --blue-light: #6366f1;
+  --brand-blue: #4f46e5;
+  --brand-blue-dk: #4338ca;
+  --brand-cyan: #06b6d4;
+  --brand-violet: #7c3aed;
+  --brand-emerald: #10b981;
+  --brand-amber: #f59e0b;
+  --brand-rose: #f43f5e;
+  --cyan: #06b6d4;
+  --violet: #7c3aed;
+  --indigo: #6366f1;
+  --amber: #f59e0b;
+  --rose: #f43f5e;
+  --emerald: #10b981;
+  --teal: #14b8a6;
+  --sky: #0ea5e9;
+
+  --text-primary: #111827;
+  --text-sec: #6b7280;
+  --text-muted: #9ca3af;
+
+  --shadow-card: 0 4px 24px rgba(15, 23, 42, 0.06);
+  --shadow-glow: 0 0 24px rgba(79, 70, 229, 0.1);
+}

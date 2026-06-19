@@ -57,6 +57,8 @@ export const API_ENDPOINTS = {
   USER: {
     SERVICE_REQUESTS: '/v1/user/service-requests',
     MY_BOOKINGS: '/v1/user/service-requests',
+    MY_BOOKINGS_STATUS_SUMMARY: '/v1/user/service-requests/status-summary',
+    MY_BOOKING_CANCEL: (id: string) => `/v1/user/service-requests/${id}/cancel`,
   },
   ADMIN_VENDOR: {
     ALL: '/v1/admin/vendors',

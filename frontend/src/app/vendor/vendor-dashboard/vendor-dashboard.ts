@@ -5,11 +5,12 @@ import { filter, Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { VendorService } from '../../services/vendor.service';
 import { VendorProfile } from '../../models/vendor.model';
+import { FooterComponent } from '../../shared/app-footer/app-footer';
 
 @Component({
   selector: 'app-vendor-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, RouterOutlet],
+  imports: [CommonModule, RouterModule, RouterOutlet, FooterComponent],
   templateUrl: './vendor-dashboard.html',
   styleUrls: ['./vendor-dashboard.css']
 })

@@ -6,13 +6,14 @@ import { VendorProfile, PayoutRequest } from '../../models/vendor.model';
 import { VendorStatus } from '../../enums/vendor.enums';
 import { AuthService } from '../../services/auth.service';
 import { Router, RouterLink } from '@angular/router';
+import { FooterComponent } from '../../shared/app-footer/app-footer';
 
 type TabId = 'pending' | 'all' | 'payouts';
 
 @Component({
   selector: 'app-vendor-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, FooterComponent],
   templateUrl: './vendor-management.html',
   styleUrls: ['./vendor-management.css']
 })

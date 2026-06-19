@@ -1,6 +1,8 @@
 package aptms.services;
 
 import aptms.dto.vendor.VendorBookingDTO;
+import aptms.entities.User;
+import aptms.entities.VendorBooking;
 import aptms.enums.VendorBookingStatus;
 
 import java.util.List;
@@ -19,6 +21,10 @@ public interface VendorBookingService {
     VendorBookingDTO cancelBooking(UUID userId, UUID bookingId, String reason);
 
     /** Returns all bookings placed by a traveller (user-facing, not vendor-scoped). */
-    List<VendorBookingDTO> getUserBookings(UUID userId);
+    List<VendorBookingDTO> getUserBookings(UUID userId, VendorBookingStatus status);
+
+    VendorBookingDTO cancelUserBooking(UUID userId, UUID bookingId, String reason);
+
+    VendorBookingDTO mapBookingForUser(VendorBooking booking, User user);
 }
 

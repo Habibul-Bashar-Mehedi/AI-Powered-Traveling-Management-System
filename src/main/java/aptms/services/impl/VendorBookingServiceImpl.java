@@ -1,10 +1,12 @@
 package aptms.services.impl;
 
 import aptms.dto.vendor.VendorBookingDTO;
+import aptms.entities.User;
 import aptms.entities.Vendor;
 import aptms.entities.VendorBooking;
 import aptms.enums.CancelledBy;
 import aptms.enums.VendorBookingStatus;
+import aptms.repositories.UserRepository;
 import aptms.repositories.VendorBookingRepository;
 import aptms.repositories.VendorRepository;
 import aptms.services.VendorBookingService;
@@ -25,14 +27,16 @@ public class VendorBookingServiceImpl implements VendorBookingService {
 
     private final VendorBookingRepository bookingRepository;
     private final VendorRepository vendorRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional(readOnly = true)
     public List<VendorBookingDTO> getBookings(UUID userId, VendorBookingStatus status) {
         Vendor vendor = getVendorByUserId(userId);
         List<VendorBooking> bookings = status == null
-                ? bookingRepository.findByVendorVendorIdOrderByCreatedAtDesc(vendor.getVendorId())
-                : bookingRepository.findByVendorVendorIdAndBookingStatusOrderByCreatedAtDesc(vendor.getVendorId(), status);
+                ? bookingRepository.findByVendorVendorIdWithDetailsOrderByCreatedAtDesc(vendor.getVendorId())
+                : bookingRepository.findByVendorVendorIdAndStatusWithDetailsOrderByCreatedAtDesc(
+                        vendor.getVendorId(), status);
         return bookings.stream().map(this::toDTO).collect(Collectors.toList());
     }
 
@@ -109,12 +113,50 @@ public class VendorBookingServiceImpl implements VendorBookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<VendorBookingDTO> getUserBookings(UUID userId) {
-        return bookingRepository
-                .findByUserIdWithDetailsOrderByCreatedAtDesc(userId)
-                .stream()
-                .map(this::toDTO)
+    public List<VendorBookingDTO> getUserBookings(UUID userId, VendorBookingStatus status) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        List<VendorBooking> bookings = status == null
+                ? bookingRepository.findByUserIdWithDetailsOrderByCreatedAtDesc(userId)
+                : bookingRepository.findByUserIdAndStatusWithDetailsOrderByCreatedAtDesc(userId, status);
+
+        return bookings.stream()
+                .map(booking -> toUserDTO(booking, user))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public VendorBookingDTO cancelUserBooking(UUID userId, UUID bookingId, String reason) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        VendorBooking booking = bookingRepository.findByBookingIdAndUserId(bookingId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking not found: " + bookingId));
+
+        if (booking.getBookingStatus() != VendorBookingStatus.PENDING
+                && booking.getBookingStatus() != VendorBookingStatus.CONFIRMED) {
+            throw new IllegalStateException("Booking cannot be cancelled in its current state");
+        }
+
+        if (booking.getBookingStatus() == VendorBookingStatus.CONFIRMED) {
+            Vendor vendor = booking.getVendor();
+            vendor.setPendingBalance(vendor.getPendingBalance().subtract(booking.getNetAmount()));
+            vendorRepository.save(vendor);
+        }
+
+        booking.setBookingStatus(VendorBookingStatus.CANCELLED);
+        booking.setCancellationReason(reason);
+        booking.setCancelledBy(CancelledBy.USER);
+
+        log.info("Booking {} cancelled by user {}", bookingId, userId);
+        return toUserDTO(bookingRepository.save(booking), user);
+    }
+
+    @Override
+    public VendorBookingDTO mapBookingForUser(VendorBooking booking, User user) {
+        return toUserDTO(booking, user);
     }
 
     private Vendor getVendorByUserId(UUID userId) {
@@ -128,14 +170,18 @@ public class VendorBookingServiceImpl implements VendorBookingService {
     }
 
     public VendorBookingDTO toDTO(VendorBooking b) {
+        return toUserDTO(b, b.getUser());
+    }
+
+    public VendorBookingDTO toUserDTO(VendorBooking b, User user) {
         VendorBookingDTO dto = new VendorBookingDTO();
         dto.setBookingId(b.getBookingId());
         dto.setServiceId(b.getService() != null ? b.getService().getServiceId() : null);
         dto.setServiceName(b.getService() != null ? b.getService().getServiceName() : null);
         dto.setVendorId(b.getVendor() != null ? b.getVendor().getVendorId() : null);
-        dto.setUserId(b.getUser() != null ? b.getUser().getId() : null);
-        dto.setUserName(b.getUser() != null ? b.getUser().getUsername() : null);
-        dto.setUserEmail(b.getUser() != null ? b.getUser().getEmail() : null);
+        dto.setUserId(user != null ? user.getId() : null);
+        dto.setUserName(user != null ? user.getUsername() : null);
+        dto.setUserEmail(user != null ? user.getEmail() : null);
         dto.setBookingStatus(b.getBookingStatus());
         dto.setStartDate(b.getStartDate());
         dto.setEndDate(b.getEndDate());
