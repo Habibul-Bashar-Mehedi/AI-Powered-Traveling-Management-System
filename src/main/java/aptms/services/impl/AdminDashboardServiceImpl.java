@@ -11,16 +11,13 @@ import aptms.enums.UserRole;
 import aptms.enums.VendorStatus;
 import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
-import aptms.repositories.AdminOrderRepository;
-import aptms.repositories.ProductRepository;
-import aptms.repositories.SystemSettingRepository;
-import aptms.repositories.UserRepository;
-import aptms.repositories.VendorRepository;
+import aptms.repositories.*;
 import aptms.repositories.projections.OrderAnalyticsProjection;
 import aptms.repositories.projections.VendorAnalyticsProjection;
 import aptms.repositories.spec.AdminSpecifications;
 import aptms.services.AdminDashboardService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,6 +31,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     private final UserRepository userRepository;
@@ -42,6 +40,10 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     private final SystemSettingRepository systemSettingRepository;
     private final VendorRepository vendorRepository;
     private final PasswordEncoder passwordEncoder;
+    
+    // Additional repositories for soft delete token cleanup
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final TokenBlacklistRepository tokenBlacklistRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -93,7 +95,35 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     @Transactional
     public void deleteUser(UUID userId) {
         User user = getUser(userId);
-        userRepository.delete(user);
+        
+        // SOFT DELETE APPROACH
+        // Instead of hard deleting the user (which causes FK constraint violations),
+        // we mark the user as deleted by setting deletedAt timestamp.
+        // This preserves referential integrity while effectively removing the user from active use.
+        
+        log.info("Soft deleting user: {} ({})", userId, user.getEmail());
+        
+        // Set deleted timestamp
+        user.setDeletedAt(Instant.now());
+        
+        // Modify email to free it up for potential re-registration
+        // Append ".deleted.UUID" to make it unique and non-usable
+        String originalEmail = user.getEmail();
+        user.setEmail(originalEmail + ".deleted." + userId.toString());
+        
+        // Optionally revoke all JWT tokens for this user
+        try {
+            refreshTokenRepository.deleteByUserId(userId);
+            tokenBlacklistRepository.deleteByUserId(userId);
+        } catch (Exception e) {
+            log.warn("Could not revoke tokens for user {}: {}", userId, e.getMessage());
+            // Continue with soft delete even if token revocation fails
+        }
+        
+        // Save the user with deletedAt timestamp
+        userRepository.save(user);
+        
+        log.info("User soft deleted successfully: {} (original email: {})", userId, originalEmail);
     }
 
     @Override

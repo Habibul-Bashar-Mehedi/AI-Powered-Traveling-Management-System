@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repository for managing blacklisted tokens.
@@ -24,6 +25,16 @@ public interface TokenBlacklistRepository extends JpaRepository<TokenBlacklist, 
      * @return optional containing the blacklist entry if found
      */
     Optional<TokenBlacklist> findByJti(String jti);
+    
+    /**
+     * Delete all blacklist entries for a specific user.
+     * Used during user deletion to clean up associated tokens.
+     * 
+     * @param userId the user's UUID
+     */
+    @Modifying
+    @Query("DELETE FROM TokenBlacklist tb WHERE tb.user.id = :userId")
+    void deleteByUserId(@Param("userId") UUID userId);
     
     /**
      * Delete all blacklist entries that have expired.

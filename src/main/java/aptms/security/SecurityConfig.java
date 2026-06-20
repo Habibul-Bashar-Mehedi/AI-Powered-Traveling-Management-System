@@ -75,6 +75,12 @@ public class SecurityConfig {
             // Disable CSRF (not needed for stateless JWT authentication)
             .csrf(AbstractHttpConfigurer::disable)
             
+            // Disable form login (prevents 302 redirects to /login)
+            .formLogin(AbstractHttpConfigurer::disable)
+            
+            // Disable HTTP Basic (not needed for REST API with JWT)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            
             // Configure CORS
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
             
@@ -91,20 +97,24 @@ public class SecurityConfig {
             
             // Configure authorization rules
             .authorizeHttpRequests(auth -> auth
-                // Always allow preflight requests
+                // Always allow preflight requests FIRST
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                // Public endpoints (no authentication required)
+                
+                // Public endpoints (no authentication required) - MUST be before anyRequest()
                 // AuthController is mapped to /api/auth — these are the real paths.
-                // The /api/v1/auth/* and bare /auth/* variants are kept for forward-compat.
+                // Using both exact paths and wildcard patterns for maximum compatibility
                 .requestMatchers(
-                    // Actual controller paths  (AuthController @RequestMapping("/api/auth"))
+                    // Actual controller paths (AuthController @RequestMapping("/api/auth"))
+                    "/api/auth/**",
                     "/api/auth/login",
                     "/api/auth/register",
                     "/api/auth/refresh",
                     // Legacy / alternate prefixes kept for safety
+                    "/api/v1/auth/**",
                     "/api/v1/auth/login",
                     "/api/v1/auth/register",
                     "/api/v1/auth/refresh",
+                    "/auth/**",
                     "/auth/login",
                     "/auth/register",
                     "/auth/refresh",
@@ -112,6 +122,7 @@ public class SecurityConfig {
                     "/actuator/**",
                     "/error"
                 ).permitAll()
+                
                 // Vendor registration requires any authenticated user (not yet VENDOR role)
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/vendor/register").authenticated()
                 .requestMatchers("/api/v1/vendor/**").hasRole("VENDOR")

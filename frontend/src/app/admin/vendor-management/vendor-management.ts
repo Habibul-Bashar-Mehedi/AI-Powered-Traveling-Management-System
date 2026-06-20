@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminVendorService } from '../../services/admin-vendor.service';
@@ -40,7 +40,8 @@ export class VendorManagement implements OnInit {
   constructor(
     private adminVendorService: AdminVendorService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -82,18 +83,42 @@ export class VendorManagement implements OnInit {
 
     if (tab === 'pending') {
       this.adminVendorService.getPendingVendors().subscribe({
-        next: (v) => { this.vendors = v; this.loading = false; },
-        error: () => { this.error = 'Failed to load pending vendors'; this.loading = false; }
+        next: (v) => {
+          this.vendors = v || [];
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.error = err?.error?.message || 'Failed to load pending vendors';
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
       });
     } else if (tab === 'all') {
       this.adminVendorService.getAllVendors().subscribe({
-        next: (v) => { this.vendors = v; this.loading = false; },
-        error: () => { this.error = 'Failed to load vendors'; this.loading = false; }
+        next: (v) => {
+          this.vendors = v || [];
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.error = err?.error?.message || 'Failed to load vendors';
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
       });
     } else if (tab === 'payouts') {
       this.adminVendorService.getPendingPayouts().subscribe({
-        next: (p) => { this.payouts = p; this.loading = false; },
-        error: () => { this.error = 'Failed to load payouts'; this.loading = false; }
+        next: (p) => {
+          this.payouts = p || [];
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.error = err?.error?.message || 'Failed to load payouts';
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
       });
     }
   }
@@ -101,8 +126,15 @@ export class VendorManagement implements OnInit {
   approve(id: string): void {
     this.actionLoading = id;
     this.adminVendorService.approveVendor(id).subscribe({
-      next: () => { this.actionLoading = null; this.loadTab(this.activeTab); },
-      error: (err) => { this.error = err?.error?.message || 'Approval failed'; this.actionLoading = null; }
+      next: () => { 
+        this.actionLoading = null; 
+        this.loadTab(this.activeTab);
+      },
+      error: (err) => { 
+        this.error = err?.error?.message || 'Approval failed'; 
+        this.actionLoading = null;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -137,16 +169,30 @@ export class VendorManagement implements OnInit {
       : this.adminVendorService.suspendVendor(id, reason);
 
     obs.subscribe({
-      next: () => { this.actionLoading = null; this.loadTab(this.activeTab); },
-      error: (err) => { this.error = err?.error?.message || 'Action failed'; this.actionLoading = null; }
+      next: () => { 
+        this.actionLoading = null; 
+        this.loadTab(this.activeTab);
+      },
+      error: (err) => { 
+        this.error = err?.error?.message || 'Action failed'; 
+        this.actionLoading = null;
+        this.cdr.detectChanges();
+      }
     });
   }
 
   reinstate(id: string): void {
     this.actionLoading = id;
     this.adminVendorService.reinstateVendor(id).subscribe({
-      next: () => { this.actionLoading = null; this.loadTab(this.activeTab); },
-      error: (err) => { this.error = err?.error?.message || 'Reinstate failed'; this.actionLoading = null; }
+      next: () => { 
+        this.actionLoading = null; 
+        this.loadTab(this.activeTab);
+      },
+      error: (err) => { 
+        this.error = err?.error?.message || 'Reinstate failed'; 
+        this.actionLoading = null;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -171,8 +217,15 @@ export class VendorManagement implements OnInit {
     this.closePayoutModal();
 
     this.adminVendorService.processPayout(id, approve, note).subscribe({
-      next: () => { this.actionLoading = null; this.loadTab('payouts'); },
-      error: (err) => { this.error = err?.error?.message || 'Payout processing failed'; this.actionLoading = null; }
+      next: () => { 
+        this.actionLoading = null; 
+        this.loadTab('payouts');
+      },
+      error: (err) => { 
+        this.error = err?.error?.message || 'Payout processing failed'; 
+        this.actionLoading = null;
+        this.cdr.detectChanges();
+      }
     });
   }
 

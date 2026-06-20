@@ -4,6 +4,9 @@ import aptms.entities.VendorService;
 import aptms.enums.ServiceStatus;
 import aptms.enums.ServiceType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -27,5 +30,9 @@ public interface VendorServiceRepository extends JpaRepository<VendorService, UU
     Optional<VendorService> findFirstByVendorVendorIdAndServiceType(UUID vendorId, ServiceType serviceType);
 
     long countByVendorVendorIdAndStatus(UUID vendorId, ServiceStatus status);
+    
+    @Modifying
+    @Query("DELETE FROM VendorService vs WHERE vs.vendor.vendorId = :vendorId")
+    void deleteByVendorId(@Param("vendorId") UUID vendorId);
 }
 

@@ -151,10 +151,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String ipAddress = getClientIpAddress();
         String userAgent = getUserAgent();
         
-        // Find user by email
-        User user = userRepository.findByEmail(request.getEmail())
+        // Find user by email (only active users)
+        User user = userRepository.findActiveByEmail(request.getEmail())
             .orElseThrow(() -> {
-                logger.warn("Login failed: user not found: {}", request.getEmail());
+                logger.warn("Login failed: user not found or deleted: {}", request.getEmail());
                 eventLogger.logLoginFailure(request.getEmail(), ipAddress, userAgent, "Invalid credentials");
                 metricsService.recordFailedLogin(request.getEmail(), "user_not_found");
                 return new InvalidException(INVALID_CREDENTIALS_MESSAGE);

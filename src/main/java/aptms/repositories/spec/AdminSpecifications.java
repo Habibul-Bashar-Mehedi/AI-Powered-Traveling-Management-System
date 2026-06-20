@@ -19,6 +19,10 @@ public final class AdminSpecifications {
     public static Specification<User> users(String search, UserRole role) {
         return (root, query, cb) -> {
             var predicates = cb.conjunction();
+            
+            // Always filter out soft-deleted users
+            predicates = cb.and(predicates, cb.isNull(root.get("deletedAt")));
+            
             if (search != null && !search.isBlank()) {
                 String keyword = "%" + search.trim().toLowerCase() + "%";
                 predicates = cb.and(predicates, cb.or(

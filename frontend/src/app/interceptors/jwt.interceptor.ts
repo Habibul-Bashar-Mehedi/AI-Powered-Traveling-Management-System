@@ -1,6 +1,6 @@
 import { Injectable, Injector } from '@angular/core';
 import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, BehaviorSubject, EMPTY } from 'rxjs';
+import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError, filter, take, switchMap } from 'rxjs/operators';
 import { TokenStorageService } from '../services/token-storage.service';
 import { AuthService } from '../services/auth.service';
@@ -101,11 +101,17 @@ export class JwtInterceptor implements HttpInterceptor {
           if (!response?.accessToken) {
             this.isRefreshing = false;
 
-            // End queued retries and clear local auth state without throwing hard errors.
+            // End queued retries and clear local auth state
             this.refreshTokenSubject.complete();
             this.refreshTokenSubject = new BehaviorSubject<string | null>(null);
             this.authService.logout().subscribe();
-            return EMPTY;
+            
+            // Throw error so component error handlers execute
+            return throwError(() => new HttpErrorResponse({
+              error: { message: 'Authentication failed. Please log in again.' },
+              status: 401,
+              statusText: 'Unauthorized'
+            }));
           }
 
           this.isRefreshing = false;
@@ -117,13 +123,19 @@ export class JwtInterceptor implements HttpInterceptor {
         catchError(error => {
           this.isRefreshing = false;
 
-          // End queued retries and clear local auth state without bubbling uncaught exceptions.
+          // End queued retries and clear local auth state
           this.refreshTokenSubject.complete();
           this.refreshTokenSubject = new BehaviorSubject<string | null>(null);
           this.authService.logout().subscribe();
 
           console.error('Refresh flow failed:', error);
-          return EMPTY;
+          
+          // Throw error so component error handlers execute
+          return throwError(() => new HttpErrorResponse({
+            error: { message: 'Session expired. Please log in again.' },
+            status: 401,
+            statusText: 'Unauthorized'
+          }));
         })
       );
     } else {
@@ -134,7 +146,7 @@ export class JwtInterceptor implements HttpInterceptor {
         switchMap(token => {
           return next.handle(this.addToken(request, token!));
         }),
-        catchError(() => EMPTY)
+        catchError((error) => throwError(() => error))
       );
     }
   }

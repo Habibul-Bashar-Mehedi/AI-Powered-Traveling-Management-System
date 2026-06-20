@@ -26,7 +26,7 @@
         placeholder="Search by username or email"
         (keyup.enter)="loadUsers(true)"
       />
-      <select [(ngModel)]="roleFilter" (change)="loadUsers(true)">
+      <select [(ngModel)]="roleFilter" (ngModelChange)="onRoleFilterChange()">
         <option value="">All Roles</option>
         <option *ngFor="let role of roleOptions" [ngValue]="role">{{ roleLabels[role] }}</option>
       </select>

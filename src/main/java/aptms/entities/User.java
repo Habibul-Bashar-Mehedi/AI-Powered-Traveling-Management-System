@@ -62,6 +62,14 @@ public class User {
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
     
+    /**
+     * Timestamp when the user was soft-deleted.
+     * Null if the user is active.
+     * Used for soft delete to maintain referential integrity while marking users as deleted.
+     */
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+    
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
     

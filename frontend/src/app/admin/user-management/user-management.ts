@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -16,7 +16,7 @@ import { UserRole, UserRoleLabels } from '../../enums/user-role.enum';
 })
 export class UserManagement implements OnInit {
   users: AdminUser[] = [];
-  loading = true;
+  loading = false;
   saving = false;
   deletingId: string | null = null;
   error = '';
@@ -39,7 +39,8 @@ export class UserManagement implements OnInit {
   constructor(
     private adminManagementService: AdminManagementService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -54,16 +55,18 @@ export class UserManagement implements OnInit {
     this.loading = true;
     this.error = '';
 
-    this.adminManagementService.getUsers(this.page, this.size, this.search, this.roleFilter).subscribe({
+    this.adminManagementService.getUsers(this.page, this.size, this.search, this.roleFilter || undefined).subscribe({
       next: (res) => {
         this.users = res.content;
         this.totalPages = res.totalPages;
         this.totalElements = res.totalElements;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.error = err?.error?.message || 'Failed to load users';
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -83,6 +86,12 @@ export class UserManagement implements OnInit {
     }
 
     this.page -= 1;
+    this.loadUsers();
+  }
+
+  onRoleFilterChange(): void {
+    // Reset to page 0 and load users when role filter changes
+    this.page = 0;
     this.loadUsers();
   }
 
@@ -173,10 +182,33 @@ export class UserManagement implements OnInit {
         this.deletingId = null;
         this.success = 'User deleted successfully.';
         this.loadUsers();
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        this.error = err?.error?.message || 'Failed to delete user';
+        // Handle CORS/Network errors (status 0)
+        if (err?.status === 0) {
+          this.error = 'Network error: Unable to connect to the server. Please check if the backend is running and CORS is properly configured.';
+          this.deletingId = null;
+          this.cdr.markForCheck();
+          console.error('Delete user error (CORS/Network):', err);
+          return;
+        }
+
+        // Handle constraint violation errors (409 Conflict or 500 with constraint info)
+        if (err?.status === 500 || err?.status === 409) {
+          this.error = 'Cannot delete user: User has associated data (bookings, orders, tokens, etc.). Please remove or reassign related data first.';
+          this.deletingId = null;
+          this.cdr.markForCheck();
+          console.error('Delete user error (constraint):', err);
+          return;
+        }
+
+        // Handle other errors
+        const errorMessage = err?.error?.message || err?.message || 'Failed to delete user';
+        this.error = errorMessage;
         this.deletingId = null;
+        this.cdr.markForCheck();
+        console.error('Delete user error:', err);
       }
     });
   }

@@ -3,6 +3,7 @@ package aptms.repositories;
 import aptms.entities.VendorBooking;
 import aptms.enums.VendorBookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -87,5 +88,9 @@ public interface VendorBookingRepository extends JpaRepository<VendorBooking, UU
     List<Object[]> countByUserIdGroupByStatus(@Param("userId") UUID userId);
 
     Optional<VendorBooking> findByBookingIdAndUserId(UUID bookingId, UUID userId);
+    
+    @Modifying
+    @Query("DELETE FROM VendorBooking vb WHERE vb.vendor.vendorId = :vendorId")
+    void deleteByVendorId(@Param("vendorId") UUID vendorId);
 }
 

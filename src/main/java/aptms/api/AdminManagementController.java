@@ -22,6 +22,12 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/management")
+@CrossOrigin(
+    origins = {"http://localhost:4200", "http://localhost:3000", "http://127.0.0.1:4200"},
+    methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.PATCH, RequestMethod.OPTIONS},
+    allowedHeaders = "*",
+    allowCredentials = "true"
+)
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
 public class AdminManagementController {
