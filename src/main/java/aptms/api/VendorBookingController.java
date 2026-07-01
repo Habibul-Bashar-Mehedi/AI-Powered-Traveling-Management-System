@@ -2,18 +2,18 @@ package aptms.api;
 
 import aptms.dto.vendor.VendorBookingDTO;
 import aptms.enums.VendorBookingStatus;
+import aptms.security.SecurityUtils;
 import aptms.services.VendorBookingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -28,6 +28,9 @@ import java.util.UUID;
 public class VendorBookingController {
 
     private final VendorBookingService bookingService;
+
+    /** Simple DTO used for reject/cancel reason payloads. */
+    public record ReasonRequest(@Size(max = 500) String reason) {}
 
     @GetMapping
     @Operation(summary = "Get booking inbox with optional status filter (FR-BKG-001)")
@@ -52,21 +55,19 @@ public class VendorBookingController {
     @Operation(summary = "Reject a pending booking")
     public ResponseEntity<VendorBookingDTO> rejectBooking(
             @PathVariable UUID id,
-            @RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(bookingService.rejectBooking(getCurrentUserId(), id, body.get("reason")));
+            @Valid @RequestBody ReasonRequest body) {
+        return ResponseEntity.ok(bookingService.rejectBooking(getCurrentUserId(), id, body.reason()));
     }
 
     @PostMapping("/{id}/cancel")
     @Operation(summary = "Cancel a confirmed booking (FR-BKG-005)")
     public ResponseEntity<VendorBookingDTO> cancelBooking(
             @PathVariable UUID id,
-            @RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(bookingService.cancelBooking(getCurrentUserId(), id, body.get("reason")));
+            @Valid @RequestBody ReasonRequest body) {
+        return ResponseEntity.ok(bookingService.cancelBooking(getCurrentUserId(), id, body.reason()));
     }
 
     private UUID getCurrentUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return UUID.fromString(auth.getName());
+        return SecurityUtils.getCurrentUserId();
     }
 }
-

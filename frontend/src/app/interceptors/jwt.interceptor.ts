@@ -77,11 +77,14 @@ export class JwtInterceptor implements HttpInterceptor {
   }
 
   /**
-   * Check if URL is an auth endpoint that should not have token attached
+   * Check if URL is a public auth endpoint that should NOT have a token attached.
+   * NOTE: /auth/logout is intentionally excluded — it requires a Bearer token so
+   *       the backend can blacklist the JWT. Omitting it here caused logout to silently
+   *       fail server-side while appearing successful client-side.
    */
   private isPublicAuthEndpoint(url: string): boolean {
-    const authEndpoints = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout'];
-    return authEndpoints.some(endpoint => url.includes(endpoint));
+    const publicEndpoints = ['/auth/login', '/auth/register', '/auth/refresh'];
+    return publicEndpoints.some(endpoint => url.includes(endpoint));
   }
 
   private isAuthEndpoint(url: string): boolean {
@@ -99,54 +102,64 @@ export class JwtInterceptor implements HttpInterceptor {
       return this.authService.refreshToken().pipe(
         switchMap((response: AuthResponse | null) => {
           if (!response?.accessToken) {
+            // Refresh itself returned 401 / no token — session is fully gone.
+            // Do all cleanup here so catchError is only a safety-net for
+            // unexpected Observable errors (e.g. network failure before emission).
             this.isRefreshing = false;
 
-            // End queued retries and clear local auth state
-            this.refreshTokenSubject.complete();
-            this.refreshTokenSubject = new BehaviorSubject<string | null>(null);
-            this.authService.logout().subscribe();
-            
-            // Throw error so component error handlers execute
-            return throwError(() => new HttpErrorResponse({
-              error: { message: 'Authentication failed. Please log in again.' },
+            const sessionErr = new HttpErrorResponse({
+              error: { message: 'Session expired. Please log in again.' },
               status: 401,
               statusText: 'Unauthorized'
-            }));
+            });
+
+            // Error the subject (not .complete()) so every queued request
+            // receives a real error instead of completing silently with no value.
+            this.refreshTokenSubject.error(sessionErr);
+            this.refreshTokenSubject = new BehaviorSubject<string | null>(null);
+
+            console.error('Refresh flow: token endpoint returned no access token — session expired');
+            // Invalidate state and redirect to login — clearAuthState was already
+            // called inside authService.refreshToken(), but handleSessionExpiry()
+            // additionally navigates to /login so the user sees the login page.
+            this.authService.handleSessionExpiry();
+            return throwError(() => sessionErr);
           }
 
+          // Refresh succeeded — unblock queued requests with the new token.
           this.isRefreshing = false;
           this.refreshTokenSubject.next(response.accessToken);
 
-          // Retry original request with new token
+          // Retry the original request with the fresh token.
           return next.handle(this.addToken(request, response.accessToken));
         }),
         catchError(error => {
-          this.isRefreshing = false;
-
-          // End queued retries and clear local auth state
-          this.refreshTokenSubject.complete();
-          this.refreshTokenSubject = new BehaviorSubject<string | null>(null);
-          this.authService.logout().subscribe();
-
+          // Safety-net: only reached when the refresh Observable itself errors
+          // unexpectedly (e.g. a network failure before any emission).
+          // The null-response case is already fully handled in switchMap above.
+          if (this.isRefreshing) {
+            // State was never cleaned up in switchMap — do it now.
+            this.isRefreshing = false;
+            const sessionErr = new HttpErrorResponse({
+              error: { message: 'Session expired. Please log in again.' },
+              status: 401,
+              statusText: 'Unauthorized'
+            });
+            this.refreshTokenSubject.error(sessionErr);
+            this.refreshTokenSubject = new BehaviorSubject<string | null>(null);
+            this.authService.handleSessionExpiry();
+          }
           console.error('Refresh flow failed:', error);
-          
-          // Throw error so component error handlers execute
-          return throwError(() => new HttpErrorResponse({
-            error: { message: 'Session expired. Please log in again.' },
-            status: 401,
-            statusText: 'Unauthorized'
-          }));
+          return throwError(() => error);
         })
       );
     } else {
-      // Refresh is already in progress, queue this request
+      // Refresh already in progress — queue this request until the new token arrives.
       return this.refreshTokenSubject.pipe(
         filter(token => token !== null),
         take(1),
-        switchMap(token => {
-          return next.handle(this.addToken(request, token!));
-        }),
-        catchError((error) => throwError(() => error))
+        switchMap(token => next.handle(this.addToken(request, token!))),
+        catchError(error => throwError(() => error))
       );
     }
   }

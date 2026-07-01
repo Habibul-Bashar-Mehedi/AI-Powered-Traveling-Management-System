@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 import {
   UserServiceRequestPayload,
   UserServiceRequestType,
@@ -10,12 +9,13 @@ import {
 } from '../services/vendor-booking.service';
 import { VendorBooking } from '../models/vendor.model';
 import { VendorBookingStatus } from '../enums/vendor.enums';
-import { FooterComponent } from '../shared/app-footer/app-footer';
+import { AuthService } from '../services/auth.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FormsModule, HttpClientModule, CommonModule, FooterComponent],
+  imports: [FormsModule, CommonModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css'],
 })
@@ -23,6 +23,7 @@ export class Dashboard implements OnInit, OnDestroy {
   constructor(
     private cdr: ChangeDetectorRef,
     private vendorBookingService: VendorBookingService,
+    private authService: AuthService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
@@ -67,12 +68,12 @@ export class Dashboard implements OnInit, OnDestroy {
 
   // ─── User Profile ───────────────────────────────────────────────
   user = {
-    name: 'Aryan Rahman',
+    name: 'Traveler',
     role: 'Premium Traveler',
     avatar: 'https://i.pravatar.cc/80?img=12',
-    joinedYear: 2022,
+    joinedYear: new Date().getFullYear(),
     tier: 'Gold',
-    notifications: 3,
+    notifications: 0,
   };
 
   // ─── Stats ───────────────────────────────────────────────────────
@@ -198,6 +199,19 @@ export class Dashboard implements OnInit, OnDestroy {
   ngOnInit() {
     this.startAutoSlide();
     this.loadChatHistory();
+    // Load real user name from AuthService
+    const currentUser = this.authService.getCurrentUserValue();
+    if (currentUser?.username) {
+      this.user.name = currentUser.username;
+      this.updateChatContext(currentUser.username);
+    }
+    this.authService.currentUser$.subscribe(u => {
+      if (u?.username) {
+        this.user.name = u.username;
+        this.updateChatContext(u.username);
+        this.cdr.detectChanges();
+      }
+    });
     if (isPlatformBrowser(this.platformId)) {
       this.loadBookingStatusSummary();
     }
@@ -231,19 +245,27 @@ export class Dashboard implements OnInit, OnDestroy {
   showChatbot = false;
   userInput: string = '';
   isTyping = false;
-  messages: any[] = [];
+  messages: { sender: string; text: string; timestamp: Date }[] = [];
   chatMinimized = false;
   chatContext = `You are an expert AI travel assistant for a premium travel booking platform.
   Help users plan trips, recommend destinations, suggest itineraries, estimate budgets,
   and answer travel-related questions. Keep responses concise, friendly, and professional.
-  Use emojis sparingly for a warm tone. The user's name is Aryan Rahman.`;
+  Use emojis sparingly for a warm tone.`;
+
+  private updateChatContext(username: string): void {
+    this.chatContext = `You are an expert AI travel assistant for a premium travel booking platform.
+  Help users plan trips, recommend destinations, suggest itineraries, estimate budgets,
+  and answer travel-related questions. Keep responses concise, friendly, and professional.
+  Use emojis sparingly for a warm tone. The user's name is ${username}.`;
+  }
 
   toggleChatbot() {
     this.showChatbot = !this.showChatbot;
     if (this.showChatbot && this.messages.length === 0) {
+      const name = this.user.name !== 'Traveler' ? this.user.name : 'there';
       this.messages.push({
         sender: 'bot',
-        text: `Hello Aryan!  I'm your AI Travel Assistant. I can help you plan trips, find deals, suggest destinations, or build custom itineraries. What would you like to explore today?`,
+        text: `Hello ${name}! 👋 I'm your AI Travel Assistant. I can help you plan trips, find deals, suggest destinations, or build custom itineraries. What would you like to explore today?`,
         timestamp: new Date(),
       });
     }
@@ -262,7 +284,11 @@ export class Dashboard implements OnInit, OnDestroy {
     this.scrollToBottom();
 
     try {
-      const KEY = 'AIzaSyAgbDp6MNcHkP-lUmegSMpF-oRI7CeTLWQ';
+      const KEY = environment.geminiApiKey;
+      if (!KEY) {
+        this.messages.push({ sender: 'bot', text: '⚠️ AI assistant is not configured. Please contact support.', timestamp: new Date() });
+        return;
+      }
       const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${KEY}`;
       const conversationHistory = this.messages
         .slice(-8)
@@ -321,7 +347,15 @@ export class Dashboard implements OnInit, OnDestroy {
   loadChatHistory() {
     if (isPlatformBrowser(this.platformId)) {
       const saved = localStorage.getItem('chatHist');
-      if (saved) this.messages = JSON.parse(saved);
+      if (saved) {
+        try {
+          this.messages = JSON.parse(saved);
+        } catch {
+          // Corrupted data — start fresh
+          localStorage.removeItem('chatHist');
+          this.messages = [];
+        }
+      }
     }
   }
 
@@ -390,6 +424,9 @@ export class Dashboard implements OnInit, OnDestroy {
         this.bookingStatusSummary = summary;
         this.user.notifications = summary.counts?.PENDING ?? 0;
         this.cdr.detectChanges();
+      },
+      error: () => {
+        // Non-critical — dashboard still works without summary counts
       }
     });
   }

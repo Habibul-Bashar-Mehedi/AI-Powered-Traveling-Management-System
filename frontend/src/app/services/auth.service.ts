@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError, of } from 'rxjs';
 import { tap, catchError, map, switchMap, finalize, shareReplay, take } from 'rxjs/operators';
+import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { API_ENDPOINTS } from '../constants/api-endpoints';
 import { User, LoginRequest, RegisterRequest, AuthResponse } from '../models/user.model';
@@ -33,6 +34,7 @@ export class AuthService {
   constructor(
     private http: HttpClient,
     private tokenStorage: TokenStorageService,
+    private router: Router,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -92,7 +94,21 @@ export class AuthService {
 
     const url = `${this.baseUrl}${API_ENDPOINTS.AUTH.REFRESH}`;
     return this.http.post<AuthResponse>(url, { refreshToken }).pipe(
-      tap(response => this.handleAuthResponse(response)),
+      map(response => {
+        // Guard against a 200 OK that carries no access token (e.g. already-rotated
+        // refresh token or a server-side session invalidation).
+        if (!response?.accessToken) {
+          console.warn('Refresh flow: token endpoint returned no access token — session expired');
+          this.clearAuthState();
+          return null;
+        }
+        return response;
+      }),
+      tap(response => {
+        if (response) {
+          this.handleAuthResponse(response);
+        }
+      }),
       catchError(error => {
         // Suppress noisy logs for expected cases:
         // status 0  = network error / backend not running (ERR_CONNECTION_REFUSED)
@@ -260,6 +276,30 @@ export class AuthService {
     if (role === UserRole.SUPER_ADMIN) return UserRole.SUPER_ADMIN;
     if (role === UserRole.VENDOR) return UserRole.VENDOR;
     return UserRole.USER;
+  }
+
+  /**
+   * Invalidate the current session and redirect to the login page.
+   *
+   * Call this from interceptors or anywhere that detects a definitive
+   * authentication failure (e.g. refresh token is expired / revoked).
+   * Unlike logout(), this does NOT hit the backend logout endpoint — the
+   * session is already gone on the server side.
+   *
+   * @param returnUrl Optional URL to redirect back to after login (defaults to current path)
+   */
+  handleSessionExpiry(returnUrl?: string): void {
+    if (!this.isBrowser) return;
+
+    this.clearAuthState();
+
+    const target = returnUrl ?? (window.location.pathname + window.location.search);
+    // Avoid redirect loops when already on the login page.
+    if (target && target !== '/login') {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: target } });
+    } else {
+      this.router.navigate(['/login']);
+    }
   }
 
   /**

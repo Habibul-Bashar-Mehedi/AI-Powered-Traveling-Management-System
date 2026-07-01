@@ -1,16 +1,20 @@
 package aptms.services.impl;
 
+import aptms.config.CacheConfig;
 import aptms.dto.vendor.VendorProfileDTO;
 import aptms.dto.vendor.VendorRegistrationRequest;
 import aptms.entities.User;
 import aptms.entities.Vendor;
 import aptms.enums.UserRole;
+import aptms.enums.VendorStatus;
 import aptms.exceptions.IdNotFoundException;
 import aptms.repositories.UserRepository;
 import aptms.repositories.VendorRepository;
 import aptms.services.VendorRegistrationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +31,10 @@ public class VendorRegistrationServiceImpl implements VendorRegistrationService 
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.CACHE_VENDORS_PENDING, allEntries = true),
+        @CacheEvict(value = CacheConfig.CACHE_VENDORS_ALL,     allEntries = true)
+    })
     public VendorProfileDTO register(VendorRegistrationRequest request, UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
@@ -43,6 +51,7 @@ public class VendorRegistrationServiceImpl implements VendorRegistrationService 
 
         Vendor vendor = new Vendor();
         vendor.setUser(user);
+        vendor.setStatus(VendorStatus.PENDING_REVIEW); // explicitly mark as submitted for admin review
         mapRequestToVendor(request, vendor);
 
         Vendor saved = vendorRepository.save(vendor);
@@ -73,18 +82,30 @@ public class VendorRegistrationServiceImpl implements VendorRegistrationService 
     private void mapRequestToVendor(VendorRegistrationRequest request, Vendor vendor) {
         vendor.setBusinessName(request.getBusinessName());
         vendor.setVendorType(request.getVendorType());
-        vendor.setRegistrationNumber(request.getRegistrationNumber());
-        vendor.setTaxId(request.getTaxId());
+        // Convert blank strings to null for UNIQUE-constrained nullable columns.
+        // Storing "" (empty string) would cause a DataIntegrityViolationException when a
+        // second vendor registers without providing these optional fields, because the DB
+        // UNIQUE constraint treats "" as a duplicate value. NULL is excluded from UNIQUE checks.
+        vendor.setRegistrationNumber(blankToNull(request.getRegistrationNumber()));
+        vendor.setTaxId(blankToNull(request.getTaxId()));
         vendor.setDescription(request.getDescription());
         vendor.setEmail(request.getEmail());
         vendor.setPhone(request.getPhone());
-        vendor.setWebsiteUrl(request.getWebsiteUrl());
+        vendor.setWebsiteUrl(blankToNull(request.getWebsiteUrl()));
         vendor.setAddressLine1(request.getAddressLine1());
-        vendor.setAddressLine2(request.getAddressLine2());
+        vendor.setAddressLine2(blankToNull(request.getAddressLine2()));
         vendor.setCity(request.getCity());
-        vendor.setStateProvince(request.getStateProvince());
+        vendor.setStateProvince(blankToNull(request.getStateProvince()));
         vendor.setCountryCode(request.getCountryCode());
-        vendor.setPostalCode(request.getPostalCode());
+        vendor.setPostalCode(blankToNull(request.getPostalCode()));
+    }
+
+    /**
+     * Returns null for null or blank (whitespace-only) strings, otherwise returns the trimmed value.
+     * Used to prevent empty strings from being persisted into UNIQUE-constrained nullable columns.
+     */
+    private static String blankToNull(String value) {
+        return (value == null || value.isBlank()) ? null : value.trim();
     }
 
     public static VendorProfileDTO toDTO(Vendor v) {

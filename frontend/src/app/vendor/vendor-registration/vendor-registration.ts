@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { VendorService } from '../../services/vendor.service';
+import { AuthService } from '../../services/auth.service';
 import { VendorType } from '../../enums/vendor.enums';
 
 @Component({
@@ -25,13 +27,29 @@ export class VendorRegistration implements OnInit {
   step2Form!: FormGroup;
   step3Form!: FormGroup;
 
+  private isBrowser: boolean;
+
   constructor(
     private fb: FormBuilder,
     private vendorService: VendorService,
-    private router: Router
-  ) {}
+    private authService: AuthService,
+    private router: Router,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   ngOnInit(): void {
+    // Guard bypass safety: in SSR the route guard is skipped (isBrowser=false),
+    // so we re-validate authentication on the client after hydration.
+    if (this.isBrowser) {
+      this.authService.restoreSession().subscribe(authenticated => {
+        if (!authenticated) {
+          this.router.navigate(['/login'], { queryParams: { returnUrl: '/vendor/register' } });
+        }
+      });
+    }
+
     this.step1Form = this.fb.group({
       businessName: ['', [Validators.required, Validators.maxLength(255)]],
       vendorType: ['', Validators.required],
@@ -80,11 +98,29 @@ export class VendorRegistration implements OnInit {
       next: () => {
         this.success = true;
         this.loading = false;
-        setTimeout(() => this.router.navigate(['/vendor/dashboard']), 2000);
+        // The backend promotes the user to VENDOR role. Refresh the JWT so the
+        // new role is reflected in the access token before entering vendor routes.
+        this.authService.refreshToken().subscribe({
+          next: () => {
+            setTimeout(() => this.router.navigate(['/vendor/dashboard']), 2000);
+          },
+          error: () => {
+            // Refresh failed — session may have just expired; send user to login.
+            setTimeout(() => this.router.navigate(['/login'], {
+              queryParams: { returnUrl: '/vendor/dashboard' }
+            }), 2000);
+          }
+        });
       },
       error: (err) => {
-        this.error = err?.error?.message || 'Registration failed. Please try again.';
         this.loading = false;
+        // 401 means the session expired (or was never established via SSR bypass).
+        // Redirect to login so the user can authenticate and try again.
+        if (err?.status === 401) {
+          this.router.navigate(['/login'], { queryParams: { returnUrl: '/vendor/register' } });
+          return;
+        }
+        this.error = err?.error?.message || 'Registration failed. Please try again.';
       }
     });
   }

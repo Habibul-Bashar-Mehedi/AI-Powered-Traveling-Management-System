@@ -4,6 +4,7 @@ import aptms.dto.admin.*;
 import aptms.enums.AdminOrderStatus;
 import aptms.enums.UserRole;
 import aptms.enums.VendorStatus;
+import aptms.security.SecurityUtils;
 import aptms.services.AdminDashboardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,8 +14,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -22,12 +21,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/management")
-@CrossOrigin(
-    origins = {"http://localhost:4200", "http://localhost:3000", "http://127.0.0.1:4200"},
-    methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.PATCH, RequestMethod.OPTIONS},
-    allowedHeaders = "*",
-    allowCredentials = "true"
-)
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
 public class AdminManagementController {
@@ -187,8 +180,6 @@ public class AdminManagementController {
     }
 
     private UUID currentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return UUID.fromString(authentication.getName());
+        return SecurityUtils.getCurrentUserId();
     }
 }
-

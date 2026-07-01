@@ -33,7 +33,7 @@ export class Registration implements OnInit {
   }
 
   ngOnInit() {
-    console.log('Registration component initialized');
+    // component ready
   }
 
   /**
@@ -111,10 +111,11 @@ export class Registration implements OnInit {
 
     this.authService.register(registerRequest).subscribe({
       next: (response) => {
-        console.log('Registration successful:', response);
 
         // Role-based redirect after successful registration
-        const role = response.user?.roles?.[0];
+        // response.user.roles may contain "ROLE_VENDOR" prefix — strip it for comparison
+        const rawRole = response.user?.roles?.[0] ?? '';
+        const role = rawRole.replace(/^ROLE_/, '').toUpperCase();
         if (role === UserRole.VENDOR) {
           this.router.navigate(['/vendor/dashboard']);
         } else if (role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN) {

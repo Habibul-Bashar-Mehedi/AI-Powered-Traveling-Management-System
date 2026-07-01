@@ -4,6 +4,7 @@ import aptms.dto.vendor.AnalyticsSummaryDTO;
 import aptms.entities.Vendor;
 import aptms.enums.ServiceStatus;
 import aptms.enums.VendorBookingStatus;
+import aptms.exceptions.IdNotFoundException;
 import aptms.repositories.VendorBookingRepository;
 import aptms.repositories.VendorRepository;
 import aptms.repositories.VendorServiceRepository;
@@ -36,7 +37,7 @@ public class VendorAnalyticsServiceImpl implements VendorAnalyticsService {
     @Transactional(readOnly = true)
     public AnalyticsSummaryDTO getSummary(UUID userId, LocalDate from, LocalDate to) {
         Vendor vendor = vendorRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Vendor not found for user: " + userId));
+                .orElseThrow(() -> new IdNotFoundException("Vendor profile not found for user: " + userId));
 
         UUID vendorId = vendor.getVendorId();
 

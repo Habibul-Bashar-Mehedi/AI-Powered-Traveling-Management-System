@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "12306": {
+      "source": "kirorab/12306-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "0c741e79614f5902d9a103a18bed34bf58bbcac18dc680d6bc11deb8c8d857ad"
+    }
+  }
+}

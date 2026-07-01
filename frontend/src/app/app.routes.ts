@@ -89,5 +89,10 @@ export const routes: Routes = [
     path: '',
     redirectTo: 'login',
     pathMatch: 'full'
+  },
+  // Catch-all: redirect unknown paths to login
+  {
+    path: '**',
+    redirectTo: 'login'
   }
 ];

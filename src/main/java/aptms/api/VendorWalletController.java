@@ -2,6 +2,7 @@ package aptms.api;
 
 import aptms.dto.vendor.PayoutRequestDTO;
 import aptms.dto.vendor.WalletSummaryDTO;
+import aptms.security.SecurityUtils;
 import aptms.services.VendorWalletService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,8 +13,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -54,8 +53,7 @@ public class VendorWalletController {
     }
 
     private UUID getCurrentUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return UUID.fromString(auth.getName());
+        return SecurityUtils.getCurrentUserId();
     }
 }
 

@@ -5,6 +5,7 @@ import aptms.dto.vendor.WalletSummaryDTO;
 import aptms.entities.PayoutRequest;
 import aptms.entities.Vendor;
 import aptms.entities.WalletTransaction;
+import aptms.exceptions.IdNotFoundException;
 import aptms.repositories.PayoutRequestRepository;
 import aptms.repositories.VendorRepository;
 import aptms.repositories.WalletTransactionRepository;
@@ -93,7 +94,7 @@ public class VendorWalletServiceImpl implements VendorWalletService {
 
     private Vendor getVendorByUserId(UUID userId) {
         return vendorRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Vendor not found for user: " + userId));
+                .orElseThrow(() -> new IdNotFoundException("Vendor profile not found for user: " + userId));
     }
 
     private WalletSummaryDTO.TransactionDTO toTransactionDTO(WalletTransaction t) {

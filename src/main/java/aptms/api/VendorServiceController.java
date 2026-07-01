@@ -1,6 +1,7 @@
 package aptms.api;
 
 import aptms.dto.vendor.VendorServiceDTO;
+import aptms.security.SecurityUtils;
 import aptms.services.VendorServiceMgmtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,8 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -66,8 +65,6 @@ public class VendorServiceController {
     }
 
     private UUID getCurrentUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return UUID.fromString(auth.getName());
+        return SecurityUtils.getCurrentUserId();
     }
 }
-

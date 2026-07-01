@@ -3,8 +3,10 @@ package aptms.exceptions;
 import aptms.dto.ErrorResponse;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -27,8 +30,9 @@ import java.util.Map;
  * Requirements: 4.3.2, FR-REG-003, FR-LGN-002, FR-MID-003, FR-MID-004
  */
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     
     /**
@@ -195,6 +199,42 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * Handle database unique-constraint and FK violations.
+     *
+     * Spring wraps JDBC SQLIntegrityConstraintViolationException inside
+     * DataIntegrityViolationException. Without this handler the generic
+     * Exception.class handler would swallow it and return HTTP 500.
+     * Returns HTTP 409 Conflict with a safe, user-facing message.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex,
+            WebRequest request) {
+
+        // Extract the most specific root-cause message for logging, but never
+        // expose raw SQL or internal table names in the response body.
+        String rootMsg = ex.getMostSpecificCause().getMessage();
+        String userMessage;
+        if (rootMsg != null && rootMsg.toLowerCase().contains("duplicate")) {
+            userMessage = "A record with the same value already exists. "
+                    + "Please check registration number, tax ID, or email.";
+        } else {
+            userMessage = "The request could not be completed due to a data conflict.";
+        }
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .error("DATA_CONFLICT")
+                .message(userMessage)
+                .timestamp(Instant.now())
+                .path(getRequestPath(request))
+                .build();
+
+        logger.warn("Data integrity violation: {}", rootMsg);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    /**
      * Handle illegal state exceptions (business rule violations).
      * E.g. "Booking is not in PENDING state", "Insufficient wallet balance".
      * Returns HTTP 409 Conflict.
@@ -214,6 +254,26 @@ public class GlobalExceptionHandler {
         logger.warn("Business rule conflict: {}", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    /**
+     * Pass ResponseStatusException through with its intended status code.
+     * Used by SecurityUtils and controllers that throw explicit 401/403/404.
+     */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatus(
+            ResponseStatusException ex,
+            WebRequest request) {
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+            .error(ex.getStatusCode().toString())
+            .message(ex.getReason() != null ? ex.getReason() : ex.getMessage())
+            .timestamp(java.time.Instant.now())
+            .path(getRequestPath(request))
+            .build();
+
+        logger.debug("ResponseStatusException: {} {}", ex.getStatusCode(), ex.getReason());
+        return ResponseEntity.status(ex.getStatusCode()).body(errorResponse);
     }
 
     /**

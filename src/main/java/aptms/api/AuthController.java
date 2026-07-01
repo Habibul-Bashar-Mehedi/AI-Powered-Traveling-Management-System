@@ -4,10 +4,8 @@ import aptms.dto.*;
 import aptms.entities.User;
 import aptms.enums.UserRole;
 import aptms.repositories.UserRepository;
-import aptms.repositories.VendorRepository;
 import aptms.services.AuthenticationService;
 import aptms.services.FeatureFlagService;
-import aptms.services.JwtService;
 import aptms.services.RegistrationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,18 +16,21 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.server.ResponseStatusException;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.UUID;
 
@@ -54,31 +55,24 @@ import static aptms.constants.EntityConstants.*;
  */
 @RestController
 @RequestMapping("/api/auth")
+@Slf4j
 @Tag(name = "Authentication", description = "JWT-based authentication endpoints for user registration, login, token management, and logout")
 public class AuthController {
     
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
-    
     private final AuthenticationService authenticationService;
     private final RegistrationService registrationService;
-    private final JwtService jwtService;
     private final FeatureFlagService featureFlagService;
     private final UserRepository userRepository;
-    private final VendorRepository vendorRepository;
 
     public AuthController(
             AuthenticationService authenticationService,
             RegistrationService registrationService,
-            JwtService jwtService,
             FeatureFlagService featureFlagService,
-            UserRepository userRepository,
-            VendorRepository vendorRepository) {
+            UserRepository userRepository) {
         this.authenticationService = authenticationService;
         this.registrationService = registrationService;
-        this.jwtService = jwtService;
         this.featureFlagService = featureFlagService;
         this.userRepository = userRepository;
-        this.vendorRepository = vendorRepository;
     }
 
     /**
@@ -178,28 +172,14 @@ public class AuthController {
     })
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(
-        @Parameter(
-            description = "User registration data",
-            required = true,
-            schema = @Schema(implementation = RegisterRequest.class)
-        )
+        @Parameter(description = "User registration data", required = true,
+            schema = @Schema(implementation = RegisterRequest.class))
         @Valid @RequestBody RegisterRequest request) {
-        logger.info("Registration request received for email: {} (JWT enabled: {})", 
+        log.info("Registration request received for email: {} (JWT enabled: {})",
             request.getEmail(), featureFlagService.isJwtEnabled());
-        
-        // Check feature flag to determine authentication method
-        if (featureFlagService.isJwtEnabled()) {
-            // JWT authentication enabled - use JWT-based registration
-            AuthResponse response = authenticationService.register(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } else {
-            // JWT authentication disabled - fall back to session-based registration
-            logger.info("JWT disabled - using session-based registration");
-            // For backward compatibility, we still return AuthResponse but with session-based auth
-            // The legacy endpoint can be used for pure session-based flow
-            AuthResponse response = authenticationService.register(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        }
+        // Feature flag is checked for logging/metrics purposes; both paths delegate to authenticationService
+        AuthResponse response = authenticationService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
@@ -294,28 +274,13 @@ public class AuthController {
     })
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
-        @Parameter(
-            description = "User login credentials",
-            required = true,
-            schema = @Schema(implementation = LoginRequest.class)
-        )
+        @Parameter(description = "User login credentials", required = true,
+            schema = @Schema(implementation = LoginRequest.class))
         @Valid @RequestBody LoginRequest request) {
-        logger.info("Login request received for email: {} (JWT enabled: {})", 
+        log.info("Login request received for email: {} (JWT enabled: {})",
             request.getEmail(), featureFlagService.isJwtEnabled());
-        
-        // Check feature flag to determine authentication method
-        if (featureFlagService.isJwtEnabled()) {
-            // JWT authentication enabled - use JWT-based login
-            AuthResponse response = authenticationService.login(request);
-            return ResponseEntity.ok(response);
-        } else {
-            // JWT authentication disabled - fall back to session-based login
-            logger.info("JWT disabled - using session-based login");
-            // For backward compatibility, we still return AuthResponse but with session-based auth
-            // The legacy endpoint can be used for pure session-based flow
-            AuthResponse response = authenticationService.login(request);
-            return ResponseEntity.ok(response);
-        }
+        AuthResponse response = authenticationService.login(request);
+        return ResponseEntity.ok(response);
     }
     
     /**
@@ -404,13 +369,10 @@ public class AuthController {
     })
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(
-        @Parameter(
-            description = "Refresh token request containing the current refresh token",
-            required = true,
-            schema = @Schema(implementation = RefreshTokenRequest.class)
-        )
+        @Parameter(description = "Refresh token request", required = true,
+            schema = @Schema(implementation = RefreshTokenRequest.class))
         @Valid @RequestBody RefreshTokenRequest request) {
-        logger.info("Token refresh request received");
+        log.info("Token refresh request received");
         AuthResponse response = authenticationService.refreshToken(request.getRefreshToken());
         return ResponseEntity.ok(response);
     }
@@ -491,17 +453,10 @@ public class AuthController {
     })
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
-        logger.info("Logout request received");
-        
-        // Get current user ID from security context
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UUID userId = UUID.fromString(authentication.getName());
-        
-        // Get access token from request header
+        log.info("Logout request received");
+        UUID userId = getCurrentUserId();
         String accessToken = extractAccessToken();
-        
         authenticationService.logout(accessToken, userId);
-        
         return ResponseEntity.noContent().build();
     }
     
@@ -562,14 +517,9 @@ public class AuthController {
     })
     @PostMapping("/logout-all")
     public ResponseEntity<Void> logoutAll() {
-        logger.info("Logout all request received");
-        
-        // Get current user ID from security context
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UUID userId = UUID.fromString(authentication.getName());
-        
+        log.info("Logout all request received");
+        UUID userId = getCurrentUserId();
         authenticationService.logoutAll(userId);
-        
         return ResponseEntity.noContent().build();
     }
     
@@ -642,54 +592,71 @@ public class AuthController {
     })
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getCurrentUser() {
-        logger.info("Get current user request received");
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UUID userId = UUID.fromString(authentication.getName());
+        log.info("Get current user request received");
+        UUID userId = getCurrentUserId();
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "User not found: " + userId));
 
-        if (user.getRole() != UserRole.VENDOR && vendorRepository.findByUserId(userId).isPresent()) {
-            user.setRole(UserRole.VENDOR);
-            user = userRepository.save(user);
-        }
+        // NOTE: vendor role sync removed from this read endpoint.
+        // Role assignment is handled by VendorRegistrationService during vendor registration.
 
-        // Build UserDTO (we could also fetch from database for more complete info)
         UserDTO userDTO = UserDTO.builder()
             .id(userId)
+            .username(user.getUsername())
             .email(user.getEmail())
             .roles(List.of(user.getRole().name()))
             .build();
-        
+
         return ResponseEntity.ok(userDTO);
     }
-    
+
     /**
      * Extract access token from Authorization header.
+     * Throws 401 ResponseStatusException on missing/invalid header.
      */
     private String extractAccessToken() {
-        ServletRequestAttributes attributes = 
+        ServletRequestAttributes attributes =
             (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        
+
         if (attributes == null) {
-            throw new IllegalStateException("No request context available");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No request context available");
         }
-        
+
         HttpServletRequest request = attributes.getRequest();
         String authHeader = request.getHeader("Authorization");
-        
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("Missing or invalid Authorization header");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "Missing or invalid Authorization header");
         }
-        
+
         return authHeader.substring(7);
     }
-    
-    // ========== Legacy endpoints (kept for backward compatibility) ==========
-    
+
     /**
-     * Legacy user registration endpoint.
-     * @deprecated Use POST /api/auth/register instead
+     * Safely resolve the UUID of the currently authenticated user.
+     * Throws 401 ResponseStatusException for anonymous, null, or non-UUID principals.
      */
+    private UUID getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()
+                || auth instanceof AnonymousAuthenticationToken) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+        try {
+            Object principal = auth.getPrincipal();
+            String name = (principal instanceof UserDetails ud) ? ud.getUsername() : auth.getName();
+            return UUID.fromString(name);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "Cannot resolve user identity from authentication principal");
+        }
+    }
+
+    // ========== Legacy endpoints (kept for backward compatibility) ==========
+
+    /** @deprecated Use POST /api/auth/register instead */
     @Deprecated
     @PostMapping("/user/register")
     public ResponseEntity<User> userRegister(@RequestBody User user) {
@@ -697,39 +664,39 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(registeredUser);
     }
 
-    /**
-     * Legacy user login endpoint.
-     * @deprecated Use POST /api/auth/login instead
-     */
+    /** @deprecated Use POST /api/auth/login instead */
     @Deprecated
     @PostMapping("/user/login")
     public ResponseEntity<String> userLogin(@RequestBody User loginRequest) {
         String response = registrationService.loginUser(
-            loginRequest.getEmail(), 
+            loginRequest.getEmail(),
             loginRequest.getPassword()
         );
         return ResponseEntity.ok(response);
     }
-    
+
     // ========== Admin endpoints ==========
 
     @GetMapping("/user")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = registrationService.getAllUsers();
         return ResponseEntity.ok(users);
     }
 
     @PutMapping("/user/{id}")
-    public ResponseEntity<String> updateUser(@PathVariable UUID id, @RequestBody UserUpdateRequest request) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<String> updateUser(@PathVariable UUID id,
+            @Valid @RequestBody UserUpdateRequest request) {
         boolean updated = registrationService.updateUser(
-            id, 
-            request.getUsername(), 
-            request.getEmail(), 
-            request.getPassword(), 
-            request.getRole(), 
+            id,
+            request.getUsername(),
+            request.getEmail(),
+            request.getPassword(),
+            request.getRole(),
             request.getCountryId()
         );
-        
+
         if (updated) {
             return ResponseEntity.ok(String.format(ENTITY_UPDATED_MESSAGE, USER));
         } else {
@@ -739,29 +706,19 @@ public class AuthController {
     }
 
     @DeleteMapping("/user/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<String> deleteUser(@PathVariable UUID id) {
         String result = registrationService.deleteUser(id);
         return ResponseEntity.ok(result);
     }
-    
-    // Inner class for update request
+
+    /** Request body for user updates. */
+    @lombok.Data
     public static class UserUpdateRequest {
         private String username;
         private String email;
         private String password;
         private UserRole role;
         private String countryId;
-        
-        // Getters and setters
-        public String getUsername() { return username; }
-        public void setUsername(String username) { this.username = username; }
-        public String getEmail() { return email; }
-        public void setEmail(String email) { this.email = email; }
-        public String getPassword() { return password; }
-        public void setPassword(String password) { this.password = password; }
-        public UserRole getRole() { return role; }
-        public void setRole(UserRole role) { this.role = role; }
-        public String getCountryId() { return countryId; }
-        public void setCountryId(String countryId) { this.countryId = countryId; }
     }
 }

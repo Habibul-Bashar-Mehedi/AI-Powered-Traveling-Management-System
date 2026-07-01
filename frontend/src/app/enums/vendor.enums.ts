@@ -5,6 +5,7 @@ export enum VendorType {
 }
 
 export enum VendorStatus {
+  PENDING = 'PENDING',
   PENDING_REVIEW = 'PENDING_REVIEW',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',

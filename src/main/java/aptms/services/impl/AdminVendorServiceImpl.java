@@ -1,6 +1,6 @@
 package aptms.services.impl;
 
-import aptms.dto.vendor.AdminVendorActionDTO;
+import aptms.config.CacheConfig;
 import aptms.dto.vendor.PayoutRequestDTO;
 import aptms.dto.vendor.VendorProfileDTO;
 import aptms.entities.PayoutRequest;
@@ -14,6 +14,9 @@ import aptms.repositories.VendorRepository;
 import aptms.services.AdminVendorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +36,7 @@ public class AdminVendorServiceImpl implements AdminVendorService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(CacheConfig.CACHE_VENDORS_PENDING)
     public List<VendorProfileDTO> getPendingVendors() {
         return vendorRepository.searchByStatuses(
                         List.of(VendorStatus.PENDING, VendorStatus.PENDING_REVIEW),
@@ -45,6 +49,7 @@ public class AdminVendorServiceImpl implements AdminVendorService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(CacheConfig.CACHE_VENDORS_ALL)
     public List<VendorProfileDTO> getAllVendors() {
         return vendorRepository.findAll()
                 .stream().map(VendorRegistrationServiceImpl::toDTO).collect(Collectors.toList());
@@ -52,6 +57,10 @@ public class AdminVendorServiceImpl implements AdminVendorService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.CACHE_VENDORS_PENDING, allEntries = true),
+        @CacheEvict(value = CacheConfig.CACHE_VENDORS_ALL,     allEntries = true)
+    })
     public VendorProfileDTO approveVendor(UUID vendorId, UUID adminUserId) {
         Vendor vendor = getVendor(vendorId);
         User admin = getUser(adminUserId);
@@ -65,6 +74,10 @@ public class AdminVendorServiceImpl implements AdminVendorService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.CACHE_VENDORS_PENDING, allEntries = true),
+        @CacheEvict(value = CacheConfig.CACHE_VENDORS_ALL,     allEntries = true)
+    })
     public VendorProfileDTO rejectVendor(UUID vendorId, UUID adminUserId, String reason) {
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("Rejection reason is required");
@@ -78,6 +91,10 @@ public class AdminVendorServiceImpl implements AdminVendorService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.CACHE_VENDORS_PENDING, allEntries = true),
+        @CacheEvict(value = CacheConfig.CACHE_VENDORS_ALL,     allEntries = true)
+    })
     public VendorProfileDTO suspendVendor(UUID vendorId, UUID adminUserId, String reason) {
         Vendor vendor = getVendor(vendorId);
         vendor.setStatus(VendorStatus.SUSPENDED);
@@ -88,6 +105,10 @@ public class AdminVendorServiceImpl implements AdminVendorService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.CACHE_VENDORS_PENDING, allEntries = true),
+        @CacheEvict(value = CacheConfig.CACHE_VENDORS_ALL,     allEntries = true)
+    })
     public VendorProfileDTO reinstateVendor(UUID vendorId, UUID adminUserId) {
         Vendor vendor = getVendor(vendorId);
         vendor.setStatus(VendorStatus.APPROVED);

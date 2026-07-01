@@ -185,7 +185,7 @@
               <td>
                 <div class="action-row">
                   <button
-                    *ngIf="v.status === 'PENDING_REVIEW'"
+                    *ngIf="v.status === 'PENDING_REVIEW' || v.status === 'PENDING'"
                     class="btn btn-approve"
                     [disabled]="actionLoading === v.vendorId"
                     (click)="approve(v.vendorId!)">
@@ -195,7 +195,7 @@
                     Approve
                   </button>
                   <button
-                    *ngIf="v.status === 'PENDING_REVIEW'"
+                    *ngIf="v.status === 'PENDING_REVIEW' || v.status === 'PENDING'"
                     class="btn btn-reject"
                     [disabled]="actionLoading === v.vendorId"
                     (click)="openReject(v.vendorId!)">
