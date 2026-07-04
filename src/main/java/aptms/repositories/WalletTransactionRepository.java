@@ -1,6 +1,7 @@
 package aptms.repositories;
 
 import aptms.entities.WalletTransaction;
+import aptms.enums.TransactionType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,7 +16,9 @@ import java.util.UUID;
 public interface WalletTransactionRepository extends JpaRepository<WalletTransaction, UUID> {
 
     Page<WalletTransaction> findByVendorVendorIdOrderByCreatedAtDesc(UUID vendorId, Pageable pageable);
-    
+
+    boolean existsByBooking_BookingIdAndTransactionType(UUID bookingId, TransactionType transactionType);
+
     @Modifying
     @Query("DELETE FROM WalletTransaction wt WHERE wt.vendor.vendorId = :vendorId")
     void deleteByVendorId(@Param("vendorId") UUID vendorId);

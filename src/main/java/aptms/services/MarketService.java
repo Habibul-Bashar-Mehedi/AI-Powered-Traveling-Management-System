@@ -6,6 +6,7 @@ import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.MarketRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,8 @@ import static aptms.constants.ValidationConstants.*;
 
 @Service
 public class MarketService {
+
+    private static final int MAX_LIST_SIZE = 500;
 
     private final MarketRepository marketRepository;
 
@@ -43,7 +46,7 @@ public class MarketService {
     @Transactional(readOnly = true)
     @SecureAction(role = "ADMIN")
     public List<Market> getAllMarket() {
-        return marketRepository.findAll();
+        return marketRepository.findAll(PageRequest.of(0, MAX_LIST_SIZE)).getContent();
     }
 
     @Transactional

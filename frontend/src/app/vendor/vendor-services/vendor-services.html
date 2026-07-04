@@ -30,7 +30,18 @@
 
   <!-- Services grid -->
   <div *ngIf="!loading && services.length > 0" class="services-grid">
-    <div *ngFor="let s of services" class="service-card">
+    <div *ngFor="let s of services; trackBy: trackByService" class="service-card">
+      <div class="service-image-wrap">
+        <img *ngIf="s.imageUrl" [src]="resolveImageUrl(s.imageUrl)" [alt]="s.serviceName" class="service-image"/>
+        <div *ngIf="!s.imageUrl" class="service-image-placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <path d="M21 15l-5-5L5 21"/>
+          </svg>
+        </div>
+      </div>
+
       <div class="service-card-header">
         <span class="service-type-badge">{{ s.serviceType }}</span>
         <span class="service-status-badge" [ngClass]="statusBadgeClass(s.status)">
@@ -95,6 +106,31 @@
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="modal-body">
 
+        <div class="field-group">
+          <label class="field-label">Service Image</label>
+          <div class="image-upload-row">
+            <div class="image-preview">
+              <img *ngIf="formImageUrl" [src]="resolveImageUrl(formImageUrl)" alt="Service preview"/>
+              <div *ngIf="!formImageUrl" class="image-preview-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <path d="M21 15l-5-5L5 21"/>
+                </svg>
+              </div>
+            </div>
+            <div class="image-upload-actions">
+              <label class="btn-outline image-upload-btn">
+                {{ imageUploading ? 'Uploading…' : formImageUrl ? 'Change Image' : 'Upload Image' }}
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" (change)="onImageSelected($event)" [disabled]="imageUploading" hidden/>
+              </label>
+              <button type="button" class="btn-outline" *ngIf="formImageUrl" (click)="removeImage()">Remove</button>
+              <p class="field-hint">JPEG, PNG, WEBP or GIF · up to 5MB</p>
+              <p *ngIf="imageError" class="error-msg">⚠️ {{ imageError }}</p>
+            </div>
+          </div>
+        </div>
+
         <div class="field-row">
           <div class="field-group">
             <label class="field-label">Service Name *</label>
@@ -104,7 +140,7 @@
             <label class="field-label">Service Type *</label>
             <select class="field-input" formControlName="serviceType">
               <option value="">Select…</option>
-              <option *ngFor="let t of serviceTypes" [value]="t">{{ t }}</option>
+              <option *ngFor="let t of serviceTypes; trackBy: trackByValue" [value]="t">{{ t }}</option>
             </select>
           </div>
         </div>
@@ -130,7 +166,7 @@
             <label class="field-label">Pricing Unit *</label>
             <select class="field-input" formControlName="pricingUnit">
               <option value="">Select…</option>
-              <option *ngFor="let u of pricingUnits" [value]="u">{{ u }}</option>
+              <option *ngFor="let u of pricingUnits; trackBy: trackByValue" [value]="u">{{ u }}</option>
             </select>
           </div>
           <div class="field-group">
@@ -143,7 +179,7 @@
           <div class="field-group">
             <label class="field-label">Booking Mode</label>
             <select class="field-input" formControlName="bookingMode">
-              <option *ngFor="let m of bookingModes" [value]="m">{{ m }}</option>
+              <option *ngFor="let m of bookingModes; trackBy: trackByValue" [value]="m">{{ m }}</option>
             </select>
           </div>
           <div class="field-group">
@@ -156,7 +192,7 @@
           <div class="field-group">
             <label class="field-label">Status</label>
             <select class="field-input" formControlName="status">
-              <option *ngFor="let st of serviceStatuses" [value]="st">{{ st }}</option>
+              <option *ngFor="let st of serviceStatuses; trackBy: trackByValue" [value]="st">{{ st }}</option>
             </select>
           </div>
           <div class="field-group">

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { VendorService } from '../../services/vendor.service';
 import { VendorServiceListing } from '../../models/vendor.model';
 import { ServiceStatus, ServiceType, PricingUnit, BookingMode } from '../../enums/vendor.enums';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-vendor-services',
@@ -21,6 +22,12 @@ export class VendorServices implements OnInit {
   submitting = false;
   error = '';
 
+  imageUploading = false;
+  imageError = '';
+
+  private static readonly MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+  private static readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
   serviceTypes = Object.values(ServiceType);
   pricingUnits = Object.values(PricingUnit);
   bookingModes = Object.values(BookingMode);
@@ -35,6 +42,10 @@ export class VendorServices implements OnInit {
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
+
+  get formImageUrl(): string {
+    return this.form?.get('imageUrl')?.value || '';
+  }
 
   ngOnInit(): void {
     this.buildForm();
@@ -56,6 +67,7 @@ export class VendorServices implements OnInit {
       confirmationWindow: [24],
       status: ['DRAFT'],
       locationAddress: [''],
+      imageUrl: [''],
       cancellationPolicy: [''],
       tags: [''],
     });
@@ -84,12 +96,14 @@ export class VendorServices implements OnInit {
   openCreate(): void {
     this.editingId = null;
     this.form.reset({ currencyCode: 'USD', bookingMode: 'MANUAL', confirmationWindow: 24, status: 'DRAFT' });
+    this.imageError = '';
     this.showForm = true;
   }
 
   openEdit(s: VendorServiceListing): void {
     this.editingId = s.serviceId || null;
     this.form.patchValue(s);
+    this.imageError = '';
     this.showForm = true;
   }
 
@@ -97,6 +111,51 @@ export class VendorServices implements OnInit {
     this.showForm = false;
     this.editingId = null;
     this.error = '';
+    this.imageError = '';
+  }
+
+  onImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.imageError = '';
+
+    if (!VendorServices.ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      this.imageError = 'Unsupported image type. Use JPEG, PNG, WEBP or GIF.';
+      input.value = '';
+      return;
+    }
+    if (file.size > VendorServices.MAX_IMAGE_BYTES) {
+      this.imageError = 'Image must be 5MB or smaller.';
+      input.value = '';
+      return;
+    }
+
+    this.imageUploading = true;
+    this.vendorService.uploadServiceImage(file).subscribe({
+      next: (res) => {
+        this.form.patchValue({ imageUrl: res.url });
+        this.imageUploading = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.imageError = err?.error?.message || 'Failed to upload image';
+        this.imageUploading = false;
+        this.cdr.markForCheck();
+      }
+    });
+    input.value = '';
+  }
+
+  removeImage(): void {
+    this.form.patchValue({ imageUrl: '' });
+  }
+
+  resolveImageUrl(url: string | null | undefined): string {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    return `${environment.assetOrigin}${url}`;
   }
 
   submit(): void {
@@ -140,6 +199,14 @@ export class VendorServices implements OnInit {
       case ServiceStatus.INACTIVE: return 'service-status-inactive';
       default: return 'service-status-default';
     }
+  }
+
+  trackByService(index: number, service: VendorServiceListing): string {
+    return service.serviceId ?? String(index);
+  }
+
+  trackByValue(index: number, value: string): string {
+    return value;
   }
 }
 

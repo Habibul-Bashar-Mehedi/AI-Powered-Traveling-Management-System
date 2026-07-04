@@ -139,7 +139,7 @@
     </div>
 
     <div *ngIf="analytics?.topServices?.length" class="top-services">
-      <div *ngFor="let s of analytics!.topServices; let i = index" class="top-service-row">
+      <div *ngFor="let s of analytics!.topServices; let i = index; trackBy: trackByService" class="top-service-row">
         <span class="rank-badge">#{{ i + 1 }}</span>
         <div class="ts-info">
           <div class="ts-name">{{ s.serviceName }}</div>

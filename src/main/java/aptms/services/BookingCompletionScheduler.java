@@ -106,13 +106,7 @@ public class BookingCompletionScheduler {
      */
     private boolean hasWalletCreditForBooking(VendorBooking booking) {
         return transactionRepository
-                .findByVendorVendorIdOrderByCreatedAtDesc(
-                        booking.getVendor().getVendorId(),
-                        org.springframework.data.domain.Pageable.unpaged())
-                .stream()
-                .anyMatch(t -> t.getBooking() != null
-                        && t.getBooking().getBookingId().equals(booking.getBookingId())
-                        && t.getTransactionType() == TransactionType.CREDIT);
+                .existsByBooking_BookingIdAndTransactionType(booking.getBookingId(), TransactionType.CREDIT);
     }
 }
 

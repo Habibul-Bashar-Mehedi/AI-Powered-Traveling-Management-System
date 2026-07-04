@@ -210,6 +210,21 @@ export class AuthService {
   }
 
   /**
+   * Determine where to send the user immediately after login/registration, based on role.
+   * Accepts roles that may carry a Spring Security "ROLE_" prefix.
+   */
+  getPostAuthRedirectUrl(role: UserRole | string | undefined | null): string {
+    const normalized = (role ?? '').toString().replace(/^ROLE_/, '').toUpperCase();
+    if (normalized === UserRole.VENDOR) {
+      return '/vendor/dashboard';
+    }
+    if (normalized === UserRole.ADMIN || normalized === UserRole.SUPER_ADMIN) {
+      return '/admin/vendors';
+    }
+    return '/dashboard';
+  }
+
+  /**
    * Restore browser session after hard refresh using refresh token.
    * Returns true on SSR to avoid server-side auth redirects.
    */

@@ -2,6 +2,7 @@ package aptms.api;
 
 import aptms.dto.vendor.VendorServiceDTO;
 import aptms.security.SecurityUtils;
+import aptms.services.FileStorageService;
 import aptms.services.VendorServiceMgmtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,8 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -27,6 +30,14 @@ import java.util.UUID;
 public class VendorServiceController {
 
     private final VendorServiceMgmtService serviceMgmtService;
+    private final FileStorageService fileStorageService;
+
+    @PostMapping("/images")
+    @Operation(summary = "Upload a service listing image")
+    public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
+        String url = fileStorageService.storeImage(file, "vendor-services");
+        return ResponseEntity.ok(Map.of("url", url));
+    }
 
     @GetMapping
     @Operation(summary = "List all services for authenticated vendor")

@@ -1,3 +1,161 @@
-/* You can add global styles to this file, and also import other style files */
-
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 @import 'tailwindcss';
+
+/* Manual (class-based) dark mode instead of relying on OS prefers-color-scheme,
+   so the in-app toggle (ThemeService) is the single source of truth. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ══════════════════════════════════════════════════════════════
+   AIPTMS — canonical design tokens (single source of truth)
+   Every component stylesheet should read colors/radii/shadows from
+   these variables rather than hardcoding hex values, so the whole
+   app stays visually consistent as pages evolve independently.
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  /* Brand */
+  --blue: #4f46e5;
+  --blue-dk: #4338ca;
+  --blue-light: #6366f1;
+  --cyan: #06b6d4;
+  --violet: #7c3aed;
+  --amber: #f59e0b;
+  --rose: #f43f5e;
+  --emerald: #10b981;
+  --teal: #14b8a6;
+  --sky: #0ea5e9;
+
+  /* Surfaces */
+  --bg-root: #f8f9fc;
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-2: #f4f5f9;
+  --bg-input: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-overlay: rgba(15, 23, 42, 0.5);
+
+  /* Borders */
+  --border: #e6e8f0;
+  --border-md: #d7dae5;
+  --border-hover: #c3c8d6;
+  --border-brand: rgba(79, 70, 229, 0.25);
+  --border-glow: rgba(79, 70, 229, 0.25);
+
+  /* Text */
+  --text-primary: #111827;
+  --text-sec: #6b7280;
+  --text-muted: #9ca3af;
+
+  /* Typography */
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Shadow */
+  --shadow-card: 0 4px 24px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 8px 30px rgba(15, 23, 42, 0.08);
+  --shadow-glow: 0 0 24px rgba(79, 70, 229, 0.12);
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Dark mode token overrides ─────────────────────────────────
+   Higher specificity than a plain `:root { ... }` rule (thanks to the
+   `.dark` class), so this wins over every page's own component-scoped
+   `:root { --bg-root: ... }` block without needing to edit each one. */
+:root.dark {
+  --bg-root: #0b0f19;
+  --bg-sidebar: #111827;
+  --bg-card: #161d2e;
+  --bg-card-2: #1c2438;
+  --bg-input: #1a2234;
+  --bg-elevated: #1c2438;
+  --bg-overlay: rgba(0, 0, 0, 0.6);
+
+  --border: rgba(255, 255, 255, 0.08);
+  --border-md: rgba(255, 255, 255, 0.12);
+  --border-hover: rgba(255, 255, 255, 0.2);
+  --border-brand: rgba(129, 140, 248, 0.35);
+  --border-glow: rgba(129, 140, 248, 0.35);
+
+  --text-primary: #e5e7eb;
+  --text-sec: #9ca3af;
+  --text-muted: #6b7280;
+
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.55);
+  --shadow-glow: 0 0 24px rgba(129, 140, 248, 0.2);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background: var(--bg-root);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+}
+
+/* ── Shared component classes ─────────────────────────────────
+   Small reusable vocabulary for pages that don't have their own
+   bespoke stylesheet (auth screens, simple forms). Pages with a
+   richer custom stylesheet are free to keep their own classes. */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
+  }
+  .btn-primary {
+    @apply text-white shadow-md;
+    background: linear-gradient(135deg, var(--blue) 0%, var(--blue-dk) 100%);
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.05);
+    box-shadow: var(--shadow-glow);
+  }
+  .btn-secondary {
+    @apply bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300;
+    @apply dark:bg-slate-800 dark:text-gray-200 dark:border-slate-600 dark:hover:bg-slate-700;
+  }
+  .btn-ghost {
+    @apply bg-transparent text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10;
+  }
+
+  .card {
+    @apply bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700;
+    box-shadow: var(--shadow-card);
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5;
+  }
+  .form-input {
+    @apply w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 transition duration-150;
+    @apply dark:bg-slate-800 dark:border-slate-600 dark:text-gray-100 dark:placeholder-gray-500;
+    @apply focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500;
+  }
+  .form-error {
+    @apply text-rose-500 text-xs mt-1.5 flex items-center gap-1;
+  }
+}

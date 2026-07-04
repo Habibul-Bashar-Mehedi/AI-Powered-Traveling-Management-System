@@ -12,7 +12,6 @@ import aptms.services.TokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,13 +37,11 @@ public class TokenServiceImpl implements TokenService {
     
     private static final Logger logger = LoggerFactory.getLogger(TokenServiceImpl.class);
     private static final String BLACKLIST_KEY_PREFIX = "blacklist:";
-    private static final int BCRYPT_STRENGTH = 10;
-    
+
     private final RefreshTokenRepository refreshTokenRepository;
     private final TokenBlacklistRepository tokenBlacklistRepository;
     private final RedisTemplate<String, String> redisTemplate;
-    private final BCryptPasswordEncoder passwordEncoder;
-    
+
     public TokenServiceImpl(
             RefreshTokenRepository refreshTokenRepository,
             TokenBlacklistRepository tokenBlacklistRepository,
@@ -52,8 +49,7 @@ public class TokenServiceImpl implements TokenService {
         this.refreshTokenRepository = refreshTokenRepository;
         this.tokenBlacklistRepository = tokenBlacklistRepository;
         this.redisTemplate = redisTemplate;
-        this.passwordEncoder = new BCryptPasswordEncoder(BCRYPT_STRENGTH);
-        
+
         logger.info("TokenService initialized with Redis cache and MySQL fallback");
     }
     
@@ -308,24 +304,22 @@ public class TokenServiceImpl implements TokenService {
         if (token == null || token.isBlank()) {
             return false;
         }
-        
-        // Find all tokens (including revoked) and check hash match
-        List<RefreshToken> allTokens = refreshTokenRepository.findAll();
-        
-        for (RefreshToken rt : allTokens) {
-            if (passwordEncoder.matches(token, rt.getTokenHash())) {
-                // Token exists - check if it's revoked
-                if (rt.isRevoked()) {
-                    logger.warn("SECURITY: Refresh token reuse detected for user: {} (token: {})", 
-                        rt.getUser().getId(), rt.getId());
-                    return true;
-                }
-                // Token exists and is not revoked - this is normal usage
-                return false;
-            }
+
+        String tokenHash = hashRefreshToken(token);
+        Optional<RefreshToken> matchingToken = refreshTokenRepository.findByTokenHash(tokenHash);
+
+        if (matchingToken.isEmpty()) {
+            // Token not found - not a reuse, just invalid
+            return false;
         }
-        
-        // Token not found - not a reuse, just invalid
+
+        RefreshToken rt = matchingToken.get();
+        if (rt.isRevoked()) {
+            logger.warn("SECURITY: Refresh token reuse detected for user: {} (token: {})",
+                rt.getUser().getId(), rt.getId());
+            return true;
+        }
+        // Token exists and is not revoked - this is normal usage
         return false;
     }
 }

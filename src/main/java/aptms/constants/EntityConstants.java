@@ -27,6 +27,7 @@ public final class EntityConstants {
     public static final String MARKET = "Market";
     public static final String ROUTE = "Route";
     public static final String CHAT_HISTORY = "Chat History";
+    public static final String BANNER = "Banner";
 
     // Hotel Status
     public static final String HOTEL_STATUS_ACTIVE = "ACTIVE";

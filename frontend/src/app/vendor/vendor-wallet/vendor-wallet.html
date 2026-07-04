@@ -55,7 +55,7 @@
     </div>
 
     <div *ngIf="wallet.recentTransactions.length > 0" class="tx-list">
-      <div *ngFor="let tx of wallet.recentTransactions" class="tx-row">
+      <div *ngFor="let tx of wallet.recentTransactions; trackBy: trackByTransaction" class="tx-row">
         <div class="tx-type"
           [class.tx-type-credit]="tx.transactionType === 'CREDIT'"
           [class.tx-type-debit]="tx.transactionType !== 'CREDIT'">
@@ -97,7 +97,7 @@
         <div class="field-group">
           <label class="field-label">Payout Method *</label>
           <select class="field-input" formControlName="payoutMethod">
-            <option *ngFor="let m of payoutMethods" [value]="m">{{ m }}</option>
+            <option *ngFor="let m of payoutMethods; trackBy: trackByValue" [value]="m">{{ m }}</option>
           </select>
         </div>
         <div class="field-group">

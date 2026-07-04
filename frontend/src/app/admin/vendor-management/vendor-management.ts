@@ -1,7 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
 import { AdminVendorService } from '../../services/admin-vendor.service';
 import { VendorProfile, PayoutRequest } from '../../models/vendor.model';
 import { VendorStatus } from '../../enums/vendor.enums';
@@ -26,11 +25,6 @@ export class VendorManagement implements OnInit {
   actionLoading: string | null = null;
   error = '';
 
-  // Pre-fetched caches — populated in parallel on init
-  private pendingVendors: VendorProfile[] = [];
-  private allVendors: VendorProfile[] = [];
-  private payoutsCache: PayoutRequest[] = [];
-
   // Modal state
   modalType: 'reject' | 'suspend' | null = null;
   modalVendorId: string | null = null;
@@ -51,8 +45,7 @@ export class VendorManagement implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Preload pending + all vendors in parallel — tab switches will be instant
-    this.preloadVendors();
+    this.loadTab('pending');
   }
 
   // ── Tab helpers ──────────────────────────────────────────────
@@ -77,95 +70,41 @@ export class VendorManagement implements OnInit {
 
   // ── Data loading ─────────────────────────────────────────────
 
-  /**
-   * Preload pending + all vendors simultaneously.
-   * After this resolves, tab switching is instant (no HTTP calls).
-   */
-  private preloadVendors(): void {
-    this.loading = true;
-    this.error = '';
-
-    forkJoin({
-      pending: this.adminVendorService.getPendingVendors(),
-      all:     this.adminVendorService.getAllVendors()
-    }).subscribe({
-      next: ({ pending, all }) => {
-        this.pendingVendors = pending || [];
-        this.allVendors     = all     || [];
-        this.loading        = false;
-        // Render the currently active tab
-        this.applyTabCache();
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.error   = err?.error?.message || 'Failed to load vendor data';
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  /** Switch tab — shows pre-loaded data instantly, no HTTP call for vendors. */
+  /** Switch tab and always fetch fresh data for it from the backend. */
   loadTab(tab: TabId): void {
     this.activeTab = tab;
     this.error     = '';
+    this.loading   = true;
 
-    if (tab === 'pending' || tab === 'all') {
-      // Data already in memory — instant render
-      this.applyTabCache();
+    const onError = (err: any) => {
+      this.error   = err?.error?.message || `Failed to load ${this.getTabTitle().toLowerCase()}`;
+      this.loading = false;
       this.cdr.detectChanges();
+    };
+
+    if (tab === 'payouts') {
+      this.adminVendorService.getPendingPayouts().subscribe({
+        next: (payouts) => {
+          this.payouts = payouts || [];
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: onError
+      });
       return;
     }
 
-    // Payouts are loaded lazily (only when the tab is first opened)
-    if (tab === 'payouts') {
-      if (this.payoutsCache.length > 0) {
-        this.payouts = this.payoutsCache;
-        this.cdr.detectChanges();
-        return;
-      }
-      this.loading = true;
-      this.adminVendorService.getPendingPayouts().subscribe({
-        next: (p) => {
-          this.payoutsCache = p || [];
-          this.payouts      = this.payoutsCache;
-          this.loading      = false;
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          this.error   = err?.error?.message || 'Failed to load payouts';
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
-      });
-    }
-  }
+    const vendors$ = tab === 'all'
+      ? this.adminVendorService.getAllVendors()
+      : this.adminVendorService.getPendingVendors();
 
-  /** Sync the `vendors` array from the appropriate in-memory cache. */
-  private applyTabCache(): void {
-    if (this.activeTab === 'pending') {
-      this.vendors = this.pendingVendors;
-    } else if (this.activeTab === 'all') {
-      this.vendors = this.allVendors;
-    }
-  }
-
-  /**
-   * After any mutation (approve / reject / suspend / reinstate),
-   * refresh both caches silently in the background.
-   */
-  private refreshVendorCaches(): void {
-    forkJoin({
-      pending: this.adminVendorService.getPendingVendors(),
-      all:     this.adminVendorService.getAllVendors()
-    }).subscribe({
-      next: ({ pending, all }) => {
-        this.pendingVendors = pending || [];
-        this.allVendors     = all     || [];
-        this.applyTabCache();
+    vendors$.subscribe({
+      next: (vendors) => {
+        this.vendors = vendors || [];
+        this.loading = false;
         this.cdr.detectChanges();
       },
-      error: () => { /* silent — stale cache is acceptable */ }
+      error: onError
     });
   }
 
@@ -176,7 +115,7 @@ export class VendorManagement implements OnInit {
     this.adminVendorService.approveVendor(id).subscribe({
       next: () => {
         this.actionLoading = null;
-        this.refreshVendorCaches();
+        this.loadTab(this.activeTab);
       },
       error: (err) => {
         this.error         = err?.error?.message || 'Approval failed';
@@ -219,7 +158,7 @@ export class VendorManagement implements OnInit {
     obs.subscribe({
       next: () => {
         this.actionLoading = null;
-        this.refreshVendorCaches();
+        this.loadTab(this.activeTab);
       },
       error: (err) => {
         this.error         = err?.error?.message || 'Action failed';
@@ -234,7 +173,7 @@ export class VendorManagement implements OnInit {
     this.adminVendorService.reinstateVendor(id).subscribe({
       next: () => {
         this.actionLoading = null;
-        this.refreshVendorCaches();
+        this.loadTab(this.activeTab);
       },
       error: (err) => {
         this.error         = err?.error?.message || 'Reinstate failed';
@@ -269,8 +208,7 @@ export class VendorManagement implements OnInit {
     this.adminVendorService.processPayout(id, approve, note).subscribe({
       next: () => {
         this.actionLoading = null;
-        this.payoutsCache  = [];   // invalidate payout cache
-        this.loadTab('payouts');   // reload payouts
+        this.loadTab('payouts');
       },
       error: (err) => {
         this.error         = err?.error?.message || 'Payout processing failed';
@@ -295,5 +233,13 @@ export class VendorManagement implements OnInit {
 
   logout(): void {
     this.authService.logout().subscribe({ complete: () => this.router.navigate(['/login']) });
+  }
+
+  trackByVendor(index: number, vendor: VendorProfile): string {
+    return vendor.vendorId ?? String(index);
+  }
+
+  trackByPayout(index: number, payout: PayoutRequest): string {
+    return payout.payoutId ?? String(index);
   }
 }

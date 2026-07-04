@@ -1,12 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
-
 :root {
-  --bg-root: #f9fafb;
+  --bg-root: #f8f9fc;
   --bg-card: #ffffff;
-  --bg-card-hover: #f3f4f6;
-  --border: #e5e7eb;
-  --border-hover: #d1d5db;
+  --bg-card-hover: #f4f5f9;
+  --border: #e6e8f0;
+  --border-hover: #c3c8d6;
   --blue: #4f46e5;
+  --blue-dk: #4338ca;
   --blue-light: #6366f1;
   --cyan: #06b6d4;
   --violet: #7c3aed;
@@ -16,8 +15,8 @@
   --text-primary: #111827;
   --text-sec: #6b7280;
   --text-muted: #9ca3af;
-  --font-display: 'Syne', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
   --radius-md: 12px;
   --radius-sm: 8px;
 }
@@ -218,7 +217,7 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
-  background: #f9fafb;
+  background: var(--bg-card-hover);
   border-bottom: 1px solid var(--border);
 }
 

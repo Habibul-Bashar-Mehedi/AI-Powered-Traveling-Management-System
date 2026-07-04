@@ -6,6 +6,7 @@ import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.TraditionalFoodRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,8 @@ import static aptms.constants.ValidationConstants.*;
 
 @Service
 public class TraditionalFoodService {
+    private static final int MAX_LIST_SIZE = 500;
+
     private final TraditionalFoodRepository traditionalFoodRepository;
 
     public TraditionalFoodService(TraditionalFoodRepository traditionalFoodRepository) {
@@ -44,7 +47,7 @@ public class TraditionalFoodService {
     @Transactional(readOnly = true)
     @SecureAction(role = "ADMIN")
     public List<TraditionalFood> getAllTraditionalFood() {
-        return traditionalFoodRepository.findAll();
+        return traditionalFoodRepository.findAll(PageRequest.of(0, MAX_LIST_SIZE)).getContent();
     }
 
     @Transactional

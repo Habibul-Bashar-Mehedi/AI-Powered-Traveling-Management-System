@@ -34,6 +34,29 @@ export interface VendorProfile {
   approvedAt?: string;
 }
 
+export interface PublicServiceListing {
+  serviceId: string;
+  serviceName: string;
+  serviceType: ServiceType;
+  description: string;
+  basePrice: number;
+  currencyCode: string;
+  pricingUnit: PricingUnit;
+  locationAddress?: string;
+  imageUrl?: string;
+  averageRating?: number;
+  totalBookings?: number;
+  vendorId: string;
+  vendorBusinessName: string;
+}
+
+export interface BookServiceRequest {
+  startDate?: string;
+  endDate?: string;
+  quantity?: number;
+  specialRequests?: string;
+}
+
 export interface VendorServiceListing {
   serviceId?: string;
   serviceName: string;
@@ -52,6 +75,7 @@ export interface VendorServiceListing {
   locationLat?: number;
   locationLng?: number;
   locationAddress?: string;
+  imageUrl?: string;
   tags?: string;
   metadata?: string;
   averageRating?: number;

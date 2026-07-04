@@ -3,6 +3,8 @@ package aptms.repositories;
 import aptms.entities.VendorService;
 import aptms.enums.ServiceStatus;
 import aptms.enums.ServiceType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +19,12 @@ import java.util.UUID;
 public interface VendorServiceRepository extends JpaRepository<VendorService, UUID> {
 
     List<VendorService> findByVendorVendorId(UUID vendorId);
+
+    Page<VendorService> findByStatus(ServiceStatus status, Pageable pageable);
+
+    Page<VendorService> findByStatusAndServiceType(ServiceStatus status, ServiceType serviceType, Pageable pageable);
+
+    Optional<VendorService> findByServiceIdAndStatus(UUID serviceId, ServiceStatus status);
 
     List<VendorService> findByVendorVendorIdAndStatus(UUID vendorId, ServiceStatus status);
 

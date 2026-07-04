@@ -43,5 +43,11 @@ export class VendorService {
     return this.http.patch<VendorServiceListing>(
       `${this.base}${API_ENDPOINTS.VENDOR.SERVICE_STATUS(id)}?status=${status}`, {});
   }
+
+  uploadServiceImage(file: File): Observable<{ url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ url: string }>(`${this.base}${API_ENDPOINTS.VENDOR.SERVICE_IMAGES}`, formData);
+  }
 }
 

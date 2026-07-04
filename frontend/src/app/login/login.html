@@ -1,56 +1,135 @@
-<form class="w-full max-w-md mx-auto bg-gray-100 p-8 rounded-2xl shadow-md" [formGroup]="loginGroup" (ngSubmit)="onSubmit()">
+<div class="min-h-screen flex bg-gray-50 dark:bg-slate-900">
 
-  <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">
-    Login
-  </h2>
+  <!-- Left branding panel -->
+  <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800">
+    <div class="absolute inset-0 opacity-20"
+         style="background-image: radial-gradient(circle at 20% 20%, white 1px, transparent 1px), radial-gradient(circle at 80% 60%, white 1px, transparent 1px); background-size: 48px 48px;"></div>
 
-  <div class="mb-4">
-    <label class="block text-sm font-medium mb-1">Email</label>
-    <input type="email" class="w-full px-4 py-2 border rounded-lg" formControlName="email" placeholder="Enter your email">
+    <div class="relative z-10 flex flex-col justify-between p-12 text-white w-full">
+      <a routerLink="/" class="flex items-center gap-2.5">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm ring-1 ring-white/20">
+          <svg class="size-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.519 60.519 0 003.478 2.405z" />
+          </svg>
+        </div>
+        <span class="text-xl font-bold tracking-tight" style="font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);">AIPTMS</span>
+      </a>
 
-    @if(email?.invalid && (email?.touched || email?.dirty)) {
-      <div class="text-red-500 text-sm mt-1">
-        @if(email?.hasError('required')) { <span>Email is required.</span> }
-        @if(email?.hasError('email')) { <span>Please enter a valid email.</span> }
+      <div class="max-w-md">
+        <h1 class="text-4xl font-bold leading-tight mb-4" style="font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);">
+          Plan smarter trips with AI on your side.
+        </h1>
+        <p class="text-indigo-100 text-base leading-relaxed">
+          Discover destinations, manage bookings, and get real-time travel assistance — all from one dashboard built for modern travelers.
+        </p>
+
+        <div class="mt-10 flex flex-col gap-4">
+          <div class="flex items-center gap-3">
+            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15">
+              <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+            </div>
+            <span class="text-sm text-indigo-50">Curated hotels, tours &amp; local experiences</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15">
+              <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+            </div>
+            <span class="text-sm text-indigo-50">AI travel assistant available 24/7</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15">
+              <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+            </div>
+            <span class="text-sm text-indigo-50">One place to track every booking</span>
+          </div>
+        </div>
       </div>
-    }
-  </div>
 
-  <div class="mb-4">
-    <label class="block text-sm font-medium mb-1">Password</label>
-    <input type="password" class="w-full px-4 py-2 border rounded-lg" formControlName="password" placeholder="Enter your password">
-
-    @if(password?.invalid && (password?.touched || password?.dirty)) {
-      <div class="text-red-500 text-sm mt-1">
-        @if(password?.hasError('required')) { <span>Password is required.</span> }
-        @if(password?.hasError('minlength')) { <span>Minimum 6 characters required.</span> }
-      </div>
-    }
-  </div>
-
-  <button
-    type="submit"
-    [disabled]="isSubmitting"
-    class="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold shadow-md hover:bg-indigo-700 active:scale-95 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
-    {{ isSubmitting ? 'Signing In...' : 'Sign In' }}
-  </button>
-
-  <!-- Error message display -->
-  @if(errorMessage) {
-    <div class="mt-4 p-3 rounded"
-         [ngClass]="isAccountLocked ? 'bg-yellow-100 border border-yellow-400 text-yellow-700' : 'bg-red-100 border border-red-400 text-red-700'">
-      <p class="font-semibold">{{ errorMessage }}</p>
-      @if(retryAfter) {
-        <p class="text-sm mt-1">Please try again after: {{ retryAfter }}</p>
-      }
+      <p class="text-xs text-indigo-200">© 2026 AIPTMS. All rights reserved.</p>
     </div>
-  }
+  </div>
 
-  <p class="text-center mt-4">
-    Don't have an account?
-    <a routerLink="/registration" class="text-indigo-600 underline hover:no-underline">
-      Register here
-    </a>
-  </p>
-</form>
+  <!-- Right form panel -->
+  <div class="flex flex-1 items-center justify-center px-6 py-12 sm:px-10">
+    <form class="w-full max-w-md" [formGroup]="loginGroup" (ngSubmit)="onSubmit()">
 
+      <div class="lg:hidden flex items-center gap-2.5 mb-10">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md">
+          <svg class="size-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.519 60.519 0 003.478 2.405z" />
+          </svg>
+        </div>
+        <span class="text-lg font-bold tracking-tight text-gray-900 dark:text-white">AIPTMS</span>
+      </div>
+
+      <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2" style="font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);">
+        Welcome back
+      </h2>
+      <p class="text-gray-500 dark:text-gray-400 mb-8">Sign in to continue to your dashboard.</p>
+
+      <div class="mb-5">
+        <label class="form-label">Email address</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 dark:text-gray-500">
+            <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+          </span>
+          <input type="email" class="form-input pl-10" formControlName="email" placeholder="you@example.com" autocomplete="email">
+        </div>
+
+        @if(email?.invalid && (email?.touched || email?.dirty)) {
+          <div class="form-error">
+            @if(email?.hasError('required')) { <span>Email is required.</span> }
+            @if(email?.hasError('email')) { <span>Please enter a valid email.</span> }
+          </div>
+        }
+      </div>
+
+      <div class="mb-6">
+        <label class="form-label">Password</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 dark:text-gray-500">
+            <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+          </span>
+          <input type="password" class="form-input pl-10" formControlName="password" placeholder="Enter your password" autocomplete="current-password">
+        </div>
+
+        @if(password?.invalid && (password?.touched || password?.dirty)) {
+          <div class="form-error">
+            @if(password?.hasError('required')) { <span>Password is required.</span> }
+            @if(password?.hasError('minlength')) { <span>Minimum 6 characters required.</span> }
+          </div>
+        }
+      </div>
+
+      <button type="submit" [disabled]="isSubmitting" class="btn btn-primary w-full py-3">
+        @if(isSubmitting) {
+          <svg class="size-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span>Signing in…</span>
+        } @else {
+          <span>Sign in</span>
+        }
+      </button>
+
+      <!-- Error message display -->
+      @if(errorMessage) {
+        <div class="mt-5 p-4 rounded-xl border text-sm"
+             [ngClass]="isAccountLocked ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-300' : 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300'">
+          <p class="font-semibold">{{ errorMessage }}</p>
+          @if(retryAfter) {
+            <p class="mt-1 text-xs opacity-90">Please try again after: {{ retryAfter }}</p>
+          }
+        </div>
+      }
+
+      <p class="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
+        Don't have an account?
+        <a routerLink="/registration" class="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">
+          Create one
+        </a>
+      </p>
+    </form>
+  </div>
+</div>

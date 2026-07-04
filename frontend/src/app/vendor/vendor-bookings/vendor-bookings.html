@@ -7,7 +7,7 @@
     </div>
     <select class="filter-select" [(ngModel)]="selectedStatus" (change)="onStatusFilter()">
       <option value="">All Statuses</option>
-      <option *ngFor="let s of statuses.slice(1)" [value]="s">{{ s }}</option>
+      <option *ngFor="let s of statuses.slice(1); trackBy: trackByValue" [value]="s">{{ s }}</option>
     </select>
   </div>
 
@@ -61,7 +61,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let b of bookings">
+        <tr *ngFor="let b of bookings; trackBy: trackByBooking">
           <td>
             <div class="traveler-name">{{ b.userName }}</div>
             <div class="traveler-email">{{ b.userEmail }}</div>

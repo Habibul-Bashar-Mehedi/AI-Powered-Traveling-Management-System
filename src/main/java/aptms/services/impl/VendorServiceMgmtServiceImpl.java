@@ -100,6 +100,7 @@ public class VendorServiceMgmtServiceImpl implements VendorServiceMgmtService {
         entity.setLocationAddress(dto.getLocationAddress());
         entity.setTags(dto.getTags());
         entity.setMetadata(dto.getMetadata());
+        entity.setImageUrl(dto.getImageUrl());
     }
 
     private VendorServiceDTO toDTO(VendorService e) {
@@ -123,6 +124,7 @@ public class VendorServiceMgmtServiceImpl implements VendorServiceMgmtService {
         dto.setLocationAddress(e.getLocationAddress());
         dto.setTags(e.getTags());
         dto.setMetadata(e.getMetadata());
+        dto.setImageUrl(e.getImageUrl());
         dto.setAverageRating(e.getAverageRating());
         dto.setTotalBookings(e.getTotalBookings());
         dto.setIsFeatured(e.getIsFeatured());

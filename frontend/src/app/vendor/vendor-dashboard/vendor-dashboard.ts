@@ -102,9 +102,13 @@ export class VendorDashboard implements OnInit, OnDestroy {
       case 'APPROVED': return '#10b981';
       case 'PENDING_REVIEW': return '#f59e0b';
       case 'REJECTED': return '#f43f5e';
-      case 'SUSPENDED': return '#8b5cf6';
-      default: return '#8a9bbf';
+      case 'SUSPENDED': return '#7c3aed';
+      default: return '#9ca3af';
     }
+  }
+
+  trackByNavItem(index: number, item: { id: string; label: string; path: string }): string {
+    return item.id;
   }
 }
 

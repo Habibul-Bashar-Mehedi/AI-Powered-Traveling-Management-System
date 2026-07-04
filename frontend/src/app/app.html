@@ -1,58 +1,104 @@
 <div class="flex flex-col min-h-screen">
 
-  <nav *ngIf="showMainNavbar" class="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-md mb-9">
+  <nav *ngIf="showMainNavbar" class="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md mb-9">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="flex h-16 items-center justify-between">
 
         <div class="flex items-center gap-8">
-          <a href="/" class="flex items-center gap-2">
-            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
-              <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+          <a routerLink="/home" class="flex items-center gap-2">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200">
+              <svg class="size-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.519 60.519 0 003.478 2.405z" />
               </svg>
             </div>
-            <span class="text-xl font-bold tracking-tight text-gray-900">AIPTMS</span>
+            <span class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">AIPTMS</span>
           </a>
 
-          <div class="hidden md:flex md:items-center md:gap-6">
-            <a routerLink="/" class="text-sm font-medium text-gray-600 transition hover:text-indigo-600" routerLinkActive="active">Home</a>
-            <a (click)="navigateToDashboard($event)" class="text-sm font-medium text-gray-600 transition hover:text-indigo-600 cursor-pointer">Dashboard</a>
-            <a href="#" class="text-sm font-medium text-gray-600 transition hover:text-indigo-600">Explore</a>
-            <a href="#" class="text-sm font-medium text-gray-600 transition hover:text-indigo-600">My Bookings</a>
-            <a href="#" class="text-sm font-medium text-gray-600 transition hover:text-indigo-600">Packages</a>
-            <span class="text-sm font-medium text-gray-400">
-            <a routerLink="/login" class="text-sm font-medium text-gray-600 transition hover:text-indigo-600" routerLinkActive="active">Login </a>/
-            <a routerLink="/registration" class="text-sm font-medium text-gray-600 transition hover:text-indigo-600" routerLinkActive="active"> Register</a>
-          </span>
-            <a href="#" class="text-sm font-medium text-gray-600 transition hover:text-indigo-600">Support</a>
-          </div>
+          @if (currentUser$ | async; as user) {
+            <div class="hidden md:flex md:items-center md:gap-6">
+              <a (click)="navigateToDashboard($event)" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer">Dashboard</a>
+              <a routerLink="/dashboard" fragment="destinations" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">Explore</a>
+              <a routerLink="/dashboard" fragment="my-bookings" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">My Bookings</a>
+              <a routerLink="/dashboard" fragment="offers" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">Packages</a>
+            </div>
+          } @else {
+            <div class="hidden md:flex md:items-center md:gap-6">
+              <a routerLink="/home" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400" routerLinkActive="active">Home</a>
+            </div>
+          }
         </div>
 
         <div class="flex items-center gap-4">
-          <div class="hidden lg:block">
+          @if (currentUser$ | async; as user) {
+            <div class="hidden lg:block">
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                  <svg class="size-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search destinations, tours..."
+                  class="w-64 rounded-full border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 py-1.5 pl-10 pr-4 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  [(ngModel)]="searchQuery"
+                  (focus)="onSearchFocus()"
+                  (input)="onSearchInput()"
+                  (blur)="closeSearchDelayed()"
+                >
+
+                @if (searchOpen && searchQuery.trim()) {
+                  <div class="absolute left-0 right-0 mt-2 rounded-xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 py-1.5 shadow-lg z-50">
+                    @if (searchResults.length === 0) {
+                      <p class="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">No matches for "{{ searchQuery }}"</p>
+                    } @else {
+                      @for (result of searchResults; track result.label) {
+                        <button
+                          type="button"
+                          class="flex w-full items-center justify-between gap-3 px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-slate-700"
+                          (mousedown)="selectSearchResult(result)">
+                          <span class="text-sm text-gray-800 dark:text-gray-100">{{ result.label }}</span>
+                          <span class="text-xs text-gray-400 dark:text-gray-500">{{ result.sublabel }}</span>
+                        </button>
+                      }
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+
+            <button type="button" class="hidden sm:flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition" (click)="toggleTheme()" [title]="isDarkTheme ? 'Switch to light mode' : 'Switch to dark mode'">
+              @if (isDarkTheme) {
+                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
+              } @else {
+                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /></svg>
+              }
+            </button>
+
             <div class="relative">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-              <svg class="size-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </span>
-              <input type="text" placeholder="Search destinations..." class="w-64 rounded-full border border-gray-200 bg-gray-50 py-1.5 pl-10 pr-4 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              <button type="button" (click)="toggleAccountMenu()" class="flex items-center gap-2 rounded-full border border-gray-200 dark:border-slate-700 p-1 pr-3 transition hover:bg-gray-50 dark:hover:bg-slate-800">
+                <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                  {{ user.username.charAt(0).toUpperCase() }}
+                </div>
+                <span class="text-xs font-semibold text-gray-700 dark:text-gray-200">{{ user.username }}</span>
+                <svg class="size-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              @if (accountMenuOpen) {
+                <div class="absolute right-0 mt-2 w-48 rounded-xl border border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 py-1.5 shadow-lg">
+                  <a routerLink="/dashboard" fragment="my-bookings" (click)="accountMenuOpen = false" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700">My Bookings</a>
+                  <button type="button" (click)="logout()" class="block w-full px-4 py-2 text-left text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10">Sign Out</button>
+                </div>
+              }
             </div>
-          </div>
+          } @else {
+            <a routerLink="/login" routerLinkActive="active" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">Sign in</a>
+            <a routerLink="/registration" class="btn btn-primary py-2 px-4">Get started</a>
+          }
 
-          <button type="button" class="flex items-center gap-2 rounded-full border border-gray-200 p-1 pr-3 transition hover:bg-gray-50">
-
-            <!-- Avatar Icon -->
-            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/>
-              </svg>
-            </div>
-
-            <span class="text-xs font-semibold text-gray-700">Account</span>
-          </button>
-
-          <button class="rounded-lg p-2 text-gray-600 hover:bg-gray-100 md:hidden">
+          <button class="rounded-lg p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 md:hidden">
             <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
@@ -65,70 +111,7 @@
   <main class="flex-grow">
     <router-outlet></router-outlet>
   </main>
-  <footer *ngIf="showMainNavbar" class="bg-white border-t border-gray-200 dark:bg-gray-900 dark:border-gray-800">
-    <div class="mx-auto max-w-7xl px-4 pt-16 pb-8 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 gap-12 lg:grid-cols-4 sm:grid-cols-2">
-
-        <div class="col-span-1 lg:col-span-1">
-          <a href="/" class="flex items-center gap-2">
-            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-md">
-              <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-              </svg>
-            </div>
-            <span class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">AIPTMS</span>
-          </a>
-          <p class="mt-4 text-sm leading-6 text-gray-600 dark:text-gray-400">
-            AI-Powered Traveling Management System. Making your travel smarter, faster, and more enjoyable with artificial intelligence.
-          </p>
-          <div class="mt-6 flex gap-4">
-            <a href="#" class="text-gray-400 hover:text-indigo-600 transition"><svg class="size-6" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg></a>
-            <a href="#" class="text-gray-400 hover:text-indigo-600 transition"><svg class="size-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12.315 2c2.43 0 2.784.012 3.855.06 1.061.044 1.787.209 2.427.458a4.902 4.902 0 011.767 1.148 4.902 4.902 0 011.148 1.767c.249.64.414 1.366.457 2.427.05 1.07.062 1.424.062 3.854s-.012 2.784-.06 3.855c-.044 1.061-.209 1.787-.458 2.427a4.902 4.902 0 01-1.148 1.767 4.902 4.902 0 01-1.767 1.148c-.64.249-1.366.414-2.427.458-1.07.05-1.424.062-3.854.062s-2.784-.012-3.855-.06c-1.061-.044-1.787-.209-2.427-.458a4.902 4.902 0 01-1.767-1.148 4.902 4.902 0 01-1.148-1.767c-.249-.64-.414-1.366-.458-2.427-.05-1.07-.062-1.424-.062-3.854s.012-2.784.06-3.855c.044-1.061.209-1.787.458-2.427a4.902 4.902 0 011.148-1.767 4.902 4.902 0 011.767-1.148c.64-.249 1.366-.414 2.427-.458 1.07-.05 1.424-.062 3.854-.062zm0 2.25c-2.408 0-2.693.009-3.643.052-.876.04-1.352.183-1.669.307-.42.163-.72.358-1.036.673-.315.315-.51.615-.673 1.036-.124.317-.267.793-.307 1.669-.043.95-.052 1.235-.052 3.643s.009 2.693.052 3.643c.04.876.183 1.352.307 1.669.163.42.358.72.673 1.036.315.315.615.51 1.036.673.317.124.793.267 1.669.307.95.043 1.235.052 3.643.052s2.693-.009 3.643-.052c.876-.04 1.352-.183 1.669-.307.42-.163.72-.358 1.036-.673.315-.315.51-.615.673-1.036.124-.317.267-.793.307-1.669.043-.95.052-1.235-.052-3.643s-.009-2.693-.052-3.643c-.04-.876-.183-1.352-.307-1.669-.163-.42-.358-.72-.673-1.036-.315-.315-.615-.51-1.036-.673-.317-.124-.793-.267-1.669-.307-.95-.043-1.235-.052-3.643-.052zM12 7.25A4.75 4.75 0 1016.75 12 4.75 4.75 0 0012 7.25zM12 14.5A2.5 2.5 0 1112 9.5a2.5 2.5 0 010 5zm5.5-6.15a1.15 1.15 0 11-2.3 0 1.15 1.15 0 012.3 0z"/></svg></a>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Quick Links</h3>
-          <ul class="mt-4 space-y-2">
-            <li><a routerLink="/" class="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400">Home</a></li>
-            <li><a (click)="navigateToDashboard($event)" class="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400 cursor-pointer">Dashboard</a></li>
-            <li><a href="#" class="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400">Explore Destinations</a></li>
-            <li><a href="#" class="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400">Travel Packages</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Support</h3>
-          <ul class="mt-4 space-y-2">
-            <li><a href="#" class="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400">Help Center</a></li>
-            <li><a href="#" class="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400">Privacy Policy</a></li>
-            <li><a href="#" class="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400">Terms of Service</a></li>
-            <li><a href="#" class="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400">Contact Us</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white">Contact</h3>
-          <ul class="mt-4 space-y-3">
-            <li class="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-              <svg class="size-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-              Dhaka, Bangladesh
-            </li>
-            <li class="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-              <svg class="size-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-              support&#64;aiptms.com
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="mt-12 border-t border-gray-200 pt-8 dark:border-gray-800">
-        <p class="text-center text-xs text-gray-500">
-          &copy; 2026 AIPTMS. All rights reserved. Created with ❤️ for travelers.
-        </p>
-      </div>
-    </div>
-  </footer>
+  <app-footer *ngIf="showMainNavbar"></app-footer>
 
 
 </div>

@@ -6,6 +6,7 @@ import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.TransportRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,8 @@ import static aptms.constants.ValidationConstants.*;
 
 @Service
 public class TransportService {
+    private static final int MAX_LIST_SIZE = 500;
+
     private final TransportRepository transportRepository;
 
     public TransportService(TransportRepository transportRepository) {
@@ -44,7 +47,7 @@ public class TransportService {
     @Transactional(readOnly = true)
     @SecureAction(role = "ADMIN")
     public List<Transport> getAllTransport() {
-        return transportRepository.findAll();
+        return transportRepository.findAll(PageRequest.of(0, MAX_LIST_SIZE)).getContent();
     }
 
     @Transactional

@@ -6,7 +6,7 @@ import { catchError, defaultIfEmpty } from 'rxjs/operators';
 import { VendorService } from '../../services/vendor.service';
 import { VendorWalletService } from '../../services/vendor-wallet.service';
 import { VendorAnalyticsService } from '../../services/vendor-analytics.service';
-import { VendorProfile, WalletSummary, AnalyticsSummary } from '../../models/vendor.model';
+import { VendorProfile, WalletSummary, AnalyticsSummary, ServicePerformance } from '../../models/vendor.model';
 
 @Component({
   selector: 'app-vendor-overview',
@@ -80,5 +80,9 @@ export class VendorOverview implements OnInit {
   }
 
   navigate(path: string): void { this.router.navigate([path]); }
+
+  trackByService(index: number, service: ServicePerformance): string {
+    return service.serviceId;
+  }
 }
 

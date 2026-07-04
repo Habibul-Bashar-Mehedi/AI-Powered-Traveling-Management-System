@@ -1,25 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
-
 :host {
   /* ── Brand ── */
-  --brand-blue:    #3b82f6;
-  --brand-blue-dk: #2563eb;
+  --brand-blue:    #4f46e5;
+  --brand-blue-dk: #4338ca;
   --brand-cyan:    #06b6d4;
-  --brand-violet:  #8b5cf6;
+  --brand-violet:  #7c3aed;
   --brand-emerald: #10b981;
   --brand-amber:   #f59e0b;
   --brand-rose:    #f43f5e;
 
   /* ── Surfaces (LIGHT THEME) ── */
-  --bg-root:     #f9fafb;
+  --bg-root:     #f8f9fc;
   --bg-card:     #ffffff;
-  --bg-card-2:   #f3f4f6;
-  --bg-elevated: #e5e7eb;
+  --bg-card-2:   #f4f5f9;
+  --bg-elevated: #ffffff;
 
   /* ── Borders (LIGHT THEME) ── */
-  --border:       #e5e7eb;
-  --border-md:    #d1d5db;
-  --border-brand: rgba(59,130,246,0.3);
+  --border:       #e6e8f0;
+  --border-md:    #d7dae5;
+  --border-brand: rgba(79,70,229,0.3);
 
   /* ── Text (LIGHT THEME) ── */
   --text-primary: #111827;
@@ -136,13 +134,13 @@
   transition: background 0.3s;
 }
 
-.status-indicator[data-status="APPROVED"]      { border-color: rgba(16,185,129,.25); color: #34d399; }
+.status-indicator[data-status="APPROVED"]      { border-color: rgba(16,185,129,.25); color: #059669; }
 .status-indicator[data-status="APPROVED"]      .status-dot { background:#10b981; box-shadow: 0 0 7px rgba(16,185,129,.6); }
-.status-indicator[data-status="PENDING_REVIEW"]{ border-color: rgba(245,158,11,.25); color: #fbbf24; }
+.status-indicator[data-status="PENDING_REVIEW"]{ border-color: rgba(245,158,11,.25); color: #b45309; }
 .status-indicator[data-status="PENDING_REVIEW"] .status-dot { background: var(--brand-amber); }
-.status-indicator[data-status="REJECTED"]      { border-color: rgba(244,63,94,.25); color: #f87171; }
+.status-indicator[data-status="REJECTED"]      { border-color: rgba(244,63,94,.25); color: #e11d48; }
 .status-indicator[data-status="REJECTED"]      .status-dot { background: var(--brand-rose); }
-.status-indicator[data-status="SUSPENDED"]     { border-color: rgba(139,92,246,.25); color: #a78bfa; }
+.status-indicator[data-status="SUSPENDED"]     { border-color: rgba(124,58,237,.25); color: #6d28d9; }
 .status-indicator[data-status="SUSPENDED"]     .status-dot { background: var(--brand-violet); }
 
 /* ═══════════════════════════════════
@@ -167,7 +165,7 @@
 
 .shell-stat:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+  box-shadow: 0 8px 32px rgba(15,23,42,0.10);
 }
 
 .shell-stat-emerald { border-left-color: var(--brand-emerald); }
@@ -227,9 +225,9 @@
 
 .alert-icon { width: 16px; height: 16px; flex-shrink: 0; }
 
-.alert-warning   { background: rgba(245,158,11,.06); border-color: rgba(245,158,11,.22); color: #fbbf24; }
-.alert-error     { background: rgba(244,63,94,.06);  border-color: rgba(244,63,94,.22);  color: #f87171; }
-.alert-suspended { background: rgba(139,92,246,.06); border-color: rgba(139,92,246,.22); color: #a78bfa; }
+.alert-warning   { background: rgba(245,158,11,.06); border-color: rgba(245,158,11,.22); color: #b45309; }
+.alert-error     { background: rgba(244,63,94,.06);  border-color: rgba(244,63,94,.22);  color: #e11d48; }
+.alert-suspended { background: rgba(124,58,237,.06); border-color: rgba(124,58,237,.22); color: #6d28d9; }
 
 /* ═══════════════════════════════════
    SKELETON LOADING

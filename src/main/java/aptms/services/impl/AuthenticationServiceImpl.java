@@ -88,11 +88,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         logger.info("Registration attempt for email: {}", request.getEmail());
-        
+
         // Capture request context
         String ipAddress = getClientIpAddress();
         String userAgent = getUserAgent();
-        
+
+        if (isGmailAddress(request.getEmail())) {
+            logger.warn("Registration rejected: Gmail address not allowed: {}", request.getEmail());
+            eventLogger.logRegistrationFailure(request.getEmail(), ipAddress, userAgent, "Gmail address not allowed");
+            throw new InvalidException("Gmail addresses are not allowed for registration. Please use a different email provider.");
+        }
+
         // Check if email already exists
         if (userRepository.existsByEmail(request.getEmail())) {
             logger.warn("Registration failed: email already exists: {}", request.getEmail());
@@ -438,13 +444,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * Find refresh token by token string (for reuse detection).
      */
     private RefreshToken findRefreshTokenByString(String tokenString) {
-        List<RefreshToken> allTokens = refreshTokenRepository.findAll();
-        for (RefreshToken rt : allTokens) {
-            if (passwordEncoder.matches(tokenString, rt.getTokenHash())) {
-                return rt;
-            }
-        }
-        return null;
+        return refreshTokenRepository.findByTokenHash(hashRefreshToken(tokenString)).orElse(null);
     }
     
     /**
@@ -475,6 +475,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return "unknown";
     }
     
+    /**
+     * Gmail (including its googlemail.com alias) is not accepted for registration.
+     */
+    private boolean isGmailAddress(String email) {
+        if (email == null) {
+            return false;
+        }
+        String domain = email.substring(email.lastIndexOf('@') + 1).trim().toLowerCase();
+        return domain.equals("gmail.com") || domain.equals("googlemail.com");
+    }
+
     /**
      * Get user agent from current request context.
      */

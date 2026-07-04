@@ -19,8 +19,19 @@ export const routes: Routes = [
   },
   {
     path: 'home',
-    loadComponent: () => import('./home/home').then(m => m.Home),
-    canActivate: [AuthGuard]
+    loadComponent: () => import('./home/home').then(m => m.Home)
+  },
+  {
+    path: 'help-center',
+    loadComponent: () => import('./info-page/info-page').then(m => m.InfoPage)
+  },
+  {
+    path: 'privacy-policy',
+    loadComponent: () => import('./info-page/info-page').then(m => m.InfoPage)
+  },
+  {
+    path: 'terms-of-service',
+    loadComponent: () => import('./info-page/info-page').then(m => m.InfoPage)
   },
 
   // ── Vendor Registration (authenticated user registers as vendor) ──────────
@@ -81,18 +92,22 @@ export const routes: Routes = [
       {
         path: 'users',
         loadComponent: () => import('./admin/user-management/user-management').then(m => m.UserManagement)
+      },
+      {
+        path: 'banners',
+        loadComponent: () => import('./admin/banner-management/banner-management').then(m => m.BannerManagement)
       }
     ]
   },
 
   {
     path: '',
-    redirectTo: 'login',
+    redirectTo: 'home',
     pathMatch: 'full'
   },
-  // Catch-all: redirect unknown paths to login
+  // Catch-all: redirect unknown paths to the homepage
   {
     path: '**',
-    redirectTo: 'login'
+    redirectTo: 'home'
   }
 ];

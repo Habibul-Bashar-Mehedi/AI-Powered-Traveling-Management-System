@@ -1,1 +1,191 @@
-<h1>Welcome to the Home Page</h1>
+<!-- ══════════════════════════════════════════════════════
+     HERO
+     ══════════════════════════════════════════════════════ -->
+<section class="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800">
+  <div class="absolute inset-0 opacity-20"
+       style="background-image: radial-gradient(circle at 20% 20%, white 1px, transparent 1px), radial-gradient(circle at 80% 60%, white 1px, transparent 1px); background-size: 48px 48px;"></div>
+
+  <div class="relative z-10 mx-auto max-w-7xl px-6 py-20 sm:px-8 lg:px-10 lg:py-28">
+    <div class="mx-auto max-w-3xl text-center">
+      <span class="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-medium text-white ring-1 ring-white/20">
+        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+        AI-Powered Travel Management
+      </span>
+
+      <h1 class="mt-6 text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl home-display">
+        Plan smarter trips with AI on your side.
+      </h1>
+      <p class="mt-6 text-lg leading-relaxed text-indigo-100 sm:text-xl">
+        Discover destinations, book hotels and tours, and manage every trip from one dashboard —
+        with a 24/7 AI assistant to help you plan along the way.
+      </p>
+
+      <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+        <a [routerLink]="primaryCtaLink" class="btn btn-primary w-full sm:w-auto px-8 py-3.5 text-base">
+          {{ primaryCtaLabel }}
+        </a>
+        @if (!isAuthenticated) {
+          <a routerLink="/login" class="w-full sm:w-auto rounded-xl border border-white/30 px-8 py-3.5 text-center text-base font-semibold text-white transition hover:bg-white/10">
+            Sign In
+          </a>
+        }
+      </div>
+
+      <div class="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-indigo-100">
+        <span class="flex items-center gap-2">
+          <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+          Free to join
+        </span>
+        <span class="flex items-center gap-2">
+          <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+          Verified vendors only
+        </span>
+        <span class="flex items-center gap-2">
+          <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+          AI assistant included
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     FEATURES
+     ══════════════════════════════════════════════════════ -->
+<section class="bg-gray-50 dark:bg-slate-800/50 py-20">
+  <div class="mx-auto max-w-7xl px-6 sm:px-8 lg:px-10">
+    <div class="mx-auto max-w-2xl text-center">
+      <h2 class="text-3xl font-bold text-gray-900 dark:text-white home-display">Everything you need for your next trip</h2>
+      <p class="mt-4 text-base text-gray-500 dark:text-gray-400">
+        One platform connecting travelers with hotels, tours, transport, and an AI assistant that's always available.
+      </p>
+    </div>
+
+    <div class="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      @for (feature of features; track trackByFeature($index, feature)) {
+        <div class="card p-6">
+          <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+            @switch (feature.icon) {
+              @case ('chat') {
+                <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8-1.222 0-2.386-.22-3.447-.62L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+              }
+              @case ('hotel') {
+                <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" /></svg>
+              }
+              @case ('compass') {
+                <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.5 9.5l-2 5-5 2 2-5 5-2z" /></svg>
+              }
+              @case ('route') {
+                <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+              }
+              @case ('shield') {
+                <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              }
+              @case ('track') {
+                <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+              }
+            }
+          </div>
+          <h3 class="mt-4 text-base font-semibold text-gray-900 dark:text-white">{{ feature.title }}</h3>
+          <p class="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">{{ feature.description }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     HOW IT WORKS
+     ══════════════════════════════════════════════════════ -->
+<section class="bg-white dark:bg-slate-900 py-20">
+  <div class="mx-auto max-w-7xl px-6 sm:px-8 lg:px-10">
+    <div class="mx-auto max-w-2xl text-center">
+      <h2 class="text-3xl font-bold text-gray-900 dark:text-white home-display">How it works</h2>
+      <p class="mt-4 text-base text-gray-500 dark:text-gray-400">From sign-up to your next trip in three simple steps.</p>
+    </div>
+
+    <div class="mt-14 grid grid-cols-1 gap-10 sm:grid-cols-3">
+      @for (step of steps; track trackByStep($index, step)) {
+        <div class="text-center">
+          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-lg font-bold text-white home-display">
+            {{ step.step }}
+          </div>
+          <h3 class="mt-5 text-base font-semibold text-gray-900 dark:text-white">{{ step.title }}</h3>
+          <p class="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">{{ step.description }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     DESTINATIONS
+     ══════════════════════════════════════════════════════ -->
+<section class="bg-gray-50 dark:bg-slate-800/50 py-20">
+  <div class="mx-auto max-w-7xl px-6 sm:px-8 lg:px-10">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white home-display">Popular destinations</h2>
+        <p class="mt-3 text-base text-gray-500 dark:text-gray-400">A glimpse of what's already on the platform.</p>
+      </div>
+      <a [routerLink]="primaryCtaLink" class="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">
+        Explore all destinations →
+      </a>
+    </div>
+
+    <div class="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      @if (destinationsLoading) {
+        @for (i of [1,2,3]; track i) {
+          <div class="card h-40 animate-pulse bg-gray-100 dark:bg-slate-700"></div>
+        }
+      } @else if (destinations.length === 0) {
+        <div class="card col-span-full p-10 text-center text-sm text-gray-500 dark:text-gray-400">
+          Destinations are being added — check back soon.
+        </div>
+      } @else {
+        @for (destination of destinations; track trackByDestination($index, destination)) {
+          <div class="card overflow-hidden">
+            <div class="flex h-32 items-center justify-center bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-500/10 dark:to-violet-500/10 text-indigo-300 dark:text-indigo-400">
+              <svg class="size-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <div class="p-5">
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ destination.name }}</h3>
+              <p class="mt-1 text-xs font-medium uppercase tracking-wide text-indigo-500 dark:text-indigo-400">{{ destination.region }}</p>
+              @if (destination.description) {
+                <p class="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">{{ destination.description | slice:0:110 }}{{ destination.description.length > 110 ? '…' : '' }}</p>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     VENDOR CTA BANNER
+     ══════════════════════════════════════════════════════ -->
+<section class="bg-white dark:bg-slate-900 py-4">
+  <div class="mx-auto max-w-7xl px-6 sm:px-8 lg:px-10">
+    <div class="flex flex-col items-center justify-between gap-6 rounded-3xl bg-gray-900 px-8 py-10 text-center sm:flex-row sm:text-left lg:px-12">
+      <div>
+        <h3 class="text-xl font-bold text-white home-display">Own a hotel, tour service, or transport business?</h3>
+        <p class="mt-2 text-sm text-gray-300">List your services on AIPTMS and reach travelers actively planning their next trip.</p>
+      </div>
+      <a routerLink="/registration" class="btn btn-primary shrink-0 px-6 py-3">Become a Vendor</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     FINAL CTA
+     ══════════════════════════════════════════════════════ -->
+<section class="bg-gray-50 py-20">
+  <div class="mx-auto max-w-3xl px-6 text-center sm:px-8">
+    <h2 class="text-3xl font-bold text-gray-900 dark:text-white home-display">Ready to plan your next trip?</h2>
+    <p class="mt-4 text-base text-gray-500 dark:text-gray-400">Join AIPTMS today and let AI help you get there.</p>
+    <div class="mt-8">
+      <a [routerLink]="primaryCtaLink" class="btn btn-primary px-8 py-3.5 text-base">{{ primaryCtaLabel }}</a>
+    </div>
+  </div>
+</section>

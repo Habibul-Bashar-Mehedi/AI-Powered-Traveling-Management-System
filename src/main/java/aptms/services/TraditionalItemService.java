@@ -6,6 +6,7 @@ import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.TraditionalItemRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,8 @@ import static aptms.constants.ValidationConstants.*;
 
 @Service
 public class TraditionalItemService {
+    private static final int MAX_LIST_SIZE = 500;
+
     private final TraditionalItemRepository traditionalItemRepository;
 
     public TraditionalItemService(TraditionalItemRepository traditionalItemRepository) {
@@ -44,7 +47,7 @@ public class TraditionalItemService {
     @Transactional(readOnly = true)
     @SecureAction(role = "ADMIN")
     public List<TraditionalItem> getAllTraditionalItem() {
-        return traditionalItemRepository.findAll();
+        return traditionalItemRepository.findAll(PageRequest.of(0, MAX_LIST_SIZE)).getContent();
     }
 
     @Transactional

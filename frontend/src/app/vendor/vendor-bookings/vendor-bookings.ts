@@ -109,5 +109,13 @@ export class VendorBookings implements OnInit {
       default: return 'status-badge-cancelled';
     }
   }
+
+  trackByBooking(index: number, booking: VendorBooking): string {
+    return booking.bookingId;
+  }
+
+  trackByValue(index: number, value: string): string {
+    return value;
+  }
 }
 

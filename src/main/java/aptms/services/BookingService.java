@@ -17,6 +17,7 @@ import aptms.repositories.VendorBookingRepository;
 import aptms.repositories.VendorRepository;
 import aptms.repositories.VendorServiceRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +34,8 @@ import static aptms.constants.EntityConstants.*;
 @Service
 @Slf4j
 public class BookingService {
+
+    private static final int MAX_LIST_SIZE = 500;
 
     private final BookingRepository bookingRepository;
     private final VendorRepository vendorRepository;
@@ -141,7 +144,7 @@ public class BookingService {
     @Transactional(readOnly = true)
     @SecureAction(role = "ADMIN")
     public List<Booking> getAllBookings() {
-        return bookingRepository.findAll();
+        return bookingRepository.findAll(PageRequest.of(0, MAX_LIST_SIZE)).getContent();
     }
 
     @Transactional

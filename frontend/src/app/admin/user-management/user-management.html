@@ -1,135 +1,289 @@
-<div class="user-admin-root">
-  <nav class="user-admin-nav">
-    <div class="user-admin-nav-inner">
-      <div class="brand">AIPTMS Admin</div>
-      <div class="nav-links">
-        <a routerLink="/admin/vendors" class="nav-link">Vendor Management</a>
-        <span class="nav-link nav-link-active">User Management</span>
+<div class="adm-root">
+
+  <!-- ══ Top Navbar (Same as Vendor Navbar) ══ -->
+  <nav class="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex h-16 items-center justify-between">
+
+        <div class="flex items-center gap-8">
+          <a href="/" class="flex items-center gap-2">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200">
+              <svg class="size-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.519 60.519 0 003.478 2.405z" />
+              </svg>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">AIPTMS</span>
+          </a>
+
+          <div class="hidden md:flex md:items-center md:gap-6">
+            <a routerLink="/admin/vendors" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">
+              Pending Review
+            </a>
+            <a routerLink="/admin/vendors" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">
+              All Vendors
+            </a>
+            <a routerLink="/admin/vendors" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">
+              Payout Requests
+            </a>
+            <span class="text-sm font-medium text-indigo-600 dark:text-indigo-400">
+              User Management
+            </span>
+            <a routerLink="/admin/banners" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">
+              Banners
+            </a>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <!-- Admin Badge -->
+          <div class="hidden lg:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30">
+            <div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white font-semibold text-sm">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-xs font-semibold text-gray-900 dark:text-white">Administrator</span>
+              <span class="text-xs text-red-600 dark:text-red-400">Full Access</span>
+            </div>
+          </div>
+
+          <button type="button" class="flex items-center gap-2 rounded-full border border-gray-200 dark:border-slate-700 p-1 pr-3 transition hover:bg-gray-50 dark:hover:bg-slate-800">
+            <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-slate-700 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/>
+              </svg>
+            </div>
+            <span class="text-xs font-semibold text-gray-700 dark:text-gray-200">Account</span>
+          </button>
+
+          <button (click)="logout()" class="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span>Sign Out</span>
+          </button>
+
+          <button class="rounded-lg p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 md:hidden">
+            <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+
       </div>
-      <button type="button" class="logout-btn" (click)="logout()">Sign Out</button>
     </div>
   </nav>
 
-  <main class="user-admin-main">
-    <header class="page-header">
-      <div>
-        <h1>User / Traveller Management</h1>
-        <p>Manage platform users with RBAC-aware controls.</p>
+  <!-- ══ Main Content ══ -->
+  <main class="main-content">
+
+    <!-- Header -->
+    <header class="content-header">
+      <div class="header-left">
+        <p class="header-eyebrow">
+          <svg class="eyebrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+          </svg>
+          Admin Control Panel
+        </p>
+        <h1 class="content-title">User &amp; Traveller Management</h1>
+        <p class="content-subtitle">Manage platform users with RBAC-aware controls.</p>
       </div>
-      <button type="button" class="primary-btn" (click)="openCreateModal()">Create User</button>
+
+      <div class="header-right">
+        <div class="header-meta-card">
+          <span class="meta-label">Total Users</span>
+          <span class="meta-value">{{ totalElements }}</span>
+        </div>
+        <div class="header-meta-card">
+          <span class="meta-label">This Page</span>
+          <span class="meta-value">{{ users.length }}</span>
+        </div>
+        <button type="button" class="btn btn-primary-solid" (click)="openCreateModal()">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Create User
+        </button>
+      </div>
     </header>
 
-    <section class="filters">
-      <input
-        type="text"
-        [(ngModel)]="search"
-        placeholder="Search by username or email"
-        (keyup.enter)="loadUsers(true)"
-      />
-      <select [(ngModel)]="roleFilter" (ngModelChange)="onRoleFilterChange()">
+    <!-- Toolbar -->
+    <section class="toolbar">
+      <div class="search-input">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="text"
+          [(ngModel)]="search"
+          placeholder="Search by username or email"
+          (keyup.enter)="loadUsers(true)"
+        />
+      </div>
+      <select class="toolbar-select" [(ngModel)]="roleFilter" (ngModelChange)="onRoleFilterChange()">
         <option value="">All Roles</option>
-        <option *ngFor="let role of roleOptions" [ngValue]="role">{{ roleLabels[role] }}</option>
+        <option *ngFor="let role of roleOptions; trackBy: trackByValue" [ngValue]="role">{{ roleLabels[role] }}</option>
       </select>
-      <button type="button" class="secondary-btn" (click)="loadUsers(true)">Apply</button>
+      <button type="button" class="btn btn-ghost" (click)="loadUsers(true)">Apply Filters</button>
     </section>
 
-    <div *ngIf="error" class="alert alert-error">{{ error }}</div>
-    <div *ngIf="success" class="alert alert-success">{{ success }}</div>
+    <!-- Alerts -->
+    <div *ngIf="error" class="alert alert-error">
+      <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>{{ error }}</span>
+    </div>
+    <div *ngIf="success" class="alert alert-success">
+      <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+      <span>{{ success }}</span>
+    </div>
 
-    <div class="table-card" *ngIf="!loading; else loadingTpl">
-      <table *ngIf="users.length > 0; else emptyTpl">
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Country</th>
-            <th>Failed Logins</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let user of users">
-            <td>{{ user.username }}</td>
-            <td>{{ user.email }}</td>
-            <td><span class="role-pill">{{ roleLabels[user.role] || user.role }}</span></td>
-            <td>{{ user.countryId || '-' }}</td>
-            <td>{{ user.failedLoginAttempts }}</td>
-            <td>{{ user.createdAt | date:'mediumDate' }}</td>
-            <td class="actions">
-              <button type="button" class="secondary-btn" (click)="openEditModal(user)">Edit</button>
-              <button
-                type="button"
-                class="danger-btn"
-                [disabled]="deletingId === user.id"
-                (click)="deleteUser(user)">
-                {{ deletingId === user.id ? 'Deleting...' : 'Delete' }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading-wrap">
+      <div class="spinner"></div>
+      <span>Loading users…</span>
+    </div>
 
-      <footer class="pagination">
-        <button type="button" class="secondary-btn" [disabled]="page === 0" (click)="prevPage()">Previous</button>
-        <span>Page {{ page + 1 }} of {{ totalPages || 1 }} ({{ totalElements }} users)</span>
-        <button
-          type="button"
-          class="secondary-btn"
-          [disabled]="totalPages === 0 || page + 1 >= totalPages"
-          (click)="nextPage()">
-          Next
-        </button>
-      </footer>
+    <!-- Table -->
+    <div *ngIf="!loading">
+      <div *ngIf="users.length === 0" class="empty-state">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+        </svg>
+        <div class="empty-text">No users found</div>
+        <div class="empty-subtext">Try adjusting your search or role filter.</div>
+      </div>
+
+      <div class="table-wrap" *ngIf="users.length > 0">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Role</th>
+              <th>Country</th>
+              <th>Failed Logins</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of users; trackBy: trackByUser">
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
+                  <div>
+                    <div class="user-name">{{ user.username }}</div>
+                    <div class="user-email">{{ user.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge role-badge" [attr.data-role]="user.role">{{ roleLabels[user.role] || user.role }}</span></td>
+              <td class="text-muted">{{ user.countryId || '—' }}</td>
+              <td class="text-muted">
+                <span [class.text-danger]="user.failedLoginAttempts > 0">{{ user.failedLoginAttempts }}</span>
+              </td>
+              <td class="text-muted">{{ user.createdAt | date:'mediumDate' }}</td>
+              <td>
+                <div class="action-row">
+                  <button type="button" class="btn btn-edit" (click)="openEditModal(user)">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-delete"
+                    [disabled]="deletingId === user.id"
+                    (click)="deleteUser(user)">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                    </svg>
+                    {{ deletingId === user.id ? 'Deleting…' : 'Delete' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <footer class="pagination">
+          <button type="button" class="btn btn-ghost" [disabled]="page === 0" (click)="prevPage()">← Previous</button>
+          <span class="pagination-info">Page {{ page + 1 }} of {{ totalPages || 1 }} · {{ totalElements }} users</span>
+          <button
+            type="button"
+            class="btn btn-ghost"
+            [disabled]="totalPages === 0 || page + 1 >= totalPages"
+            (click)="nextPage()">
+            Next →
+          </button>
+        </footer>
+      </div>
     </div>
   </main>
-</div>
 
-<ng-template #loadingTpl>
-  <div class="loading">Loading users...</div>
-</ng-template>
+  <!-- ── Create / Edit Modal ── -->
+  <div class="modal-overlay" *ngIf="modalOpen" (click)="closeModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg class="modal-icon modal-icon-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span>{{ editingUserId ? 'Edit User' : 'Create User' }}</span>
+        </div>
+        <button class="modal-close" (click)="closeModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
 
-<ng-template #emptyTpl>
-  <div class="empty">No users found with the current filters.</div>
-</ng-template>
+      <div class="modal-body">
+        <label class="form-label">Username</label>
+        <input type="text" class="form-input" [(ngModel)]="form.username" placeholder="jane_doe" />
 
-<div class="modal-backdrop" *ngIf="modalOpen" (click)="closeModal()">
-  <div class="modal" (click)="$event.stopPropagation()">
-    <h2>{{ editingUserId ? 'Edit User' : 'Create User' }}</h2>
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" [(ngModel)]="form.email" placeholder="jane@example.com" />
 
-    <label>
-      Username
-      <input type="text" [(ngModel)]="form.username" />
-    </label>
+        <label class="form-label">
+          Password
+          <span class="form-label-hint">{{ editingUserId ? '(leave blank to keep current)' : '' }}</span>
+        </label>
+        <input type="password" class="form-input" [(ngModel)]="form.password" placeholder="At least 8 characters" />
 
-    <label>
-      Email
-      <input type="email" [(ngModel)]="form.email" />
-    </label>
+        <label class="form-label">Role</label>
+        <select class="form-input" [(ngModel)]="form.role">
+          <option *ngFor="let role of roleOptions; trackBy: trackByValue" [ngValue]="role">{{ roleLabels[role] }}</option>
+        </select>
 
-    <label>
-      Password
-      <input type="password" [(ngModel)]="form.password" placeholder="At least 8 characters" />
-    </label>
+        <label class="form-label">Country ID <span class="form-label-hint">(optional)</span></label>
+        <input type="text" class="form-input" maxlength="10" [(ngModel)]="form.countryId" placeholder="BD" />
+      </div>
 
-    <label>
-      Role
-      <select [(ngModel)]="form.role">
-        <option *ngFor="let role of roleOptions" [ngValue]="role">{{ roleLabels[role] }}</option>
-      </select>
-    </label>
-
-    <label>
-      Country ID (optional)
-      <input type="text" maxlength="10" [(ngModel)]="form.countryId" />
-    </label>
-
-    <div class="modal-actions">
-      <button type="button" class="secondary-btn" (click)="closeModal()" [disabled]="saving">Cancel</button>
-      <button type="button" class="primary-btn" (click)="saveUser()" [disabled]="saving">
-        {{ saving ? 'Saving...' : 'Save' }}
-      </button>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" (click)="closeModal()" [disabled]="saving">Cancel</button>
+        <button type="button" class="btn btn-primary-solid" (click)="saveUser()" [disabled]="saving">
+          {{ saving ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
     </div>
   </div>
+
+  <app-footer></app-footer>
+
 </div>

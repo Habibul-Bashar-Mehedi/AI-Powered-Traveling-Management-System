@@ -6,6 +6,7 @@ import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.RouteRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +14,8 @@ import java.util.List;
 
 @Service
 public class RouteService {
+    private static final int MAX_LIST_SIZE = 500;
+
     private final RouteRepository routeRepository;
 
     public RouteService(RouteRepository routeRepository) {
@@ -40,7 +43,7 @@ public class RouteService {
     @Transactional(readOnly = true)
     @SecureAction(role = "ADMIN")
     public List<Route> getAllRoute() {
-        return routeRepository.findAll();
+        return routeRepository.findAll(PageRequest.of(0, MAX_LIST_SIZE)).getContent();
     }
 
 

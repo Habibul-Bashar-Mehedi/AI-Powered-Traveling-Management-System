@@ -44,6 +44,7 @@ export const API_ENDPOINTS = {
     SERVICES: '/v1/vendor/services',
     SERVICE_BY_ID: (id: string) => `/v1/vendor/services/${id}`,
     SERVICE_STATUS: (id: string) => `/v1/vendor/services/${id}/status`,
+    SERVICE_IMAGES: '/v1/vendor/services/images',
     BOOKINGS: '/v1/vendor/bookings',
     BOOKING_BY_ID: (id: string) => `/v1/vendor/bookings/${id}`,
     BOOKING_CONFIRM: (id: string) => `/v1/vendor/bookings/${id}/confirm`,
@@ -60,6 +61,10 @@ export const API_ENDPOINTS = {
     MY_BOOKINGS_STATUS_SUMMARY: '/v1/user/service-requests/status-summary',
     MY_BOOKING_CANCEL: (id: string) => `/v1/user/service-requests/${id}/cancel`,
   },
+  SERVICE_CATALOG: {
+    LIST: '/v1/services',
+    BOOK: (id: string) => `/v1/services/${id}/book`,
+  },
   ADMIN_VENDOR: {
     ALL: '/v1/admin/vendors',
     PENDING: '/v1/admin/vendors/pending',
@@ -73,5 +78,17 @@ export const API_ENDPOINTS = {
   ADMIN_MANAGEMENT: {
     USERS: '/v1/admin/management/users',
     USER_BY_ID: (id: string) => `/v1/admin/management/users/${id}`,
+  },
+  BANNER: {
+    ACTIVE: '/v1/banners/active',
+  },
+  ADMIN_BANNER: {
+    ALL: '/v1/admin/banners',
+    BY_ID: (id: string) => `/v1/admin/banners/${id}`,
+    ACTIVE_TOGGLE: (id: string) => `/v1/admin/banners/${id}/active`,
+    IMAGES: '/v1/admin/banners/images',
+  },
+  AI: {
+    CHAT: '/ai/chat',
   }
 } as const;

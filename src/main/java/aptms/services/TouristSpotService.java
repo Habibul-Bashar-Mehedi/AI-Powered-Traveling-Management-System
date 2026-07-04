@@ -6,6 +6,7 @@ import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.TouristSpotRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,8 @@ import static aptms.constants.ValidationConstants.*;
 
 @Service
 public class TouristSpotService {
+    private static final int MAX_LIST_SIZE = 500;
+
     private final TouristSpotRepository touristSpotRepository;
 
     public TouristSpotService(TouristSpotRepository touristSpotRepository) {
@@ -42,7 +45,7 @@ public class TouristSpotService {
     @Transactional(readOnly = true)
     @SecureAction(role = "ADMIN")
     public List<TouristSpot> getAllTouristSpot() {
-        return touristSpotRepository.findAll();
+        return touristSpotRepository.findAll(PageRequest.of(0, MAX_LIST_SIZE)).getContent();
     }
 
     @Transactional

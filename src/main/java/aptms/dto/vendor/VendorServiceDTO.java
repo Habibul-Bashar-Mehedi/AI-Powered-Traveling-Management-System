@@ -58,6 +58,8 @@ public class VendorServiceDTO {
     private BigDecimal locationLng;
     private String locationAddress;
 
+    private String imageUrl;
+
     private String tags;
     private String metadata;
 

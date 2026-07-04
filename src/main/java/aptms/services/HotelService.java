@@ -7,6 +7,7 @@ import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.HotelRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,8 @@ import static aptms.constants.ValidationConstants.*;
 
 @Service
 public class HotelService {
+
+    private static final int MAX_LIST_SIZE = 500;
 
     private final HotelRepository hotelRepository;
 
@@ -51,7 +54,7 @@ public class HotelService {
     @Transactional(readOnly = true)
     @SecureAction(role = "ADMIN")
     public List<Hotel> getAllHotel() {
-        return hotelRepository.findAll();
+        return hotelRepository.findAll(PageRequest.of(0, MAX_LIST_SIZE)).getContent();
     }
 
     @Transactional(readOnly = true)

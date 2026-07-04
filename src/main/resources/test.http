@@ -14,7 +14,7 @@ Content-Type: application/json
   "countryId": "BD"
 }
 > {% client.global.set("userId1", response.body.id); %}
-
+ve
 ### User Login
 POST http://localhost:8080/api/auth/user/login
 Content-Type: application/json

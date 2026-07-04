@@ -1,0 +1,122 @@
+<section class="bg-white dark:bg-slate-900">
+  <div class="mx-auto max-w-3xl px-6 py-16 sm:px-8 sm:py-20">
+
+    <a routerLink="/home" class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400">
+      <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+      Back to home
+    </a>
+
+    @switch (kind) {
+
+      @case ('help-center') {
+        <h1 class="info-display mt-6 text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">Help Center</h1>
+        <p class="mt-3 text-base text-gray-500 dark:text-gray-400">Answers to the questions we hear most often.</p>
+
+        <div class="mt-10 space-y-8">
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">How do I book a hotel, tour, or transport?</h2>
+            <p class="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-400">Sign in and open your dashboard. You can browse services published by vendors under "Available Services," or use "Book Instantly" for a quick request that gets matched to an available vendor automatically.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">How do I track a booking?</h2>
+            <p class="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-400">Open "My Bookings" from your dashboard to see every request's status — pending, confirmed, completed, rejected, or cancelled — updated in real time.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">Can I cancel a booking?</h2>
+            <p class="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-400">Yes. Pending and confirmed bookings can be cancelled directly from "My Bookings," with an optional reason for the vendor.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">How do I list my hotel, tour, or transport business?</h2>
+            <p class="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-400">Create a free account, then register as a vendor from your dashboard. An administrator reviews every application before it goes live, and once approved you can publish services with photos, pricing, and availability.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">What can the AI travel assistant help with?</h2>
+            <p class="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-400">Ask it for destination ideas, itinerary suggestions, or rough budget estimates — it's available directly from your dashboard, any time.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">Still need help?</h2>
+            <p class="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+              Reach us at <a href="mailto:support@aiptms.com" class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">support&#64;aiptms.com</a> and we'll get back to you.
+            </p>
+          </div>
+        </div>
+      }
+
+      @case ('privacy-policy') {
+        <h1 class="info-display mt-6 text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">Privacy Policy</h1>
+        <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">Last updated: January 2026</p>
+
+        <div class="mt-10 space-y-8 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">Information we collect</h2>
+            <p class="mt-2">When you create an account, we collect your name, email address, and country. When you make a booking, we collect the details needed to fulfill it (dates, quantity, special requests). Vendors provide business details when they register to list services.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">How we use your information</h2>
+            <p class="mt-2">We use this information to operate your account, process bookings between you and vendors, provide customer support, and improve the platform. We do not sell your personal information to third parties.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">Sharing with vendors</h2>
+            <p class="mt-2">When you make a booking, we share the details necessary to fulfil it — such as your name and booking specifics — with the vendor providing that service.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">Cookies and local storage</h2>
+            <p class="mt-2">We use browser local storage to keep you signed in between visits (authentication tokens). We don't use third-party advertising trackers.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">Data security</h2>
+            <p class="mt-2">Passwords are stored using industry-standard hashing, and access to administrative functions is role-restricted. No online system is completely risk-free, but we take reasonable steps to protect your data.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">Your rights</h2>
+            <p class="mt-2">You can review and update your account details at any time, and you may request account deletion by contacting support.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">Contact us</h2>
+            <p class="mt-2">Questions about this policy? Email <a href="mailto:support@aiptms.com" class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">support&#64;aiptms.com</a>.</p>
+          </div>
+        </div>
+      }
+
+      @case ('terms-of-service') {
+        <h1 class="info-display mt-6 text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">Terms of Service</h1>
+        <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">Last updated: January 2026</p>
+
+        <div class="mt-10 space-y-8 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">1. Acceptance of terms</h2>
+            <p class="mt-2">By creating an account or using AIPTMS, you agree to these terms. If you don't agree, please don't use the platform.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">2. Accounts</h2>
+            <p class="mt-2">You're responsible for keeping your login credentials secure and for all activity under your account. You must provide accurate information when registering.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">3. Vendor listings and bookings</h2>
+            <p class="mt-2">Vendors are independent businesses responsible for the services they list. AIPTMS connects travelers and vendors and facilitates booking requests, but is not itself the provider of hotel, tour, or transport services.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">4. Cancellations</h2>
+            <p class="mt-2">Cancellation terms may vary by vendor and service. Check the specific listing's cancellation policy before booking.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">5. Prohibited use</h2>
+            <p class="mt-2">You agree not to misuse the platform — including submitting fraudulent bookings, attempting to bypass security controls, or listing services you're not authorized to offer.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">6. Limitation of liability</h2>
+            <p class="mt-2">AIPTMS is provided "as is." We aim for high availability and accuracy but don't guarantee the platform will be uninterrupted or error-free.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">7. Changes to these terms</h2>
+            <p class="mt-2">We may update these terms from time to time. Continued use of the platform after changes take effect means you accept the updated terms.</p>
+          </div>
+          <div>
+            <h2 class="info-display text-lg font-semibold text-gray-900 dark:text-white">8. Contact</h2>
+            <p class="mt-2">Questions? Email <a href="mailto:support@aiptms.com" class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">support&#64;aiptms.com</a>.</p>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</section>

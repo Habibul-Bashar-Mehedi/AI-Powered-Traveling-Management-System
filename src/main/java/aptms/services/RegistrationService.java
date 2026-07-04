@@ -7,6 +7,8 @@ import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.UserRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,32 +21,53 @@ import static aptms.constants.ValidationConstants.*;
 
 @Service
 public class RegistrationService {
-    private final UserRepository userRepository;
+    private static final int MAX_LIST_SIZE = 500;
 
-    public RegistrationService(UserRepository userRepository) {
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public RegistrationService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
     public User registerUser(User user) {
+        if (isGmailAddress(user.getEmail())) {
+            throw new InvalidException("Gmail addresses are not allowed for registration. Please use a different email provider.");
+        }
+
         if(userRepository.existsByEmail(user.getEmail())) {
             throw new DuplicateValueFoundExceptions(
                 String.format(DUPLICATE_ENTRY_MESSAGE, FIELD_EMAIL)
             );
         }
-        
+
         // Set default role if not provided
         if(user.getRole() == null) {
             user.setRole(UserRole.USER);
         }
-        
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
         return userRepository.save(user);
+    }
+
+    /**
+     * Gmail (including its googlemail.com alias) is not accepted for registration.
+     */
+    private boolean isGmailAddress(String email) {
+        if (email == null) {
+            return false;
+        }
+        String domain = email.substring(email.lastIndexOf('@') + 1).trim().toLowerCase();
+        return domain.equals("gmail.com") || domain.equals("googlemail.com");
     }
 
     public String loginUser(String email, String password) {
         return userRepository.findByEmail(email)
                 .map(user -> {
-                    if (user.getPassword().equals(password)) {
+                    if (passwordEncoder.matches(password, user.getPassword())) {
                         return "Login Successful! Welcome " + user.getUsername();
                     }
                     throw new InvalidException(INVALID_CREDENTIALS_MESSAGE);
@@ -56,7 +79,7 @@ public class RegistrationService {
     @Transactional(readOnly = true)
     @SecureAction(role = "ADMIN")
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+        return userRepository.findAll(PageRequest.of(0, MAX_LIST_SIZE)).getContent();
     }
 
     @Transactional
@@ -80,7 +103,9 @@ public class RegistrationService {
 
         return userRepository.findById(id).map(user -> {
             user.setUsername(username);
-            user.setPassword(password);
+            if (password != null && !password.isBlank()) {
+                user.setPassword(passwordEncoder.encode(password));
+            }
             user.setEmail(email);
             user.setRole(role);
             user.setCountryId(countryId);

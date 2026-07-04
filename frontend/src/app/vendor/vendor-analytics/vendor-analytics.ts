@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angu
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VendorAnalyticsService } from '../../services/vendor-analytics.service';
-import { AnalyticsSummary } from '../../models/vendor.model';
+import { AnalyticsSummary, ServicePerformance } from '../../models/vendor.model';
 
 @Component({
   selector: 'app-vendor-analytics',
@@ -73,6 +73,14 @@ export class VendorAnalytics implements OnInit {
   barHeightClass(value: number): string {
     const bucket = Math.max(1, Math.min(12, Math.round(this.barHeight(value) / 10)));
     return `bar-h-${bucket}`;
+  }
+
+  trackByRevenueEntry(index: number, entry: { date: string; value: number }): string {
+    return entry.date;
+  }
+
+  trackByService(index: number, service: ServicePerformance): string {
+    return service.serviceId;
   }
 }
 

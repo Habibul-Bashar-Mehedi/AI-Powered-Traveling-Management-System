@@ -6,11 +6,12 @@ import { AuthService } from '../../services/auth.service';
 import { AdminManagementService } from '../../services/admin-management.service';
 import { AdminUser, AdminUserRequest } from '../../models/admin-management.model';
 import { UserRole, UserRoleLabels } from '../../enums/user-role.enum';
+import { FooterComponent } from '../../shared/app-footer/app-footer';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, FooterComponent],
   templateUrl: './user-management.html',
   styleUrls: ['./user-management.css']
 })
@@ -258,6 +259,14 @@ export class UserManagement implements OnInit {
     }
 
     return backendMessage || 'Failed to save user';
+  }
+
+  trackByUser(index: number, user: AdminUser): string {
+    return user.id;
+  }
+
+  trackByValue(index: number, value: string): string {
+    return value;
   }
 }
 

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormControl, FormsModule, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 import { UserRole } from '../enums/user-role.enum';
 import { RegisterRequest } from '../models/user.model';
@@ -48,7 +49,8 @@ export class Registration implements OnInit {
       ]),
       email: new FormControl('', [
         Validators.required,
-        Validators.email
+        Validators.email,
+        this.notGmailValidator
       ]),
       role: new FormControl(UserRole.USER, [Validators.required]),
       password: new FormControl('', [
@@ -69,6 +71,16 @@ export class Registration implements OnInit {
     const password = group.get('password')?.value;
     const confirmPassword = group.get('confirmPassword')?.value;
     return password === confirmPassword ? null : { passwordMismatch: true };
+  }
+
+  /**
+   * Gmail (including its googlemail.com alias) is not accepted for registration.
+   * The backend enforces this too — this is just for immediate feedback.
+   */
+  private notGmailValidator(control: AbstractControl): ValidationErrors | null {
+    const email = (control.value || '').trim().toLowerCase();
+    const domain = email.split('@')[1];
+    return domain === 'gmail.com' || domain === 'googlemail.com' ? { gmailNotAllowed: true } : null;
   }
 
   /**
@@ -111,22 +123,10 @@ export class Registration implements OnInit {
 
     this.authService.register(registerRequest).subscribe({
       next: (response) => {
-
         // Role-based redirect after successful registration
-        // response.user.roles may contain "ROLE_VENDOR" prefix — strip it for comparison
-        const rawRole = response.user?.roles?.[0] ?? '';
-        const role = rawRole.replace(/^ROLE_/, '').toUpperCase();
-        if (role === UserRole.VENDOR) {
-          this.router.navigate(['/vendor/dashboard']);
-        } else if (role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN) {
-          this.router.navigate(['/admin/vendors']);
-        } else {
-          // USER role or default
-          this.router.navigate(['/dashboard']);
-        }
+        this.router.navigate([this.authService.getPostAuthRedirectUrl(response.user?.roles?.[0])]);
       },
-      error: (error) => {
-        console.error('Registration failed:', error);
+      error: (error: HttpErrorResponse) => {
         this.isSubmitting = false;
 
         // Handle validation errors

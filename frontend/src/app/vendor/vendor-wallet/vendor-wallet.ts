@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angu
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { VendorWalletService } from '../../services/vendor-wallet.service';
-import { WalletSummary, PayoutRequest } from '../../models/vendor.model';
+import { WalletSummary, PayoutRequest, WalletTransaction } from '../../models/vendor.model';
 import { PayoutMethod } from '../../enums/vendor.enums';
 
 @Component({
@@ -78,6 +78,14 @@ export class VendorWallet implements OnInit {
         this.payoutSubmitting = false;
       })
     });
+  }
+
+  trackByTransaction(index: number, tx: WalletTransaction): string {
+    return tx.transactionId;
+  }
+
+  trackByValue(index: number, value: string): string {
+    return value;
   }
 
 }

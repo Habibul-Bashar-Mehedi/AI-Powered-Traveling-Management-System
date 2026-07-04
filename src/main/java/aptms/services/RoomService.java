@@ -7,6 +7,7 @@ import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.RoomRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,8 @@ import static aptms.constants.ValidationConstants.*;
 
 @Service
 public class RoomService {
+
+    private static final int MAX_LIST_SIZE = 500;
 
     private final RoomRepository roomRepository;
 
@@ -57,7 +60,7 @@ public class RoomService {
     @Transactional(readOnly = true)
     @SecureAction(role = "ADMIN")
     public List<Room> getAllRoom() {
-        return roomRepository.findAll();
+        return roomRepository.findAll(PageRequest.of(0, MAX_LIST_SIZE)).getContent();
     }
 
     @Transactional

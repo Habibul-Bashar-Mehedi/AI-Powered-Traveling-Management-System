@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 import { LoginRequest } from '../models/user.model';
 import { APP_CONSTANTS } from '../constants/app-constants';
@@ -30,18 +31,10 @@ export class Login implements OnInit {
   }
 
   ngOnInit() {
-    console.log('Login initialized');
-
     // Redirect if already logged in — route by role
     if (this.authService.isAuthenticated()) {
       const user = this.authService.getCurrentUserValue();
-      if (user?.role === UserRole.VENDOR) {
-        this.router.navigate(['/vendor/dashboard']);
-      } else if (user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN) {
-        this.router.navigate(['/admin/vendors']);
-      } else {
-        this.router.navigate(['/dashboard']);
-      }
+      this.router.navigate([this.authService.getPostAuthRedirectUrl(user?.role)]);
     }
   }
 
@@ -90,22 +83,17 @@ export class Login implements OnInit {
 
     this.authService.login(loginData).subscribe({
       next: (response) => {
-        console.log("Login successful:", response);
-
         // Role-based redirect
         const role = response.user?.roles?.[0];
-        if (role === UserRole.VENDOR) {
-          this.router.navigate(['/vendor/dashboard']);
-        } else if (role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN) {
-          this.router.navigate(['/admin/vendors']);
+        if (role === UserRole.VENDOR || role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN) {
+          this.router.navigate([this.authService.getPostAuthRedirectUrl(role)]);
         } else {
           // Get return URL from query params or default to dashboard
           const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
           this.router.navigate([returnUrl]);
         }
       },
-      error: (error) => {
-        console.error("Login failed:", error);
+      error: (error: HttpErrorResponse) => {
         this.isSubmitting = false;
 
         // Handle different error types

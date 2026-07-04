@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -7,10 +7,27 @@ import {
   UserBookingStatusSummary,
   VendorBookingService
 } from '../services/vendor-booking.service';
-import { VendorBooking } from '../models/vendor.model';
+import { VendorBooking, PublicServiceListing } from '../models/vendor.model';
 import { VendorBookingStatus } from '../enums/vendor.enums';
 import { AuthService } from '../services/auth.service';
+import { DestinationService } from '../services/destination.service';
+import { Destination } from '../models/destination.model';
+import { AiChatService } from '../services/ai-chat.service';
+import { ServiceCatalogService } from '../services/service-catalog.service';
+import { BannerService } from '../services/banner.service';
+import { Banner } from '../models/banner.model';
+import { ThemeService } from '../services/theme.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+
+interface DashboardStat {
+  label: string;
+  value: string;
+  icon: string;
+  trend: string;
+  color: 'cyan' | 'violet' | 'amber' | 'rose';
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -22,8 +39,16 @@ import { environment } from '../../environments/environment';
 export class Dashboard implements OnInit, OnDestroy {
   constructor(
     private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
     private vendorBookingService: VendorBookingService,
     private authService: AuthService,
+    private destinationService: DestinationService,
+    private aiChatService: AiChatService,
+    private serviceCatalogService: ServiceCatalogService,
+    private bannerService: BannerService,
+    private themeService: ThemeService,
+    private route: ActivatedRoute,
+    private router: Router,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
@@ -49,11 +74,9 @@ export class Dashboard implements OnInit, OnDestroy {
   actionMessage: Record<string, string> = {};
   actionError: Record<string, string> = {};
 
-  // ─── Eid Pass ─────────────────────────────────────────────────────
-  eidPassLoading = false;
-  eidPassMessage = '';
-  eidPassError = '';
-  eidPassBooked = false;
+  // ─── Banners (admin-managed offers) ────────────────────────────────
+  banners: Banner[] = [];
+  bannersLoading = false;
 
   // ─── My Bookings ──────────────────────────────────────────────────
   myBookings: VendorBooking[] = [];
@@ -69,118 +92,113 @@ export class Dashboard implements OnInit, OnDestroy {
   // ─── User Profile ───────────────────────────────────────────────
   user = {
     name: 'Traveler',
-    role: 'Premium Traveler',
-    avatar: 'https://i.pravatar.cc/80?img=12',
-    joinedYear: new Date().getFullYear(),
-    tier: 'Gold',
     notifications: 0,
   };
 
-  // ─── Stats ───────────────────────────────────────────────────────
-  stats = [
-    { label: 'Trips Booked', value: '24', icon: '✈️', trend: '+3 this month', color: 'cyan' },
-    { label: 'Countries Visited', value: '11', icon: '', trend: '+2 this year', color: 'violet' },
-    { label: 'Total Spent', value: '৳2.4L', icon: '', trend: '↑ 12% vs last yr', color: 'amber' },
-    { label: 'Reward Points', value: '8,420', icon: '⭐', trend: '340 pts expiring', color: 'rose' },
-  ];
+  get userInitials(): string {
+    const parts = this.user.name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'T';
+    return parts.slice(0, 2).map(p => p[0]!.toUpperCase()).join('');
+  }
 
-  // ─── Slides ──────────────────────────────────────────────────────
-  slides = [
-    {
-      title: 'Welcome Back, Aryan ',
-      subtitle: 'Your next adventure is just one booking away.',
-      img: 'https://cdn-icons-png.flaticon.com/512/201/201623.png',
-      accentClass: 'slide-theme-blue',
-      tag: 'Dashboard',
-    },
-    {
-      title: 'New Destinations ',
-      subtitle: 'Explore 40+ trending travel spots added this week.',
-      img: 'https://cdn-icons-png.flaticon.com/512/854/854878.png',
-      accentClass: 'slide-theme-cyan',
-      tag: 'Explore',
-    },
-    {
-      title: 'Flash Sale — 30% Off ',
-      subtitle: 'Limited time offers on international packages.',
-      img: 'https://cdn-icons-png.flaticon.com/512/2910/2910791.png',
-      accentClass: 'slide-theme-amber',
-      tag: 'Offers',
-    },
-    {
-      title: 'Your Itinerary ️',
-      subtitle: 'Cox\'s Bazar trip starts in 5 days. All confirmed!',
-      img: 'https://cdn-icons-png.flaticon.com/512/854/854878.png',
-      accentClass: 'slide-theme-violet',
-      tag: 'Upcoming',
-    },
-  ];
+  // ─── Notifications (derived from real booking activity) ───────────
+  notificationsOpen = false;
+
+  get notificationItems(): Array<{ id: string; icon: string; text: string; time: string; tone: 'pending' | 'confirmed' | 'rejected' }> {
+    return this.allBookings
+      .filter(b => b.bookingStatus !== VendorBookingStatus.COMPLETED)
+      .map(b => {
+        const eventTime = b.confirmedAt || b.completedAt || b.createdAt;
+        let text: string;
+        let tone: 'pending' | 'confirmed' | 'rejected';
+        let icon: string;
+        switch (b.bookingStatus) {
+          case VendorBookingStatus.CONFIRMED:
+            text = `${b.serviceName} was confirmed`;
+            tone = 'confirmed';
+            icon = '✅';
+            break;
+          case VendorBookingStatus.REJECTED:
+            text = `${b.serviceName} was rejected`;
+            tone = 'rejected';
+            icon = '⚠️';
+            break;
+          case VendorBookingStatus.CANCELLED:
+            text = `${b.serviceName} booking was cancelled`;
+            tone = 'rejected';
+            icon = '⚠️';
+            break;
+          default:
+            text = `Awaiting vendor confirmation for ${b.serviceName}`;
+            tone = 'pending';
+            icon = '⏳';
+        }
+        return { id: b.bookingId, icon, text, time: this.formatRelativeTime(eventTime), tone, sortKey: new Date(eventTime).getTime() };
+      })
+      .sort((a, b) => b.sortKey - a.sortKey)
+      .slice(0, 8);
+  }
+
+  toggleNotifications(): void {
+    this.notificationsOpen = !this.notificationsOpen;
+    this.accountMenuOpen = false;
+    this.cdr.detectChanges();
+  }
+
+  get isDarkTheme(): boolean {
+    return this.themeService.theme() === 'dark';
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
+
+  private formatRelativeTime(iso: string): string {
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const minutes = Math.floor(diffMs / 60000);
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    return new Date(iso).toLocaleDateString();
+  }
+
+  // ─── Account menu ─────────────────────────────────────────────────
+  accountMenuOpen = false;
+
+  toggleAccountMenu(): void {
+    this.notificationsOpen = false;
+    this.accountMenuOpen = !this.accountMenuOpen;
+  }
+
+  logout(): void {
+    this.accountMenuOpen = false;
+    this.authService.logout().subscribe({ complete: () => this.router.navigate(['/login']) });
+  }
+
+  // ─── Header date ──────────────────────────────────────────────────
+  todayDate = new Date();
+
+  // ─── Stats (derived from real booking data) ───────────────────────
+  stats: DashboardStat[] = [];
+  private allBookings: VendorBooking[] = [];
+
+  // ─── Upcoming trips (drives hero slider) ───────────────────────────
+  upcomingBookings: VendorBooking[] = [];
+  private readonly slideThemes = ['slide-theme-blue', 'slide-theme-cyan', 'slide-theme-amber', 'slide-theme-violet'];
 
   // ─── Destinations ─────────────────────────────────────────────────
-  destinations = [
-    {
-      type: 'tour',
-      name: "Cox's Bazar",
-      location: 'Bangladesh',
-      duration: '3 Days',
-      group: '2–5 People',
-      price: '12,000',
-      rating: 4.8,
-      reviews: 312,
-      badge: 'Popular',
-      img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80',
-    },
-    {
-      type: 'tour',
-      name: 'Dubai Luxury',
-      location: 'UAE',
-      duration: '5 Days',
-      group: '2–4 People',
-      price: '50,000',
-      rating: 4.9,
-      reviews: 189,
-      badge: 'Trending',
-      img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&q=80',
-    },
-    {
-      type: 'tour',
-      name: 'Bangkok Adventure',
-      location: 'Thailand',
-      duration: '4 Days',
-      group: '3–6 People',
-      price: '30,000',
-      rating: 4.7,
-      reviews: 241,
-      badge: 'Best Value',
-      img: 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=600&q=80',
-    },
-    {
-      type: 'tour',
-      name: 'Maldives Escape',
-      location: 'Maldives',
-      duration: '6 Days',
-      group: '2 People',
-      price: '85,000',
-      rating: 5.0,
-      reviews: 98,
-      badge: 'Luxury',
-      img: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=600&q=80',
-    },
-    {
-      type: 'special',
-      name: 'Traditional Cuisine Tour',
-      desc: 'Authentic local food journeys across 5 regions.',
-      badge: 'Food',
-      img: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&q=80',
-    },
-    {
-      type: 'special',
-      name: 'Heritage & Crafts',
-      desc: 'Explore handmade textiles and traditional artisans.',
-      badge: 'Culture',
-      img: 'https://images.unsplash.com/photo-1603252109303-2751441dd157?w=600&q=80',
-    },
-  ];
+  destinations: Destination[] = [];
+  destinationsLoading = false;
+
+  // ─── Service catalog (real vendor listings, incl. images) ──────────
+  catalogServices: PublicServiceListing[] = [];
+  catalogLoading = false;
+  catalogBookingLoading: Record<string, boolean> = {};
+  catalogBookingMessage: Record<string, string> = {};
+  catalogBookingError: Record<string, string> = {};
 
   // ─── Active nav item ──────────────────────────────────────────────
   activeNav = 'dashboard';
@@ -194,7 +212,8 @@ export class Dashboard implements OnInit, OnDestroy {
 
   // ─── Slider ───────────────────────────────────────────────────────
   currentIndex = 0;
-  intervalId: any;
+  intervalId: ReturnType<typeof setInterval> | undefined;
+  private currentUserSubscription?: Subscription;
 
   ngOnInit() {
     this.startAutoSlide();
@@ -203,22 +222,32 @@ export class Dashboard implements OnInit, OnDestroy {
     const currentUser = this.authService.getCurrentUserValue();
     if (currentUser?.username) {
       this.user.name = currentUser.username;
-      this.updateChatContext(currentUser.username);
+      this.chatUsername = currentUser.username;
     }
-    this.authService.currentUser$.subscribe(u => {
+    this.currentUserSubscription = this.authService.currentUser$.subscribe(u => {
       if (u?.username) {
         this.user.name = u.username;
-        this.updateChatContext(u.username);
+        this.chatUsername = u.username;
         this.cdr.detectChanges();
       }
     });
     if (isPlatformBrowser(this.platformId)) {
       this.loadBookingStatusSummary();
+      this.loadAllBookingsForStats();
+    }
+    this.loadDestinations();
+    this.loadCatalogServices();
+    this.loadBanners();
+
+    // Auto-expand the bookings panel when arriving via the "My Bookings" nav link
+    if (this.route.snapshot.fragment === 'my-bookings' && !this.showMyBookings) {
+      this.toggleMyBookings();
     }
   }
 
   ngOnDestroy() {
     if (this.intervalId) clearInterval(this.intervalId);
+    this.currentUserSubscription?.unsubscribe();
     this.stopBookingsPolling();
   }
 
@@ -227,12 +256,14 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   next() {
-    this.currentIndex = (this.currentIndex + 1) % this.slides.length;
+    const len = this.upcomingBookings.length || 1;
+    this.currentIndex = (this.currentIndex + 1) % len;
     this.cdr.detectChanges();
   }
 
   prev() {
-    this.currentIndex = (this.currentIndex - 1 + this.slides.length) % this.slides.length;
+    const len = this.upcomingBookings.length || 1;
+    this.currentIndex = (this.currentIndex - 1 + len) % len;
     this.cdr.detectChanges();
   }
 
@@ -241,23 +272,17 @@ export class Dashboard implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  slideTheme(i: number): string {
+    return this.slideThemes[i % this.slideThemes.length];
+  }
+
   // ─── Chatbot ──────────────────────────────────────────────────────
   showChatbot = false;
   userInput: string = '';
   isTyping = false;
   messages: { sender: string; text: string; timestamp: Date }[] = [];
   chatMinimized = false;
-  chatContext = `You are an expert AI travel assistant for a premium travel booking platform.
-  Help users plan trips, recommend destinations, suggest itineraries, estimate budgets,
-  and answer travel-related questions. Keep responses concise, friendly, and professional.
-  Use emojis sparingly for a warm tone.`;
-
-  private updateChatContext(username: string): void {
-    this.chatContext = `You are an expert AI travel assistant for a premium travel booking platform.
-  Help users plan trips, recommend destinations, suggest itineraries, estimate budgets,
-  and answer travel-related questions. Keep responses concise, friendly, and professional.
-  Use emojis sparingly for a warm tone. The user's name is ${username}.`;
-  }
+  private chatUsername: string | null = null;
 
   toggleChatbot() {
     this.showChatbot = !this.showChatbot;
@@ -265,7 +290,7 @@ export class Dashboard implements OnInit, OnDestroy {
       const name = this.user.name !== 'Traveler' ? this.user.name : 'there';
       this.messages.push({
         sender: 'bot',
-        text: `Hello ${name}! 👋 I'm your AI Travel Assistant. I can help you plan trips, find deals, suggest destinations, or build custom itineraries. What would you like to explore today?`,
+        text: `Hello ${name}! 👋 I'm your AI Travel Assistant. Tell me your budget and I'll recommend the best tour package for you from what's available right now — I can also help with destinations, deals, and itineraries. What would you like to explore today?`,
         timestamp: new Date(),
       });
     }
@@ -284,34 +309,33 @@ export class Dashboard implements OnInit, OnDestroy {
     this.scrollToBottom();
 
     try {
-      const KEY = environment.geminiApiKey;
-      if (!KEY) {
-        this.messages.push({ sender: 'bot', text: '⚠️ AI assistant is not configured. Please contact support.', timestamp: new Date() });
-        return;
-      }
-      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${KEY}`;
-      const conversationHistory = this.messages
+      const history = this.messages
         .slice(-8)
-        .map((m: any) => ({ role: m.sender === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }));
+        .map(m => ({ sender: m.sender, text: m.text }));
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: this.chatContext }] },
-          contents: conversationHistory,
-        }),
+      const data = await firstValueFrom(this.aiChatService.sendMessage({
+        username: this.chatUsername,
+        message: prompt,
+        history,
+      }));
+      const botText = data.reply || 'Sorry, please try again.';
+      // The fetch-backed HttpClient can resolve this promise outside Angular's zone,
+      // so pushing state and scheduling change detection must be forced back into it —
+      // otherwise the reply never appears until some unrelated event happens to trigger CD.
+      this.ngZone.run(() => {
+        this.messages.push({ sender: 'bot', text: botText, timestamp: new Date() });
+        this.saveChatHistory();
       });
-      const data = await response.json();
-      const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, please try again.';
-      this.messages.push({ sender: 'bot', text: botText, timestamp: new Date() });
-      this.saveChatHistory();
     } catch {
-      this.messages.push({ sender: 'bot', text: '⚠️ Connection error. Please check your network and try again.', timestamp: new Date() });
+      this.ngZone.run(() => {
+        this.messages.push({ sender: 'bot', text: '⚠️ Connection error. Please check your network and try again.', timestamp: new Date() });
+      });
     } finally {
-      this.isTyping = false;
-      this.cdr.detectChanges();
-      this.scrollToBottom();
+      this.ngZone.run(() => {
+        this.isTyping = false;
+        this.cdr.detectChanges();
+        this.scrollToBottom();
+      });
     }
   }
 
@@ -374,46 +398,97 @@ export class Dashboard implements OnInit, OnDestroy {
     this.activeNav = id;
   }
 
-  getStars(rating: number): string[] {
-    return Array.from({ length: 5 }, (_, i) => (i < Math.floor(rating) ? '★' : '☆'));
-  }
-
   onQuickActionClick(action: { label: string; requestType: UserServiceRequestType; note: string }): void {
     this.submitServiceRequest(action.requestType, action.label, action.note);
   }
 
-  onDestinationAction(dest: any): void {
-    if (dest.type === 'tour') {
-      this.submitServiceRequest('EXPLORE_TOURIST_PLACES', dest.name, `Tour request for ${dest.name}`);
-      return;
-    }
-    this.submitServiceRequest('ORDER_TRADITIONAL_FOOD_ITEMS', dest.name, `Special request for ${dest.name}`);
+  onDestinationAction(dest: Destination): void {
+    this.submitServiceRequest('EXPLORE_TOURIST_PLACES', dest.name, `Exploration request for ${dest.name}, ${dest.region}.`);
   }
 
-  // ─── Eid Pass ──────────────────────────────────────────────────
-  claimEidPass(): void {
-    this.eidPassLoading = true;
-    this.eidPassMessage = '';
-    this.eidPassError = '';
-    const payload: UserServiceRequestPayload = {
-      requestType: 'EXPLORE_TOURIST_PLACES',
-      title: '🌙 Eid Special Pass',
-      quantity: 1,
-      specialRequests: 'EID_SPECIAL_PASS | 30% Eid discount applied. Request for Eid ul-Adha 2026 travel package.'
-    };
-    this.vendorBookingService.createUserServiceRequest(payload).subscribe({
-      next: () => {
-        this.eidPassLoading = false;
-        this.eidPassBooked = true;
-        this.eidPassMessage = '🎉 Your Eid Pass has been issued! The vendor will confirm your special Eid package shortly.';
-        this.showMyBookings = true;
-        this.refreshBookingsAfterMutation();
+  // ─── Destinations ────────────────────────────────────────────────
+  loadDestinations(): void {
+    this.destinationsLoading = true;
+    this.destinationService.getAll().subscribe({
+      next: (destinations) => {
+        this.destinations = destinations;
+        this.destinationsLoading = false;
+        this.cdr.detectChanges();
       },
-      error: (err) => {
-        this.eidPassLoading = false;
-        this.eidPassError = err?.error?.message || 'Could not claim Eid Pass. Please try again.';
+      error: () => {
+        this.destinationsLoading = false;
+        this.cdr.detectChanges();
       }
     });
+  }
+
+  // ─── Service catalog ─────────────────────────────────────────────
+  loadCatalogServices(): void {
+    this.catalogLoading = true;
+    this.serviceCatalogService.getActiveServices().subscribe({
+      next: (page) => {
+        this.catalogServices = page.content;
+        this.catalogLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.catalogLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  bookCatalogService(service: PublicServiceListing): void {
+    this.catalogBookingLoading[service.serviceId] = true;
+    this.catalogBookingMessage[service.serviceId] = '';
+    this.catalogBookingError[service.serviceId] = '';
+    this.cdr.detectChanges();
+
+    this.serviceCatalogService.bookService(service.serviceId, { quantity: 1 }).subscribe({
+      next: () => {
+        this.catalogBookingLoading[service.serviceId] = false;
+        this.catalogBookingMessage[service.serviceId] = 'Booked! Check My Bookings for status.';
+        this.refreshBookingsAfterMutation();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.catalogBookingLoading[service.serviceId] = false;
+        this.catalogBookingError[service.serviceId] = err?.error?.message || 'Failed to book this service.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  resolveImageUrl(url: string | null | undefined): string {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    return `${environment.assetOrigin}${url}`;
+  }
+
+  // ─── Banners (admin-managed offers) ────────────────────────────
+  loadBanners(): void {
+    this.bannersLoading = true;
+    this.bannerService.getActiveBanners().subscribe({
+      next: (banners) => {
+        this.banners = banners || [];
+        this.bannersLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.bannersLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  bannerCtaClick(banner: Banner): void {
+    const target = banner.ctaTarget || 'offers';
+    if (/^https?:\/\//i.test(target)) {
+      if (isPlatformBrowser(this.platformId)) window.open(target, '_blank', 'noopener');
+      return;
+    }
+    if (!isPlatformBrowser(this.platformId)) return;
+    document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   // ─── My Bookings ───────────────────────────────────────────────
@@ -423,12 +498,76 @@ export class Dashboard implements OnInit, OnDestroy {
       next: (summary) => {
         this.bookingStatusSummary = summary;
         this.user.notifications = summary.counts?.PENDING ?? 0;
+        this.buildStats();
         this.cdr.detectChanges();
       },
       error: () => {
         // Non-critical — dashboard still works without summary counts
       }
     });
+  }
+
+  private loadAllBookingsForStats(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    this.vendorBookingService.getMyBookings().subscribe({
+      next: (bookings) => {
+        this.allBookings = bookings;
+        this.buildUpcomingBookings();
+        this.buildStats();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // Non-critical — dashboard still works without stats/upcoming trips
+      }
+    });
+  }
+
+  private buildUpcomingBookings(): void {
+    this.upcomingBookings = this.allBookings
+      .filter(b => b.bookingStatus === VendorBookingStatus.PENDING || b.bookingStatus === VendorBookingStatus.CONFIRMED)
+      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+      .slice(0, 4);
+    this.currentIndex = 0;
+  }
+
+  private buildStats(): void {
+    const counts = this.bookingStatusSummary?.counts ?? {};
+    const total = this.bookingStatusSummary?.total ?? 0;
+    const paidBookings = this.allBookings.filter(
+      b => b.bookingStatus === VendorBookingStatus.CONFIRMED || b.bookingStatus === VendorBookingStatus.COMPLETED
+    );
+    const totalSpent = paidBookings.reduce((sum, b) => sum + (b.grossAmount || 0), 0);
+
+    this.stats = [
+      {
+        label: 'Total Requests',
+        value: String(total),
+        icon: '📋',
+        trend: `${counts[VendorBookingStatus.PENDING] ?? 0} pending`,
+        color: 'cyan'
+      },
+      {
+        label: 'Confirmed Trips',
+        value: String(counts[VendorBookingStatus.CONFIRMED] ?? 0),
+        icon: '✅',
+        trend: `${counts[VendorBookingStatus.COMPLETED] ?? 0} completed`,
+        color: 'violet'
+      },
+      {
+        label: 'Completed Trips',
+        value: String(counts[VendorBookingStatus.COMPLETED] ?? 0),
+        icon: '🏁',
+        trend: `${(counts[VendorBookingStatus.CANCELLED] ?? 0) + (counts[VendorBookingStatus.REJECTED] ?? 0)} cancelled/rejected`,
+        color: 'amber'
+      },
+      {
+        label: 'Total Spent',
+        value: `৳${totalSpent.toLocaleString()}`,
+        icon: '💳',
+        trend: `${paidBookings.length} paid booking${paidBookings.length === 1 ? '' : 's'}`,
+        color: 'rose'
+      }
+    ];
   }
 
   loadMyBookings(silent = false): void {
@@ -524,6 +663,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
   private refreshBookingsAfterMutation(): void {
     this.loadBookingStatusSummary();
+    this.loadAllBookingsForStats();
     if (this.showMyBookings) {
       this.loadMyBookings(true);
     }

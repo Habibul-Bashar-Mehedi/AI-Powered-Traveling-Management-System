@@ -120,9 +120,14 @@ public class SecurityConfig {
                     "/auth/refresh",
                     // Misc public paths
                     "/actuator/**",
-                    "/error"
+                    "/error",
+                    // Publicly servable uploaded assets (e.g. vendor service images)
+                    "/uploads/**"
                 ).permitAll()
-                
+
+                // Public marketing content for the landing page (read-only; mutations still require auth)
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/destination").permitAll()
+
                 // Vendor registration requires any authenticated user (not yet VENDOR role)
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/vendor/register").authenticated()
                 .requestMatchers("/api/v1/vendor/**").hasRole("VENDOR")

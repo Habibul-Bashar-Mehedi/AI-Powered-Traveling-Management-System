@@ -7,6 +7,7 @@ import aptms.exceptions.IdNotFoundException;
 import aptms.exceptions.InvalidException;
 import aptms.repositories.ChatHistoryRepository;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,8 @@ import java.util.List;
 
 @Service
 public class ChatHistoryService {
+
+    private static final int MAX_LIST_SIZE = 500;
 
     private final ChatHistoryRepository chatHistoryRepository;
 
@@ -43,7 +46,7 @@ public class ChatHistoryService {
     @Transactional(readOnly = true)
     @SecureAction(role = "ADMIN")
     public List<ChatHistory> getAllChatHistory() {
-        return chatHistoryRepository.findAll();
+        return chatHistoryRepository.findAll(PageRequest.of(0, MAX_LIST_SIZE)).getContent();
     }
 
     @SecureAction(role = "ADMIN")
