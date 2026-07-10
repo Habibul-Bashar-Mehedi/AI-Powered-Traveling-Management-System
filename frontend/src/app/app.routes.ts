@@ -96,6 +96,10 @@ export const routes: Routes = [
       {
         path: 'banners',
         loadComponent: () => import('./admin/banner-management/banner-management').then(m => m.BannerManagement)
+      },
+      {
+        path: 'bookings',
+        loadComponent: () => import('./admin/admin-bookings/admin-bookings').then(m => m.AdminBookings)
       }
     ]
   },

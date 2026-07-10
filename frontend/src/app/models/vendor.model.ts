@@ -1,7 +1,16 @@
 import {
   VendorType, VendorStatus, ServiceType, ServiceStatus, BookingMode,
-  PricingUnit, VendorBookingStatus, PayoutMethod, PayoutStatus, TransactionType
+  PricingUnit, VendorBookingStatus, PayoutMethod, PayoutStatus, TransactionType, PaymentMethod, PackageItemType
 } from '../enums/vendor.enums';
+
+export interface PackageItem {
+  itemId?: string;
+  itemType: PackageItemType;
+  title: string;
+  description?: string;
+  dayNumber?: number | null;
+  sequence?: number;
+}
 
 export interface VendorProfile {
   vendorId?: string;
@@ -46,15 +55,25 @@ export interface PublicServiceListing {
   imageUrl?: string;
   averageRating?: number;
   totalBookings?: number;
+  maxCapacity?: number;
+  packageItems?: PackageItem[];
   vendorId: string;
   vendorBusinessName: string;
 }
 
 export interface BookServiceRequest {
-  startDate?: string;
+  startDate: string;
   endDate?: string;
   quantity?: number;
   specialRequests?: string;
+  paymentMethod: PaymentMethod;
+  paymentReference: string;
+}
+
+export interface ServiceAvailability {
+  maxCapacity: number;
+  alreadyBooked: number;
+  available: number;
 }
 
 export interface VendorServiceListing {
@@ -83,6 +102,7 @@ export interface VendorServiceListing {
   isFeatured?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  packageItems?: PackageItem[];
 }
 
 export interface VendorBooking {
@@ -90,6 +110,7 @@ export interface VendorBooking {
   serviceId: string;
   serviceName: string;
   vendorId: string;
+  vendorBusinessName?: string;
   userId: string;
   userName: string;
   userEmail: string;
@@ -101,6 +122,8 @@ export interface VendorBooking {
   commissionAmount: number;
   netAmount: number;
   paymentStatus: string;
+  paymentMethod?: PaymentMethod;
+  paymentReference?: string;
   specialRequests?: string;
   cancellationReason?: string;
   cancelledBy?: string;

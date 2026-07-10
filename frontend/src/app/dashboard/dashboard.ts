@@ -8,7 +8,7 @@ import {
   VendorBookingService
 } from '../services/vendor-booking.service';
 import { VendorBooking, PublicServiceListing } from '../models/vendor.model';
-import { VendorBookingStatus } from '../enums/vendor.enums';
+import { VendorBookingStatus, PaymentMethod, ServiceType } from '../enums/vendor.enums';
 import { AuthService } from '../services/auth.service';
 import { DestinationService } from '../services/destination.service';
 import { Destination } from '../models/destination.model';
@@ -35,6 +35,9 @@ interface DashboardStat {
   imports: [FormsModule, CommonModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css'],
+  host: {
+    '(document:keydown.escape)': 'onEscapeKey()'
+  },
 })
 export class Dashboard implements OnInit, OnDestroy {
   constructor(
@@ -51,24 +54,6 @@ export class Dashboard implements OnInit, OnDestroy {
     private router: Router,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
-
-  quickActions: Array<{ label: string; requestType: UserServiceRequestType; note: string }> = [
-    {
-      label: 'Hotel Booking',
-      requestType: 'HOTEL_BOOKING',
-      note: 'Need a hotel room booking from dashboard.'
-    },
-    {
-      label: 'Explore Tourist Places',
-      requestType: 'EXPLORE_TOURIST_PLACES',
-      note: 'Need guided support for exploring tourist places.'
-    },
-    {
-      label: 'Order Traditional Food & Items',
-      requestType: 'ORDER_TRADITIONAL_FOOD_ITEMS',
-      note: 'Need traditional food and item order assistance.'
-    }
-  ];
 
   actionLoading: Record<string, boolean> = {};
   actionMessage: Record<string, string> = {};
@@ -196,16 +181,50 @@ export class Dashboard implements OnInit, OnDestroy {
   // ─── Service catalog (real vendor listings, incl. images) ──────────
   catalogServices: PublicServiceListing[] = [];
   catalogLoading = false;
-  catalogBookingLoading: Record<string, boolean> = {};
-  catalogBookingMessage: Record<string, string> = {};
-  catalogBookingError: Record<string, string> = {};
+
+  // ─── Booking modal (lets a user book more than one unit of a service) ──
+  bookingDraft: PublicServiceListing | null = null;
+  bookingDraftQuantity = 1;
+  bookingDraftNotes = '';
+  bookingDraftSubmitting = false;
+  bookingDraftError = '';
+  private static readonly DEFAULT_MAX_QUANTITY = 20;
+
+  // ─── Payment method (simulated checkout — no live gateway integration) ──
+  readonly paymentOptions: Array<{
+    value: PaymentMethod;
+    label: string;
+    icon: string;
+    referenceLabel: string;
+    referencePlaceholder: string;
+    referenceType: 'tel' | 'text';
+    referencePattern?: string;
+  }> = [
+    { value: PaymentMethod.BKASH, label: 'bKash', icon: '📱', referenceLabel: 'bKash Number', referencePlaceholder: '01XXXXXXXXX', referenceType: 'tel', referencePattern: '^01[3-9][0-9]{8}$' },
+    { value: PaymentMethod.ROCKET, label: 'Rocket', icon: '🚀', referenceLabel: 'Rocket Number', referencePlaceholder: '01XXXXXXXXX', referenceType: 'tel', referencePattern: '^01[3-9][0-9]{8}$' },
+    { value: PaymentMethod.NAGAD, label: 'Nagad', icon: '🟠', referenceLabel: 'Nagad Number', referencePlaceholder: '01XXXXXXXXX', referenceType: 'tel', referencePattern: '^01[3-9][0-9]{8}$' },
+    { value: PaymentMethod.BANK_TRANSFER, label: 'Bank Transfer', icon: '🏦', referenceLabel: 'Account Number', referencePlaceholder: 'e.g. 1234567890', referenceType: 'text' },
+    { value: PaymentMethod.CARD, label: 'Card', icon: '💳', referenceLabel: 'Card Number', referencePlaceholder: 'e.g. 4111 1111 1111 1111', referenceType: 'text' }
+  ];
+  bookingDraftPaymentMethod: PaymentMethod | null = null;
+  bookingDraftPaymentReference = '';
+
+  // ─── Booking date + live availability (prevents double-booking the same seat/room/day) ──
+  bookingDraftStartDate = '';
+  bookingDraftEndDate = '';
+  bookingDraftAvailability: number | null = null;
+  bookingDraftAvailabilityLoading = false;
+  bookingDraftAvailabilityError = '';
+  private availabilityRequestId = 0;
+
+  // ─── Booking confirmation popup ─────────────────────────────────────
+  bookingConfirmation: (VendorBooking & { currencyCode?: string; vendorBusinessName?: string }) | null = null;
 
   // ─── Active nav item ──────────────────────────────────────────────
   activeNav = 'dashboard';
   navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '⊞' },
     { id: 'trips', label: 'My Trips', icon: '✈️' },
-    { id: 'explore', label: 'Explore', icon: '' },
     { id: 'offers', label: 'Offers', icon: '️' },
     { id: 'profile', label: 'Profile', icon: '' },
   ];
@@ -214,6 +233,7 @@ export class Dashboard implements OnInit, OnDestroy {
   currentIndex = 0;
   intervalId: ReturnType<typeof setInterval> | undefined;
   private currentUserSubscription?: Subscription;
+  private fragmentSubscription?: Subscription;
 
   ngOnInit() {
     this.startAutoSlide();
@@ -239,14 +259,26 @@ export class Dashboard implements OnInit, OnDestroy {
     this.loadCatalogServices();
     this.loadBanners();
 
-    // Auto-expand the bookings panel when arriving via the "My Bookings" nav link
-    if (this.route.snapshot.fragment === 'my-bookings' && !this.showMyBookings) {
-      this.toggleMyBookings();
-    }
+    // Respond to the nav bar's "My Bookings" / "Packages" links every time they're
+    // clicked, not just on first load — a fragment-only navigation while already on
+    // /dashboard doesn't re-run ngOnInit, so a snapshot check here would silently do
+    // nothing on repeat clicks. Subscribing to the fragment stream fixes that.
+    this.fragmentSubscription = this.route.fragment.subscribe(fragment => {
+      if (!fragment) return;
+      if (fragment === 'my-bookings' && !this.showMyBookings) {
+        this.toggleMyBookings();
+      }
+      if (isPlatformBrowser(this.platformId)) {
+        // Wait a tick so conditionally-rendered content (e.g. the just-expanded
+        // bookings panel) is in the DOM before we scroll to it.
+        setTimeout(() => document.getElementById(fragment)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      }
+    });
   }
 
   ngOnDestroy() {
     if (this.intervalId) clearInterval(this.intervalId);
+    this.fragmentSubscription?.unsubscribe();
     this.currentUserSubscription?.unsubscribe();
     this.stopBookingsPolling();
   }
@@ -398,10 +430,6 @@ export class Dashboard implements OnInit, OnDestroy {
     this.activeNav = id;
   }
 
-  onQuickActionClick(action: { label: string; requestType: UserServiceRequestType; note: string }): void {
-    this.submitServiceRequest(action.requestType, action.label, action.note);
-  }
-
   onDestinationAction(dest: Destination): void {
     this.submitServiceRequest('EXPLORE_TOURIST_PLACES', dest.name, `Exploration request for ${dest.name}, ${dest.region}.`);
   }
@@ -438,25 +466,233 @@ export class Dashboard implements OnInit, OnDestroy {
     });
   }
 
-  bookCatalogService(service: PublicServiceListing): void {
-    this.catalogBookingLoading[service.serviceId] = true;
-    this.catalogBookingMessage[service.serviceId] = '';
-    this.catalogBookingError[service.serviceId] = '';
+  // ─── Booking modal (choose date, quantity, then confirm) ────────────────
+  get bookingDraftIsHotel(): boolean {
+    return this.bookingDraft?.serviceType === ServiceType.HOTEL_ROOM;
+  }
+
+  get minBookingDate(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  get bookingDraftMaxQuantity(): number {
+    const serviceMax = this.bookingDraft?.maxCapacity && this.bookingDraft.maxCapacity > 0
+      ? this.bookingDraft.maxCapacity
+      : Dashboard.DEFAULT_MAX_QUANTITY;
+    return this.bookingDraftAvailability !== null
+      ? Math.min(serviceMax, this.bookingDraftAvailability)
+      : serviceMax;
+  }
+
+  get bookingDraftUnitLabel(): string {
+    switch (this.bookingDraft?.pricingUnit) {
+      case 'PER_NIGHT': return 'Night(s)';
+      case 'PER_PERSON': return 'Traveler(s)';
+      case 'PER_SEAT': return 'Seat(s)';
+      case 'PER_TRIP': return 'Trip(s)';
+      default: return 'Unit(s)';
+    }
+  }
+
+  get bookingDraftTotal(): number {
+    return (this.bookingDraft?.basePrice ?? 0) * this.bookingDraftQuantity;
+  }
+
+  get isBookingDateValid(): boolean {
+    if (!this.bookingDraftStartDate) return false;
+    if (this.bookingDraftIsHotel) {
+      return !!this.bookingDraftEndDate && this.bookingDraftEndDate >= this.bookingDraftStartDate;
+    }
+    return true;
+  }
+
+  openBookingModal(service: PublicServiceListing): void {
+    this.bookingDraft = service;
+    this.bookingDraftQuantity = 1;
+    this.bookingDraftNotes = '';
+    this.bookingDraftError = '';
+    this.bookingDraftSubmitting = false;
+    this.bookingDraftPaymentMethod = null;
+    this.bookingDraftPaymentReference = '';
+    this.bookingDraftAvailability = null;
+    this.bookingDraftAvailabilityError = '';
+    this.bookingDraftStartDate = this.minBookingDate;
+    this.bookingDraftEndDate = '';
+    this.onBookingDateChange();
+  }
+
+  closeBookingModal(): void {
+    if (this.bookingDraftSubmitting) return;
+    this.bookingDraft = null;
+  }
+
+  onBookingDateChange(): void {
+    this.bookingDraftError = '';
+    if (!this.isBookingDateValid) {
+      this.bookingDraftAvailability = null;
+      return;
+    }
+    this.refreshAvailability();
+  }
+
+  private refreshAvailability(): void {
+    const service = this.bookingDraft;
+    if (!service || !this.isBookingDateValid) return;
+
+    const requestId = ++this.availabilityRequestId;
+    this.bookingDraftAvailabilityLoading = true;
+    this.bookingDraftAvailabilityError = '';
     this.cdr.detectChanges();
 
-    this.serviceCatalogService.bookService(service.serviceId, { quantity: 1 }).subscribe({
-      next: () => {
-        this.catalogBookingLoading[service.serviceId] = false;
-        this.catalogBookingMessage[service.serviceId] = 'Booked! Check My Bookings for status.';
+    const endDate = this.bookingDraftIsHotel ? this.bookingDraftEndDate : undefined;
+    this.serviceCatalogService.getAvailability(service.serviceId, this.bookingDraftStartDate, endDate).subscribe({
+      next: (res) => {
+        if (requestId !== this.availabilityRequestId) return; // a newer date change superseded this response
+        this.bookingDraftAvailabilityLoading = false;
+        this.bookingDraftAvailability = res.available;
+        this.setBookingDraftQuantity(this.bookingDraftQuantity);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        if (requestId !== this.availabilityRequestId) return;
+        this.bookingDraftAvailabilityLoading = false;
+        this.bookingDraftAvailability = null;
+        this.bookingDraftAvailabilityError = err?.error?.message || 'Could not check availability for this date.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  decrementBookingQuantity(): void {
+    this.setBookingDraftQuantity(this.bookingDraftQuantity - 1);
+  }
+
+  incrementBookingQuantity(): void {
+    this.setBookingDraftQuantity(this.bookingDraftQuantity + 1);
+  }
+
+  setBookingDraftQuantity(value: number): void {
+    const max = Math.max(this.bookingDraftMaxQuantity, 0);
+    if (!Number.isFinite(value)) value = 1;
+    this.bookingDraftQuantity = max === 0 ? 0 : Math.min(Math.max(Math.round(value), 1), max);
+  }
+
+  get selectedPaymentOption() {
+    return this.paymentOptions.find(o => o.value === this.bookingDraftPaymentMethod) ?? null;
+  }
+
+  selectPaymentMethod(method: PaymentMethod): void {
+    if (this.bookingDraftPaymentMethod !== method) {
+      this.bookingDraftPaymentReference = '';
+    }
+    this.bookingDraftPaymentMethod = method;
+    this.bookingDraftError = '';
+  }
+
+  get isPaymentReferenceValid(): boolean {
+    const option = this.selectedPaymentOption;
+    if (!option) return false;
+    const value = this.bookingDraftPaymentReference.trim();
+    if (!value) return false;
+    return option.referencePattern ? new RegExp(option.referencePattern).test(value) : true;
+  }
+
+  get canConfirmBooking(): boolean {
+    return this.isBookingDateValid
+      && !this.bookingDraftAvailabilityLoading
+      && this.bookingDraftAvailability !== null
+      && this.bookingDraftAvailability > 0
+      && this.bookingDraftQuantity > 0
+      && this.bookingDraftQuantity <= this.bookingDraftAvailability
+      && !!this.bookingDraftPaymentMethod
+      && this.isPaymentReferenceValid
+      && !this.bookingDraftSubmitting;
+  }
+
+  confirmBooking(): void {
+    const service = this.bookingDraft;
+    if (!service || this.bookingDraftSubmitting) return;
+
+    if (!this.isBookingDateValid) {
+      this.bookingDraftError = this.bookingDraftIsHotel
+        ? 'Please select a valid check-in and check-out date.'
+        : 'Please select a booking date.';
+      return;
+    }
+    if (this.bookingDraftAvailability === null) {
+      this.bookingDraftError = 'Still checking availability for this date — please wait a moment.';
+      return;
+    }
+    if (this.bookingDraftAvailability <= 0) {
+      this.bookingDraftError = 'This service is fully booked for the selected date(s). Try another date.';
+      return;
+    }
+    if (this.bookingDraftQuantity > this.bookingDraftAvailability) {
+      this.bookingDraftError = `Only ${this.bookingDraftAvailability} left for the selected date(s).`;
+      return;
+    }
+    if (!this.bookingDraftPaymentMethod) {
+      this.bookingDraftError = 'Please select a payment method.';
+      return;
+    }
+    if (!this.isPaymentReferenceValid) {
+      this.bookingDraftError = `Enter a valid ${this.selectedPaymentOption?.referenceLabel.toLowerCase()}.`;
+      return;
+    }
+
+    this.bookingDraftSubmitting = true;
+    this.bookingDraftError = '';
+    this.cdr.detectChanges();
+
+    this.serviceCatalogService.bookService(service.serviceId, {
+      startDate: this.bookingDraftStartDate,
+      endDate: this.bookingDraftIsHotel ? this.bookingDraftEndDate : undefined,
+      quantity: this.bookingDraftQuantity,
+      specialRequests: this.bookingDraftNotes.trim() || undefined,
+      paymentMethod: this.bookingDraftPaymentMethod,
+      paymentReference: this.bookingDraftPaymentReference.trim()
+    }).subscribe({
+      next: (booking) => {
+        this.bookingDraftSubmitting = false;
+        this.bookingDraft = null;
+        this.bookingConfirmation = {
+          ...booking,
+          currencyCode: service.currencyCode,
+          vendorBusinessName: service.vendorBusinessName
+        };
         this.refreshBookingsAfterMutation();
         this.cdr.detectChanges();
       },
       error: (err) => {
-        this.catalogBookingLoading[service.serviceId] = false;
-        this.catalogBookingError[service.serviceId] = err?.error?.message || 'Failed to book this service.';
+        this.bookingDraftSubmitting = false;
+        this.bookingDraftError = err?.error?.message || 'Failed to book this service. Please try again.';
+        // Someone else may have booked the remaining capacity between our last check and
+        // this submit — re-check so the quantity cap on screen reflects reality.
+        this.refreshAvailability();
         this.cdr.detectChanges();
       }
     });
+  }
+
+  closeBookingConfirmation(): void {
+    this.bookingConfirmation = null;
+  }
+
+  onEscapeKey(): void {
+    if (this.bookingConfirmation) {
+      this.closeBookingConfirmation();
+    } else if (this.bookingDraft) {
+      this.closeBookingModal();
+    }
+  }
+
+  viewMyBookingsFromConfirmation(): void {
+    this.bookingConfirmation = null;
+    if (!this.showMyBookings) {
+      this.toggleMyBookings();
+    }
+    if (!isPlatformBrowser(this.platformId)) return;
+    document.getElementById('my-bookings')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   resolveImageUrl(url: string | null | undefined): string {
@@ -602,6 +838,9 @@ export class Dashboard implements OnInit, OnDestroy {
       return;
     }
     this.stopBookingsPolling();
+    // Clear the #my-bookings fragment so a page reload doesn't silently re-expand
+    // the panel via the ngOnInit deep-link check below.
+    this.router.navigate([], { relativeTo: this.route, fragment: undefined, replaceUrl: true });
   }
 
   onBookingStatusFilterChange(): void {
@@ -644,6 +883,22 @@ export class Dashboard implements OnInit, OnDestroy {
 
   bookingStatusLabel(status: string): string {
     return status.charAt(0) + status.slice(1).toLowerCase();
+  }
+
+  paymentMethodDisplay(method: string | undefined | null): string {
+    if (!method) return '—';
+    const option = this.paymentOptions.find(o => o.value === method);
+    return option ? `${option.icon} ${option.label}` : method;
+  }
+
+  packageItemIcon(itemType: string): string {
+    switch (itemType) {
+      case 'TRANSPORT': return '🚌';
+      case 'HOTEL': return '🏨';
+      case 'ACTIVITY': return '🎟️';
+      case 'MEAL': return '🍽️';
+      default: return '📍';
+    }
   }
 
   bookingStatusClass(status: string): string {
@@ -703,7 +958,6 @@ export class Dashboard implements OnInit, OnDestroy {
       next: () => {
         this.actionLoading[key] = false;
         this.actionMessage[key] = 'Request sent. Vendor will review and respond from the vendor dashboard.';
-        this.showMyBookings = true;
         this.refreshBookingsAfterMutation();
         if (!this.bookingsPollId) {
           this.startBookingsPolling();

@@ -1,6 +1,7 @@
 package aptms.dto.vendor;
 
 import aptms.enums.CancelledBy;
+import aptms.enums.PaymentMethod;
 import aptms.enums.VendorBookingStatus;
 import aptms.enums.VendorPaymentStatus;
 import lombok.Data;
@@ -21,6 +22,7 @@ public class VendorBookingDTO {
     private UUID serviceId;
     private String serviceName;
     private UUID vendorId;
+    private String vendorBusinessName;
     private UUID userId;
     private String userName;
     private String userEmail;
@@ -32,6 +34,8 @@ public class VendorBookingDTO {
     private BigDecimal commissionAmount;
     private BigDecimal netAmount;
     private VendorPaymentStatus paymentStatus;
+    private PaymentMethod paymentMethod;
+    private String paymentReference;
     private String specialRequests;
     private String cancellationReason;
     private CancelledBy cancelledBy;

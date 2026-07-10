@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { API_ENDPOINTS } from '../constants/api-endpoints';
-import { BookServiceRequest, PublicServiceListing, VendorBooking } from '../models/vendor.model';
+import { BookServiceRequest, PublicServiceListing, ServiceAvailability, VendorBooking } from '../models/vendor.model';
 
 export interface Page<T> {
   content: T[];
@@ -24,5 +24,11 @@ export class ServiceCatalogService {
 
   bookService(serviceId: string, request: BookServiceRequest): Observable<VendorBooking> {
     return this.http.post<VendorBooking>(`${this.base}${API_ENDPOINTS.SERVICE_CATALOG.BOOK(serviceId)}`, request);
+  }
+
+  getAvailability(serviceId: string, startDate: string, endDate?: string): Observable<ServiceAvailability> {
+    let params = new HttpParams().set('startDate', startDate);
+    if (endDate) params = params.set('endDate', endDate);
+    return this.http.get<ServiceAvailability>(`${this.base}${API_ENDPOINTS.SERVICE_CATALOG.AVAILABILITY(serviceId)}`, { params });
   }
 }

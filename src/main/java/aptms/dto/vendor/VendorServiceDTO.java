@@ -6,9 +6,12 @@ import aptms.enums.ServiceStatus;
 import aptms.enums.ServiceType;
 import lombok.Data;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -68,5 +71,9 @@ public class VendorServiceDTO {
     private Boolean isFeatured;
     private Instant createdAt;
     private Instant updatedAt;
+
+    /** Itinerary breakdown — only meaningful when serviceType is TOUR_PACKAGE. */
+    @Valid
+    private List<PackageItemDTO> packageItems = new ArrayList<>();
 }
 

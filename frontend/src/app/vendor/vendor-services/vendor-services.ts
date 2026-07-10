@@ -1,10 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { VendorService } from '../../services/vendor.service';
-import { VendorServiceListing } from '../../models/vendor.model';
-import { ServiceStatus, ServiceType, PricingUnit, BookingMode } from '../../enums/vendor.enums';
+import { PackageItem, VendorServiceListing } from '../../models/vendor.model';
+import { ServiceStatus, ServiceType, PricingUnit, BookingMode, PackageItemType } from '../../enums/vendor.enums';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -24,6 +24,7 @@ export class VendorServices implements OnInit {
 
   imageUploading = false;
   imageError = '';
+  listError = '';
 
   private static readonly MAX_IMAGE_BYTES = 5 * 1024 * 1024;
   private static readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -32,6 +33,7 @@ export class VendorServices implements OnInit {
   pricingUnits = Object.values(PricingUnit);
   bookingModes = Object.values(BookingMode);
   serviceStatuses = Object.values(ServiceStatus);
+  packageItemTypes = Object.values(PackageItemType);
 
   form!: FormGroup;
 
@@ -45,6 +47,14 @@ export class VendorServices implements OnInit {
 
   get formImageUrl(): string {
     return this.form?.get('imageUrl')?.value || '';
+  }
+
+  get isPackage(): boolean {
+    return this.form?.get('serviceType')?.value === ServiceType.TOUR_PACKAGE;
+  }
+
+  get packageItemsArray(): FormArray {
+    return this.form.get('packageItems') as FormArray;
   }
 
   ngOnInit(): void {
@@ -70,7 +80,34 @@ export class VendorServices implements OnInit {
       imageUrl: [''],
       cancellationPolicy: [''],
       tags: [''],
+      packageItems: this.fb.array([]),
     });
+  }
+
+  private newPackageItemGroup(item?: PackageItem): FormGroup {
+    return this.fb.group({
+      itemId: [item?.itemId ?? null],
+      itemType: [item?.itemType ?? PackageItemType.TRANSPORT, Validators.required],
+      title: [item?.title ?? '', [Validators.required, Validators.maxLength(255)]],
+      description: [item?.description ?? ''],
+      dayNumber: [item?.dayNumber ?? null],
+    });
+  }
+
+  addPackageItem(): void {
+    this.packageItemsArray.push(this.newPackageItemGroup({
+      itemType: PackageItemType.TRANSPORT,
+      title: '',
+      sequence: this.packageItemsArray.length
+    }));
+  }
+
+  removePackageItem(index: number): void {
+    this.packageItemsArray.removeAt(index);
+  }
+
+  trackByIndex(index: number): number {
+    return index;
   }
 
   loadServices(): void {
@@ -96,6 +133,7 @@ export class VendorServices implements OnInit {
   openCreate(): void {
     this.editingId = null;
     this.form.reset({ currencyCode: 'USD', bookingMode: 'MANUAL', confirmationWindow: 24, status: 'DRAFT' });
+    this.packageItemsArray.clear();
     this.imageError = '';
     this.showForm = true;
   }
@@ -103,6 +141,8 @@ export class VendorServices implements OnInit {
   openEdit(s: VendorServiceListing): void {
     this.editingId = s.serviceId || null;
     this.form.patchValue(s);
+    this.packageItemsArray.clear();
+    (s.packageItems ?? []).forEach(item => this.packageItemsArray.push(this.newPackageItemGroup(item)));
     this.imageError = '';
     this.showForm = true;
   }
@@ -164,6 +204,9 @@ export class VendorServices implements OnInit {
     this.error = '';
 
     const payload: VendorServiceListing = this.form.value;
+    payload.packageItems = this.isPackage
+      ? (payload.packageItems ?? []).map((item, index) => ({ ...item, sequence: index }))
+      : [];
 
     const req = this.editingId
       ? this.vendorService.updateService(this.editingId, payload)
@@ -186,11 +229,25 @@ export class VendorServices implements OnInit {
 
   delete(id: string): void {
     if (!confirm('Delete this service? This cannot be undone.')) return;
-    this.vendorService.deleteService(id).subscribe({ complete: () => this.loadServices() });
+    this.listError = '';
+    this.vendorService.deleteService(id).subscribe({
+      next: () => this.loadServices(),
+      error: (err) => {
+        this.listError = err?.error?.message || 'Failed to delete this service.';
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   toggleStatus(s: VendorServiceListing, newStatus: string): void {
-    this.vendorService.toggleServiceStatus(s.serviceId!, newStatus).subscribe({ complete: () => this.loadServices() });
+    this.listError = '';
+    this.vendorService.toggleServiceStatus(s.serviceId!, newStatus).subscribe({
+      next: () => this.loadServices(),
+      error: (err) => {
+        this.listError = err?.error?.message || 'Failed to update service status.';
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   statusBadgeClass(status?: ServiceStatus): string {

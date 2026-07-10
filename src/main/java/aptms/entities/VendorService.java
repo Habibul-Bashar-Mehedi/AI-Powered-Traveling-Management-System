@@ -8,6 +8,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -105,5 +107,10 @@ public class VendorService {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    /** Itinerary breakdown for TOUR_PACKAGE listings (empty/unused for other service types). */
+    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("dayNumber ASC, sequence ASC")
+    private List<PackageItem> packageItems = new ArrayList<>();
 }
 

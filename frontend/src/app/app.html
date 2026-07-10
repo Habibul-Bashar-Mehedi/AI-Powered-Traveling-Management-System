@@ -17,9 +17,8 @@
           @if (currentUser$ | async; as user) {
             <div class="hidden md:flex md:items-center md:gap-6">
               <a (click)="navigateToDashboard($event)" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer">Dashboard</a>
-              <a routerLink="/dashboard" fragment="destinations" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">Explore</a>
               <a routerLink="/dashboard" fragment="my-bookings" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">My Bookings</a>
-              <a routerLink="/dashboard" fragment="offers" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">Packages</a>
+              <a routerLink="/dashboard" fragment="services" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">Packages</a>
             </div>
           } @else {
             <div class="hidden md:flex md:items-center md:gap-6">

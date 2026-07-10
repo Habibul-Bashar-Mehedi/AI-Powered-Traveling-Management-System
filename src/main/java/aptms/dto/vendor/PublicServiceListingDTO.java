@@ -5,6 +5,7 @@ import aptms.enums.ServiceType;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -25,6 +26,8 @@ public class PublicServiceListingDTO {
     private String imageUrl;
     private BigDecimal averageRating;
     private Integer totalBookings;
+    private Integer maxCapacity;
+    private List<PackageItemDTO> packageItems;
 
     private UUID vendorId;
     private String vendorBusinessName;

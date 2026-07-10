@@ -93,6 +93,7 @@ public class SecurityConfig {
                     log.info("Configuring stateful session management (session-based mode)");
                     session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED);
                 }
+
             })
             
             // Configure authorization rules

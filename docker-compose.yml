@@ -1,0 +1,64 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: travel-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: travel_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - travel-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: travel-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - travel-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: travel-backend
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - travel-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: travel-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      BACKEND_URL: http://backend:8080
+    ports:
+      - "4200:4200"
+    networks:
+      - travel-network
+
+volumes:
+  mysql_data:
+    external: true
+    name: ai-powered-traveling-management-system_mysql_data
+
+networks:
+  travel-network:

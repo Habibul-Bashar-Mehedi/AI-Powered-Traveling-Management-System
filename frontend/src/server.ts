@@ -6,6 +6,8 @@ import {
 } from '@angular/ssr/node';
 import express from 'express';
 import { join } from 'node:path';
+import { request as httpRequest } from 'node:http';
+import type { Request, Response } from 'express';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -13,16 +15,38 @@ const app = express();
 const angularApp = new AngularNodeAppEngine();
 
 /**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
+ * Proxy API and uploaded-asset requests to the backend so that both
+ * client-side calls and server-side (SSR/prerender) HttpClient calls
+ * made against the relative `/api` and `/uploads` paths resolve.
  */
+const backendUrl = new URL(process.env['BACKEND_URL'] || 'http://localhost:8080');
+
+function proxyToBackend(req: Request, res: Response): void {
+  const proxyReq = httpRequest(
+    {
+      protocol: backendUrl.protocol,
+      hostname: backendUrl.hostname,
+      port: backendUrl.port,
+      path: req.originalUrl,
+      method: req.method,
+      headers: { ...req.headers, host: backendUrl.host },
+    },
+    (proxyRes) => {
+      res.writeHead(proxyRes.statusCode ?? 502, proxyRes.headers);
+      proxyRes.pipe(res);
+    },
+  );
+  proxyReq.on('error', () => {
+    if (!res.headersSent) {
+      res.writeHead(502);
+    }
+    res.end('Bad gateway');
+  });
+  req.pipe(proxyReq);
+}
+
+app.use('/api', proxyToBackend);
+app.use('/uploads', proxyToBackend);
 
 /**
  * Serve static files from /browser

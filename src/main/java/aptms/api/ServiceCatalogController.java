@@ -2,6 +2,7 @@ package aptms.api;
 
 import aptms.dto.vendor.BookServiceRequestDTO;
 import aptms.dto.vendor.PublicServiceListingDTO;
+import aptms.dto.vendor.ServiceAvailabilityDTO;
 import aptms.dto.vendor.VendorBookingDTO;
 import aptms.services.ServiceCatalogService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -42,6 +45,15 @@ public class ServiceCatalogController {
             @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, Math.min(size, 50), Sort.by("updatedAt").descending());
         return ResponseEntity.ok(serviceCatalogService.getActiveServices(pageable));
+    }
+
+    @GetMapping("/{id}/availability")
+    @Operation(summary = "Check remaining bookable capacity for a service on a given date (or date range)")
+    public ResponseEntity<ServiceAvailabilityDTO> getAvailability(
+            @PathVariable UUID id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return ResponseEntity.ok(serviceCatalogService.getAvailability(id, startDate, endDate));
     }
 
     @PostMapping("/{id}/book")

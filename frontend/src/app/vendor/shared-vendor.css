@@ -703,6 +703,13 @@
   letter-spacing: 0.6px; margin-bottom: 8px;
 }
 
+.field-optional {
+  text-transform: none;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: normal;
+}
+
 .field-input {
   width: 100%; padding: 11px 14px;
   background: var(--bg-input);
@@ -726,6 +733,29 @@
 select.field-input option { background: #ffffff; color: var(--text-primary); }
 
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.package-item-row {
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+}
+
+.package-item-fields {
+  display: grid;
+  grid-template-columns: 140px 1fr 90px auto;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.package-item-day {
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .package-item-fields { grid-template-columns: 1fr; }
+}
 
 /* ─────────────────────────────────
    MODAL

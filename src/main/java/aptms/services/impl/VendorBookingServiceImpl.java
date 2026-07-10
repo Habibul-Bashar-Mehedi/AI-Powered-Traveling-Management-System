@@ -179,6 +179,7 @@ public class VendorBookingServiceImpl implements VendorBookingService {
         dto.setServiceId(b.getService() != null ? b.getService().getServiceId() : null);
         dto.setServiceName(b.getService() != null ? b.getService().getServiceName() : null);
         dto.setVendorId(b.getVendor() != null ? b.getVendor().getVendorId() : null);
+        dto.setVendorBusinessName(b.getVendor() != null ? b.getVendor().getBusinessName() : null);
         dto.setUserId(user != null ? user.getId() : null);
         dto.setUserName(user != null ? user.getUsername() : null);
         dto.setUserEmail(user != null ? user.getEmail() : null);
@@ -190,6 +191,8 @@ public class VendorBookingServiceImpl implements VendorBookingService {
         dto.setCommissionAmount(b.getCommissionAmount());
         dto.setNetAmount(b.getNetAmount());
         dto.setPaymentStatus(b.getPaymentStatus());
+        dto.setPaymentMethod(b.getPaymentMethod());
+        dto.setPaymentReference(maskPaymentReference(b.getPaymentReference()));
         dto.setSpecialRequests(b.getSpecialRequests());
         dto.setCancellationReason(b.getCancellationReason());
         dto.setCancelledBy(b.getCancelledBy());
@@ -197,6 +200,15 @@ public class VendorBookingServiceImpl implements VendorBookingService {
         dto.setConfirmedAt(b.getConfirmedAt());
         dto.setCompletedAt(b.getCompletedAt());
         return dto;
+    }
+
+    private String maskPaymentReference(String reference) {
+        if (reference == null || reference.length() <= 4) {
+            return reference;
+        }
+        int visibleTail = 2;
+        String masked = "*".repeat(reference.length() - visibleTail);
+        return masked + reference.substring(reference.length() - visibleTail);
     }
 }
 

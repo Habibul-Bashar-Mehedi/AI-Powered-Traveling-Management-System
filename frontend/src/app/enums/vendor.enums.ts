@@ -63,3 +63,19 @@ export enum TransactionType {
   DEBIT = 'DEBIT'
 }
 
+export enum PaymentMethod {
+  BKASH = 'BKASH',
+  ROCKET = 'ROCKET',
+  NAGAD = 'NAGAD',
+  BANK_TRANSFER = 'BANK_TRANSFER',
+  CARD = 'CARD'
+}
+
+export enum PackageItemType {
+  TRANSPORT = 'TRANSPORT',
+  HOTEL = 'HOTEL',
+  ACTIVITY = 'ACTIVITY',
+  MEAL = 'MEAL',
+  OTHER = 'OTHER'
+}
+

@@ -1,6 +1,7 @@
 package aptms.entities;
 
 import aptms.enums.CancelledBy;
+import aptms.enums.PaymentMethod;
 import aptms.enums.VendorBookingStatus;
 import aptms.enums.VendorPaymentStatus;
 import jakarta.persistence.*;
@@ -63,6 +64,13 @@ public class VendorBooking {
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false, length = 25)
     private VendorPaymentStatus paymentStatus = VendorPaymentStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", length = 20)
+    private PaymentMethod paymentMethod;
+
+    @Column(name = "payment_reference", length = 100)
+    private String paymentReference;
 
     @Column(name = "special_requests", columnDefinition = "TEXT")
     private String specialRequests;

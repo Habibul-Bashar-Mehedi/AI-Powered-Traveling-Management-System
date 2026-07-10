@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -88,7 +89,50 @@ public interface VendorBookingRepository extends JpaRepository<VendorBooking, UU
     List<Object[]> countByUserIdGroupByStatus(@Param("userId") UUID userId);
 
     Optional<VendorBooking> findByBookingIdAndUserId(UUID bookingId, UUID userId);
-    
+
+    boolean existsByServiceServiceId(UUID serviceId);
+
+    /**
+     * Total quantity already booked (excluding cancelled/rejected) for a service
+     * across any existing booking whose date range overlaps [startDate, endDate].
+     * Single-day bookings store endDate = NULL, so they're treated as occupying
+     * just their startDate via COALESCE.
+     */
+    @Query("""
+        SELECT COALESCE(SUM(b.quantity), 0) FROM VendorBooking b
+        WHERE b.service.serviceId = :serviceId
+          AND b.bookingStatus NOT IN (aptms.enums.VendorBookingStatus.CANCELLED, aptms.enums.VendorBookingStatus.REJECTED)
+          AND b.startDate <= :endDate
+          AND COALESCE(b.endDate, b.startDate) >= :startDate
+    """)
+    int sumBookedQuantityForDateRange(
+            @Param("serviceId") UUID serviceId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    /** Admin-wide booking inbox: every booking across all vendors and users. */
+    @Query("""
+        SELECT b FROM VendorBooking b
+        JOIN FETCH b.service s
+        JOIN FETCH b.vendor v
+        JOIN FETCH b.user u
+        ORDER BY b.createdAt DESC
+    """)
+    List<VendorBooking> findAllWithDetailsOrderByCreatedAtDesc();
+
+    @Query("""
+        SELECT b FROM VendorBooking b
+        JOIN FETCH b.service s
+        JOIN FETCH b.vendor v
+        JOIN FETCH b.user u
+        WHERE b.bookingStatus = :status
+        ORDER BY b.createdAt DESC
+    """)
+    List<VendorBooking> findAllByStatusWithDetailsOrderByCreatedAtDesc(@Param("status") VendorBookingStatus status);
+
+    @Query("SELECT b.bookingStatus, COUNT(b) FROM VendorBooking b GROUP BY b.bookingStatus")
+    List<Object[]> countAllGroupByStatus();
+
     @Modifying
     @Query("DELETE FROM VendorBooking vb WHERE vb.vendor.vendorId = :vendorId")
     void deleteByVendorId(@Param("vendorId") UUID vendorId);

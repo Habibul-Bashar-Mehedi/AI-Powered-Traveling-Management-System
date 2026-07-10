@@ -64,6 +64,7 @@ export const API_ENDPOINTS = {
   SERVICE_CATALOG: {
     LIST: '/v1/services',
     BOOK: (id: string) => `/v1/services/${id}/book`,
+    AVAILABILITY: (id: string) => `/v1/services/${id}/availability`,
   },
   ADMIN_VENDOR: {
     ALL: '/v1/admin/vendors',
@@ -78,6 +79,10 @@ export const API_ENDPOINTS = {
   ADMIN_MANAGEMENT: {
     USERS: '/v1/admin/management/users',
     USER_BY_ID: (id: string) => `/v1/admin/management/users/${id}`,
+  },
+  ADMIN_BOOKING: {
+    ALL: '/v1/admin/bookings',
+    STATUS_SUMMARY: '/v1/admin/bookings/status-summary',
   },
   BANNER: {
     ACTIVE: '/v1/banners/active',

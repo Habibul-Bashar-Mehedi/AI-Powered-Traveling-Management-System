@@ -3,9 +3,11 @@ package aptms.repositories;
 import aptms.entities.VendorService;
 import aptms.enums.ServiceStatus;
 import aptms.enums.ServiceType;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,6 +27,16 @@ public interface VendorServiceRepository extends JpaRepository<VendorService, UU
     Page<VendorService> findByStatusAndServiceType(ServiceStatus status, ServiceType serviceType, Pageable pageable);
 
     Optional<VendorService> findByServiceIdAndStatus(UUID serviceId, ServiceStatus status);
+
+    /**
+     * Locks the service row for the duration of the caller's transaction so that
+     * two concurrent bookings for the same date range can't both read the same
+     * "seats remaining" count and both succeed (classic lost-update race).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM VendorService s WHERE s.serviceId = :serviceId AND s.status = :status")
+    Optional<VendorService> findByServiceIdAndStatusForUpdate(
+            @Param("serviceId") UUID serviceId, @Param("status") ServiceStatus status);
 
     List<VendorService> findByVendorVendorIdAndStatus(UUID vendorId, ServiceStatus status);
 
