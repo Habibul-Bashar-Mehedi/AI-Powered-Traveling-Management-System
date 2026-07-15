@@ -28,7 +28,7 @@ interface SearchResult {
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('SMTS');
+  protected readonly title = signal('STMS');
   showMainNavbar = true;
   accountMenuOpen = false;
   notificationCount = 0;

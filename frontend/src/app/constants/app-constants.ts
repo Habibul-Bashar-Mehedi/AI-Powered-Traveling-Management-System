@@ -1,6 +1,6 @@
 export const APP_CONSTANTS = {
   APP_NAME: 'Smart Travel Management System',
-  APP_SHORT_NAME: 'SMTS',
+  APP_SHORT_NAME: 'STMS',
   DEFAULT_PAGE_SIZE: 20,
   MAX_PAGE_SIZE: 100,
   PASSWORD_MIN_LENGTH: 8,
