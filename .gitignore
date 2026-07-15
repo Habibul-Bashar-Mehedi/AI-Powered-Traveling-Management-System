@@ -33,10 +33,6 @@ build/
 .vscode/
 
 ### Environment Variables ###
-.env
-.env.local
-.env.*.local
-*.env
 
 ### Application Logs ###
 logs/
