@@ -82,7 +82,7 @@ public class SecurityConfig {
             .httpBasic(AbstractHttpConfigurer::disable)
             
             // Configure CORS
-            .cors(cors -> cors.configurationSource(corsConfigurationSource))
+            .cors(AbstractHttpConfigurer::disable)
             
             // Configure session management (stateless when JWT enabled, stateful otherwise)
             .sessionManagement(session -> {
