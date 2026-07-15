@@ -26,8 +26,12 @@ public class MarketRestController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<Market>> getAllMarket() {
-        List<Market> markets = marketService.getAllMarket();
+    public ResponseEntity<List<Market>> getAllMarket(
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
+            @RequestParam(required = false) Double radiusKm,
+            @RequestParam(required = false) Long destinationId) {
+        List<Market> markets = marketService.getNearby(lat, lng, radiusKm, destinationId);
         return ResponseEntity.ok(markets);
     }
 

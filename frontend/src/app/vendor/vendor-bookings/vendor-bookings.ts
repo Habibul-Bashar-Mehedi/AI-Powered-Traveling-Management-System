@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angu
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VendorBookingService } from '../../services/vendor-booking.service';
+import { VendorService } from '../../services/vendor.service';
 import { VendorBooking } from '../../models/vendor.model';
 import { VendorBookingStatus } from '../../enums/vendor.enums';
 
@@ -20,11 +21,13 @@ export class VendorBookings implements OnInit {
   rejectReason = '';
   rejectingId: string | null = null;
   error = '';
+  vendorSuspended = false;
 
   statuses = ['', ...Object.values(VendorBookingStatus)];
 
   constructor(
     private bookingService: VendorBookingService,
+    private vendorService: VendorService,
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
@@ -32,6 +35,14 @@ export class VendorBookings implements OnInit {
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
     this.load();
+    this.vendorService.getProfile().subscribe({
+      next: (v) => this.applyViewState(() => {
+        this.vendorSuspended = v.status === 'SUSPENDED';
+      }),
+      error: () => {
+        // Non-critical — backend still enforces the suspension block server-side
+      }
+    });
   }
 
   private applyViewState(update: () => void): void {

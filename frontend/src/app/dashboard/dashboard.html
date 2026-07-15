@@ -9,74 +9,6 @@
         <h1 class="page-title">Welcome Back!</h1>
         <p class="page-sub">{{ todayDate | date:'EEEE, d MMMM y' }}</p>
       </div>
-      <div class="topbar-right">
-        <div class="notif-wrap">
-          <button class="icon-btn notif-btn" (click)="toggleNotifications()" title="Notifications">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            @if (user.notifications > 0) {
-              <span class="notif-dot">{{ user.notifications }}</span>
-            }
-          </button>
-
-          @if (notificationsOpen) {
-            <div class="notif-panel">
-              <div class="notif-panel-header">Notifications</div>
-              @if (notificationItems.length === 0) {
-                <div class="notif-empty">You're all caught up — no updates yet.</div>
-              } @else {
-                <div class="notif-list">
-                  @for (item of notificationItems; track item.id) {
-                    <div class="notif-item" [class]="'notif-item-' + item.tone">
-                      <span class="notif-item-icon">{{ item.icon }}</span>
-                      <div class="notif-item-body">
-                        <p class="notif-item-text">{{ item.text }}</p>
-                        <span class="notif-item-time">{{ item.time }}</span>
-                      </div>
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          }
-        </div>
-
-        <button class="icon-btn" (click)="toggleTheme()" [title]="isDarkTheme ? 'Switch to light mode' : 'Switch to dark mode'">
-          @if (isDarkTheme) {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
-            </svg>
-          } @else {
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="4"></circle>
-              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
-            </svg>
-          }
-        </button>
-
-        <div class="topbar-avatar-wrap">
-          <button type="button" class="topbar-avatar topbar-avatar-initials avatar-btn" (click)="toggleAccountMenu()">
-            {{ userInitials }}
-          </button>
-          <div class="avatar-ring"></div>
-
-          @if (accountMenuOpen) {
-            <div class="account-menu">
-              <div class="account-menu-name">{{ user.name }}</div>
-              <button type="button" class="account-menu-item account-menu-item-danger" (click)="logout()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path>
-                  <polyline points="16 17 21 12 16 7"></polyline>
-                  <line x1="21" y1="12" x2="9" y2="12"></line>
-                </svg>
-                Sign Out
-              </button>
-            </div>
-          }
-        </div>
-      </div>
     </header>
 
     <!-- HERO SLIDER -->
@@ -108,7 +40,7 @@
                         <span> → {{ booking.endDate }}</span>
                       }
                     </p>
-                    <button class="slide-cta" (click)="toggleMyBookings()">View Booking →</button>
+                    <a class="slide-cta" routerLink="/profile">View Booking →</a>
                   </div>
                 </div>
                 <div class="slide-accent"></div>
@@ -148,142 +80,62 @@
       }
     </section>
 
-    <!-- MY BOOKINGS -->
-    <section id="my-bookings" class="my-bookings-section">
-      <div class="section-header my-bookings-header">
-        <div>
-          <h2 class="section-title">My Vendor Requests</h2>
-          <p class="section-sub">Track pending, confirmed, completed, rejected, and cancelled bookings</p>
-        </div>
-        <button class="view-all-btn" (click)="toggleMyBookings()">
-          {{ showMyBookings ? 'Hide' : 'View' }} Bookings →
-        </button>
-      </div>
-
-      @if (bookingStatusSummary) {
-        <div class="booking-status-strip">
-          @for (status of bookingStatusOptions; track status) {
-            <button
-              type="button"
-              class="booking-status-chip"
-              [class.booking-status-chip-active]="bookingStatusFilter === status"
-              (click)="onStatusChipClick(status)">
-              <span class="booking-status-chip-label">{{ bookingStatusLabel(status) }}</span>
-              <span class="booking-status-chip-count">{{ statusCount(status) }}</span>
-            </button>
-          }
-        </div>
-      }
-
-      @if (showMyBookings) {
-        <div class="my-bookings-panel">
-          <div class="my-bookings-toolbar">
-            <label class="booking-filter-label" for="bookingStatusFilter">Filter by status</label>
-            <select
-              id="bookingStatusFilter"
-              class="booking-filter-select"
-              [(ngModel)]="bookingStatusFilter"
-              (change)="onBookingStatusFilterChange()">
-              <option value="">All statuses</option>
-              @for (status of bookingStatusOptions; track status) {
-                <option [value]="status">{{ bookingStatusLabel(status) }}</option>
-              }
-            </select>
-            <button class="booking-refresh-btn" type="button" (click)="refreshBookings()">
-              Refresh
-            </button>
-          </div>
-
-          @if (myBookingsLoading) {
-            <p class="bookings-loading">Loading your bookings…</p>
-          } @else if (myBookings.length === 0) {
-            <p class="bookings-empty">No bookings yet. Browse Available Services below to make your first booking.</p>
-          } @else {
-            <div class="bookings-list">
-              @for (booking of myBookings; track booking.bookingId) {
-                <article class="booking-card">
-                  <div class="booking-card-main">
-                    <h3 class="booking-service">{{ booking.serviceName }}</h3>
-                    <p class="booking-meta">
-                      {{ booking.startDate }}
-                      @if (booking.endDate) {
-                        <span> → {{ booking.endDate }}</span>
-                      }
-                      · Qty {{ booking.quantity }}
-                    </p>
-                    @if (booking.specialRequests) {
-                      <p class="booking-note">{{ booking.specialRequests }}</p>
-                    }
-                    @if (booking.cancellationReason) {
-                      <p class="booking-cancel-reason">Reason: {{ booking.cancellationReason }}</p>
-                    }
-                  </div>
-                  <div class="booking-card-side">
-                    <span class="status-badge" [class]="bookingStatusClass(booking.bookingStatus)">
-                      {{ bookingStatusLabel(booking.bookingStatus) }}
-                    </span>
-                    <div class="booking-amount">৳{{ booking.grossAmount | number:'1.0-0' }}</div>
-                    @if (canCancelBooking(booking.bookingStatus)) {
-                      <button
-                        type="button"
-                        class="booking-cancel-btn"
-                        [disabled]="bookingCancelLoading === booking.bookingId"
-                        (click)="cancelMyBooking(booking)">
-                        {{ bookingCancelLoading === booking.bookingId ? 'Cancelling…' : 'Cancel' }}
-                      </button>
-                    }
-                  </div>
-                </article>
-              }
-            </div>
-          }
-        </div>
-      }
-    </section>
-
     <!-- AVAILABLE SERVICES (real vendor listings, incl. vendor-uploaded images) -->
     <div class="section-header">
       <div>
         <h2 class="section-title">Available Services</h2>
-        <p class="section-sub">Listings published directly by our vendors</p>
+        @if (selectedCategory) {
+          <p class="section-sub">Showing {{ selectedCategoryLabel }} — pick another category below, or view all</p>
+        } @else {
+          <p class="section-sub">Browse by category — listings published directly by our vendors</p>
+        }
       </div>
+      @if (selectedCategory) {
+        <button type="button" class="category-back-btn" (click)="clearCategoryFilter()">← All Categories</button>
+      }
     </div>
 
-    <section id="services" class="dest-grid">
+    <section id="services">
       @if (catalogLoading) {
-        <p class="bookings-loading">Loading services…</p>
+        <div class="dest-grid">
+          <app-loading-state variant="shimmer-cards" [count]="3"></app-loading-state>
+        </div>
       } @else if (catalogServices.length === 0) {
         <p class="bookings-empty">No services published yet. Check back soon.</p>
       } @else {
-        @for (service of catalogServices; track service.serviceId) {
-          <div class="dest-card service-catalog-card">
-            <div class="dest-image-wrap">
-              @if (service.imageUrl) {
-                <img [src]="resolveImageUrl(service.imageUrl)" [alt]="service.serviceName" class="dest-image"/>
-              } @else {
-                <div class="dest-image-placeholder">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2"/>
-                    <circle cx="8.5" cy="8.5" r="1.5"/>
-                    <path d="M21 15l-5-5L5 21"/>
-                  </svg>
-                </div>
-              }
-            </div>
-            <div class="dest-body">
-              <div class="dest-top">
-                <h3 class="dest-name">{{ service.serviceName }}</h3>
-                <p class="dest-desc">{{ service.vendorBusinessName }} · {{ service.currencyCode }} {{ service.basePrice | number:'1.2-2' }} / {{ service.pricingUnit }}</p>
-                @if (service.packageItems && service.packageItems.length > 0) {
-                  <span class="package-badge">📦 {{ service.packageItems.length }}-stop package</span>
-                }
-              </div>
-              <button class="dest-btn" (click)="openBookingModal(service)">
+        <div class="category-grid">
+          @for (category of serviceCategories; track category.type) {
+            <button type="button"
+              class="category-tile category-{{ category.color }}"
+              [class.category-tile-active]="selectedCategory === category.type"
+              (click)="selectCategory(category.type)">
+              <span class="category-tile-icon">{{ category.icon }}</span>
+              <span class="category-tile-body">
+                <span class="category-tile-label">{{ category.label }}</span>
+                <span class="category-tile-count">{{ category.count }} listing{{ category.count === 1 ? '' : 's' }}</span>
+              </span>
+              <span class="category-tile-glow"></span>
+            </button>
+          }
+        </div>
+      }
+
+      @if (selectedCategory) {
+        <div class="dest-grid">
+          @for (service of filteredCatalogServices; track service.serviceId) {
+            <app-card
+              [imageUrl]="service.imageUrl ? resolveImageUrl(service.imageUrl) : null"
+              [imageAlt]="service.serviceName"
+              [title]="service.serviceName"
+              [subtitle]="serviceSubtitle(service)"
+              [badgeText]="servicePackageBadge(service)"
+              (viewDetails)="openServiceDetails(service)">
+              <button card-primary type="button" class="dest-btn" (click)="openBookingModal(service)">
                 Book Now
               </button>
-            </div>
-          </div>
-        }
+            </app-card>
+          }
+        </div>
       }
     </section>
 
@@ -297,7 +149,7 @@
       </div>
 
       @if (bannersLoading) {
-        <p class="bookings-loading">Loading offers…</p>
+        <app-loading-state variant="spinner" label="Loading offers…"></app-loading-state>
       } @else if (banners.length === 0) {
         <p class="bookings-empty">No active offers right now. Check back soon.</p>
       } @else {
@@ -322,49 +174,34 @@
       }
     </section>
 
-    <!-- SECTION HEADER -->
+    <!-- TRAVEL PACKAGES -->
     <div class="section-header">
       <div>
-        <h2 class="section-title">Destinations & Experiences</h2>
-        <p class="section-sub">Explore destinations available on the platform</p>
+        <h2 class="section-title">Travel Packages</h2>
+        <p class="section-sub">Curated bundles combining transport, hotel stays, and more</p>
       </div>
     </div>
 
-<!-- DESTINATIONS GRID -->
-<section id="destinations" class="dest-grid">
-  @if (destinationsLoading) {
-    <p class="bookings-loading">Loading destinations…</p>
-  } @else if (destinations.length === 0) {
-    <p class="bookings-empty">No destinations available yet. Check back soon.</p>
-  } @else {
-    @for (dest of destinations; track dest.id) {
-      <div class="dest-card">
-        <div class="dest-body">
-
-          <div class="dest-top">
-            <h3 class="dest-name">{{ dest.name }}</h3>
-            <p class="dest-loc"> {{ dest.region }}</p>
-            @if (dest.description) {
-              <p class="dest-desc">{{ dest.description }}</p>
-            }
-          </div>
-
-          <button class="dest-btn" [disabled]="actionLoading[dest.name]" (click)="onDestinationAction(dest)">
-            {{ actionLoading[dest.name] ? 'Submitting...' : 'Discover' }}
-          </button>
-
-          @if (actionMessage[dest.name]) {
-            <p class="dest-desc">{{ actionMessage[dest.name] }}</p>
-          }
-          @if (actionError[dest.name]) {
-            <p class="dest-desc">{{ actionError[dest.name] }}</p>
-          }
-
-        </div>
-      </div>
-    }
-  }
-</section>
+    <section id="packages" class="dest-grid">
+      @if (packagesLoading) {
+        <app-loading-state variant="shimmer-cards" [count]="3"></app-loading-state>
+      } @else if (packages.length === 0) {
+        <p class="bookings-empty">No packages published yet. Check back soon.</p>
+      } @else {
+        @for (pkg of packages; track pkg.packageId) {
+          <app-card
+            [imageUrl]="pkg.imageUrl ? resolveImageUrl(pkg.imageUrl) : null"
+            [imageAlt]="pkg.name"
+            [title]="pkg.name"
+            [subtitle]="packageSubtitle(pkg)"
+            (viewDetails)="openPackageDetails(pkg)">
+            <button card-primary type="button" class="dest-btn" (click)="openPackageBookingModal(pkg)">
+              Book Package
+            </button>
+          </app-card>
+        }
+      }
+    </section>
 
   </main>
 </div>
@@ -476,269 +313,200 @@
   }
 </button>
 
-<!-- Book Service Modal (choose quantity, then confirm) -->
+<!-- Book Service Modal (extracted shared component — choose date, quantity, pay) -->
 @if (bookingDraft) {
-  <div class="booking-confirm-backdrop" role="presentation" (click)="closeBookingModal()">
-    <div
-      class="booking-confirm-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="bookModalTitle"
-      (click)="$event.stopPropagation()">
-      <div class="booking-confirm-header">
-        <div class="booking-confirm-icon book-modal-icon">🛒</div>
-        <div>
-          <h2 id="bookModalTitle" class="booking-confirm-title">Book This Service</h2>
-          <p class="booking-confirm-sub">{{ bookingDraft.serviceName }}</p>
-        </div>
-        <button type="button" class="modal-close" aria-label="Close" [disabled]="bookingDraftSubmitting" (click)="closeBookingModal()">✕</button>
-      </div>
-
-      <div class="booking-confirm-body">
-        <div class="booking-confirm-row booking-confirm-row-top">
-          <div>
-            <h3 class="booking-confirm-service">{{ bookingDraft.serviceName }}</h3>
-            <p class="booking-confirm-vendor">{{ bookingDraft.vendorBusinessName }}</p>
-          </div>
-          <span class="book-modal-unit-price">{{ bookingDraft.currencyCode }} {{ bookingDraft.basePrice | number:'1.2-2' }} <small>/ {{ bookingDraft.pricingUnit }}</small></span>
-        </div>
-
-        @if (bookingDraft.packageItems && bookingDraft.packageItems.length > 0) {
-          <div class="book-modal-field">
-            <label class="book-modal-label">What's Included</label>
-            <ul class="package-itinerary-list">
-              @for (item of bookingDraft.packageItems; track $index) {
-                <li class="package-itinerary-item">
-                  <span class="package-itinerary-icon">{{ packageItemIcon(item.itemType) }}</span>
-                  <span class="package-itinerary-text">
-                    @if (item.dayNumber) { <strong>Day {{ item.dayNumber }}:</strong> }
-                    {{ item.title }}
-                    @if (item.description) { <span class="package-itinerary-desc"> — {{ item.description }}</span> }
-                  </span>
-                </li>
-              }
-            </ul>
-          </div>
-        }
-
-        <div class="book-modal-field">
-          @if (bookingDraftIsHotel) {
-            <label class="book-modal-label">Check-in &amp; Check-out</label>
-            <div class="book-modal-date-row">
-              <input
-                type="date"
-                class="form-input"
-                aria-label="Check-in date"
-                [min]="minBookingDate"
-                [(ngModel)]="bookingDraftStartDate"
-                (ngModelChange)="onBookingDateChange()"
-                [disabled]="bookingDraftSubmitting"/>
-              <span class="book-modal-date-sep">→</span>
-              <input
-                type="date"
-                class="form-input"
-                aria-label="Check-out date"
-                [min]="bookingDraftStartDate || minBookingDate"
-                [(ngModel)]="bookingDraftEndDate"
-                (ngModelChange)="onBookingDateChange()"
-                [disabled]="bookingDraftSubmitting"/>
-            </div>
-          } @else {
-            <label class="book-modal-label" for="bookDate">Booking Date</label>
-            <input
-              id="bookDate"
-              type="date"
-              class="form-input"
-              [min]="minBookingDate"
-              [(ngModel)]="bookingDraftStartDate"
-              (ngModelChange)="onBookingDateChange()"
-              [disabled]="bookingDraftSubmitting"/>
-          }
-          @if (bookingDraftAvailabilityLoading) {
-            <p class="form-hint">Checking availability…</p>
-          } @else if (bookingDraftAvailabilityError) {
-            <p class="book-modal-availability book-modal-availability-error">{{ bookingDraftAvailabilityError }}</p>
-          } @else if (bookingDraftAvailability !== null) {
-            @if (bookingDraftAvailability > 0) {
-              <p class="book-modal-availability book-modal-availability-ok">✓ {{ bookingDraftAvailability }} {{ bookingDraftUnitLabel.toLowerCase() }} available for this date</p>
-            } @else {
-              <p class="book-modal-availability book-modal-availability-error">Fully booked for this date — try another date.</p>
-            }
-          }
-        </div>
-
-        <div class="book-modal-field">
-          <label class="book-modal-label" for="bookQuantity">Quantity ({{ bookingDraftUnitLabel }})</label>
-          <div class="qty-stepper">
-            <button type="button" class="qty-btn" [disabled]="bookingDraftQuantity <= 1 || bookingDraftSubmitting" (click)="decrementBookingQuantity()" aria-label="Decrease quantity">−</button>
-            <input
-              id="bookQuantity"
-              class="qty-input"
-              type="number"
-              min="1"
-              [max]="bookingDraftMaxQuantity"
-              [(ngModel)]="bookingDraftQuantity"
-              (ngModelChange)="setBookingDraftQuantity($event)"
-              [disabled]="bookingDraftSubmitting"/>
-            <button type="button" class="qty-btn" [disabled]="bookingDraftQuantity >= bookingDraftMaxQuantity || bookingDraftSubmitting" (click)="incrementBookingQuantity()" aria-label="Increase quantity">+</button>
-          </div>
-          <p class="form-hint">Up to {{ bookingDraftMaxQuantity }} {{ bookingDraftUnitLabel.toLowerCase() }} per booking. Book more than one to reserve multiple at once.</p>
-        </div>
-
-        <div class="book-modal-field">
-          <label class="book-modal-label" for="bookNotes">Special requests <span class="book-modal-optional">(optional)</span></label>
-          <textarea
-            id="bookNotes"
-            class="form-textarea book-modal-notes"
-            rows="2"
-            maxlength="1000"
-            placeholder="e.g. window seat, early check-in, dietary needs..."
-            [(ngModel)]="bookingDraftNotes"
-            [disabled]="bookingDraftSubmitting"></textarea>
-        </div>
-
-        <div class="book-modal-field">
-          <label class="book-modal-label">Pay with</label>
-          <div class="payment-method-grid">
-            @for (option of paymentOptions; track option.value) {
-              <button
-                type="button"
-                class="payment-method-pill"
-                [class.payment-method-pill-active]="bookingDraftPaymentMethod === option.value"
-                [disabled]="bookingDraftSubmitting"
-                (click)="selectPaymentMethod(option.value)">
-                <span class="payment-method-icon">{{ option.icon }}</span>
-                <span>{{ option.label }}</span>
-              </button>
-            }
-          </div>
-          @if (selectedPaymentOption) {
-            <input
-              class="form-input payment-method-reference"
-              [type]="selectedPaymentOption.referenceType"
-              [placeholder]="selectedPaymentOption.referencePlaceholder"
-              [attr.aria-label]="selectedPaymentOption.referenceLabel"
-              [(ngModel)]="bookingDraftPaymentReference"
-              [disabled]="bookingDraftSubmitting"/>
-            <p class="form-hint">Enter your {{ selectedPaymentOption.referenceLabel.toLowerCase() }} to simulate checkout — no real charge is made.</p>
-          }
-        </div>
-
-        <div class="booking-confirm-amounts">
-          <div class="booking-confirm-amount-row">
-            <span>{{ bookingDraft.currencyCode }} {{ bookingDraft.basePrice | number:'1.2-2' }} × {{ bookingDraftQuantity }}</span>
-            <span>{{ bookingDraft.currencyCode }} {{ bookingDraftTotal | number:'1.2-2' }}</span>
-          </div>
-          <div class="booking-confirm-amount-row booking-confirm-amount-total">
-            <span>Total</span>
-            <span>{{ bookingDraft.currencyCode }} {{ bookingDraftTotal | number:'1.2-2' }}</span>
-          </div>
-        </div>
-
-        @if (bookingDraftError) {
-          <p class="book-modal-error">{{ bookingDraftError }}</p>
-        }
-      </div>
-
-      <div class="booking-confirm-footer">
-        <button type="button" class="dest-btn booking-confirm-secondary" [disabled]="bookingDraftSubmitting" (click)="closeBookingModal()">Cancel</button>
-        <button type="button" class="dest-btn" [disabled]="!canConfirmBooking" (click)="confirmBooking()">
-          {{ bookingDraftSubmitting ? 'Booking...' : 'Confirm Booking' }}
-        </button>
-      </div>
-    </div>
-  </div>
+  <app-service-booking-modal
+    [service]="bookingDraft"
+    (closed)="closeBookingModal()"
+    (booked)="onServiceBooked($event)">
+  </app-service-booking-modal>
 }
 
-<!-- Booking Confirmation Popup -->
-@if (bookingConfirmation) {
-  <div class="booking-confirm-backdrop" role="presentation" (click)="closeBookingConfirmation()">
-    <div
-      class="booking-confirm-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="bookingConfirmTitle"
-      (click)="$event.stopPropagation()">
-      <div class="booking-confirm-header">
-        <div class="booking-confirm-icon">✓</div>
-        <div>
-          <h2 id="bookingConfirmTitle" class="booking-confirm-title">Booking Confirmed</h2>
-          <p class="booking-confirm-sub">Your booking request has been placed successfully.</p>
-        </div>
-        <button type="button" class="modal-close" aria-label="Close" (click)="closeBookingConfirmation()">✕</button>
+<!-- Pay Now Modal (opened right after a booking/package is reserved, unpaid) -->
+@if (payNowDraft) {
+  <app-pay-now-modal
+    [bookingType]="payNowDraft.bookingType"
+    [bookingId]="payNowDraft.bookingId"
+    [bookingReference]="payNowDraft.bookingReference"
+    [merchantName]="payNowDraft.merchantName"
+    [amount]="payNowDraft.amount"
+    [currencyCode]="payNowDraft.currencyCode"
+    (closed)="closePayNowModal()">
+  </app-pay-now-modal>
+}
+
+<!-- Service Details Modal -->
+@if (detailService) {
+  <app-modal
+    [open]="true"
+    [titleText]="detailService.serviceName"
+    [subtitleText]="detailService.vendorBusinessName"
+    icon="🔎"
+    size="lg"
+    (closed)="closeServiceDetails()">
+
+    @if (detailService.imageUrl) {
+      <img [src]="resolveImageUrl(detailService.imageUrl)" [alt]="detailService.serviceName" class="detail-modal-image"/>
+    }
+
+    <p class="booking-confirm-vendor">{{ detailService.description }}</p>
+
+    <dl class="booking-confirm-details">
+      <div class="booking-confirm-detail">
+        <dt>Type</dt>
+        <dd>{{ detailService.serviceType }}</dd>
       </div>
-
-      <div class="booking-confirm-body">
-        <div class="booking-confirm-row booking-confirm-row-top">
-          <div>
-            <h3 class="booking-confirm-service">{{ bookingConfirmation.serviceName }}</h3>
-            @if (bookingConfirmation.vendorBusinessName) {
-              <p class="booking-confirm-vendor">{{ bookingConfirmation.vendorBusinessName }}</p>
-            }
-          </div>
-          <span class="status-badge" [class]="bookingStatusClass(bookingConfirmation.bookingStatus)">
-            {{ bookingStatusLabel(bookingConfirmation.bookingStatus) }}
-          </span>
+      <div class="booking-confirm-detail">
+        <dt>Price</dt>
+        <dd>{{ detailService.currencyCode }} {{ detailService.basePrice | number:'1.2-2' }} / {{ detailService.pricingUnit }}</dd>
+      </div>
+      @if (detailService.locationAddress) {
+        <div class="booking-confirm-detail">
+          <dt>Location</dt>
+          <dd>{{ detailService.locationAddress }}</dd>
         </div>
+      }
+      @if (detailService.maxCapacity) {
+        <div class="booking-confirm-detail">
+          <dt>Max Capacity</dt>
+          <dd>{{ detailService.maxCapacity }}</dd>
+        </div>
+      }
+      @if (detailService.averageRating) {
+        <div class="booking-confirm-detail">
+          <dt>Rating</dt>
+          <dd>⭐ {{ detailService.averageRating | number:'1.1-1' }}</dd>
+        </div>
+      }
+      @if (detailService.totalBookings !== undefined) {
+        <div class="booking-confirm-detail">
+          <dt>Bookings</dt>
+          <dd>{{ detailService.totalBookings }}</dd>
+        </div>
+      }
+    </dl>
 
-        <dl class="booking-confirm-details">
-          <div class="booking-confirm-detail">
-            <dt>Booking ID</dt>
-            <dd>{{ bookingConfirmation.bookingId }}</dd>
-          </div>
-          <div class="booking-confirm-detail">
-            <dt>Start Date</dt>
-            <dd>
-              {{ bookingConfirmation.startDate }}
-              @if (bookingConfirmation.endDate) {
-                <span> → {{ bookingConfirmation.endDate }}</span>
-              }
-            </dd>
-          </div>
-          <div class="booking-confirm-detail">
-            <dt>Quantity</dt>
-            <dd>{{ bookingConfirmation.quantity }}</dd>
-          </div>
-          <div class="booking-confirm-detail">
-            <dt>Payment Status</dt>
-            <dd>{{ bookingConfirmation.paymentStatus }}</dd>
-          </div>
-          @if (bookingConfirmation.paymentMethod) {
-            <div class="booking-confirm-detail">
-              <dt>Paid With</dt>
-              <dd>{{ paymentMethodDisplay(bookingConfirmation.paymentMethod) }} @if (bookingConfirmation.paymentReference) {<span> · {{ bookingConfirmation.paymentReference }}</span>}</dd>
-            </div>
+    @if (detailService.packageItems && detailService.packageItems.length > 0) {
+      <div class="book-modal-field">
+        <label class="book-modal-label">What's Included</label>
+        <ul class="package-itinerary-list">
+          @for (item of detailService.packageItems; track $index) {
+            <li class="package-itinerary-item">
+              <span class="package-itinerary-icon">{{ packageItemIcon(item.itemType) }}</span>
+              <span class="package-itinerary-text">
+                @if (item.dayNumber) { <strong>Day {{ item.dayNumber }}:</strong> }
+                {{ item.title }}
+                @if (item.description) { <span class="package-itinerary-desc"> — {{ item.description }}</span> }
+              </span>
+            </li>
           }
-          @if (bookingConfirmation.specialRequests) {
-            <div class="booking-confirm-detail booking-confirm-detail-wide">
-              <dt>Special Requests</dt>
-              <dd>{{ bookingConfirmation.specialRequests }}</dd>
-            </div>
-          }
-        </dl>
-
-        <div class="booking-confirm-amounts">
-          <div class="booking-confirm-amount-row">
-            <span>Gross Amount</span>
-            <span>{{ bookingConfirmation.currencyCode }} {{ bookingConfirmation.grossAmount | number:'1.2-2' }}</span>
-          </div>
-          <div class="booking-confirm-amount-row">
-            <span>Commission</span>
-            <span>- {{ bookingConfirmation.currencyCode }} {{ bookingConfirmation.commissionAmount | number:'1.2-2' }}</span>
-          </div>
-          <div class="booking-confirm-amount-row booking-confirm-amount-total">
-            <span>Net to Vendor</span>
-            <span>{{ bookingConfirmation.currencyCode }} {{ bookingConfirmation.netAmount | number:'1.2-2' }}</span>
-          </div>
-        </div>
+        </ul>
       </div>
+    }
 
-      <div class="booking-confirm-footer">
-        <button type="button" class="dest-btn booking-confirm-secondary" (click)="closeBookingConfirmation()">Close</button>
-        <button type="button" class="dest-btn" (click)="viewMyBookingsFromConfirmation()">View My Bookings</button>
-      </div>
-    </div>
-  </div>
+    <button modal-footer type="button" class="dest-btn booking-confirm-secondary" (click)="closeServiceDetails()">Close</button>
+    <button modal-footer type="button" class="dest-btn" (click)="bookFromDetails(detailService)">Book Now</button>
+  </app-modal>
 }
 
 
+<!-- Package Details Modal -->
+@if (detailPackage) {
+  <app-modal
+    [open]="true"
+    [titleText]="detailPackage.name"
+    [subtitleText]="packageSubtitle(detailPackage)"
+    icon="🧳"
+    size="lg"
+    (closed)="closePackageDetails()">
+
+    @if (detailPackage.imageUrl) {
+      <img [src]="resolveImageUrl(detailPackage.imageUrl)" [alt]="detailPackage.name" class="detail-modal-image"/>
+    }
+
+    <p class="booking-confirm-vendor">{{ detailPackage.description }}</p>
+
+    <div class="book-modal-field">
+      <label class="book-modal-label">What's Included</label>
+      <ul class="package-itinerary-list">
+        @for (component of detailPackage.components; track $index) {
+          <li class="package-itinerary-item">
+            <span class="package-itinerary-icon">📦</span>
+            <span class="package-itinerary-text">
+              @if (component.dayNumber) { <strong>Day {{ component.dayNumber }}:</strong> }
+              {{ component.serviceName }}
+              @if (component.notes) { <span class="package-itinerary-desc"> — {{ component.notes }}</span> }
+            </span>
+          </li>
+        }
+      </ul>
+    </div>
+
+    @if (detailPackage.extras && detailPackage.extras.length > 0) {
+      <div class="book-modal-field">
+        <label class="book-modal-label">Extras</label>
+        <ul class="package-itinerary-list">
+          @for (extra of detailPackage.extras; track $index) {
+            <li class="package-itinerary-item">
+              <span class="package-itinerary-icon">{{ extra.included ? '✓' : '➕' }}</span>
+              <span class="package-itinerary-text">
+                {{ extra.title }}
+                @if (!extra.included && extra.price) { <span class="package-itinerary-desc"> — +{{ detailPackage.currencyCode }} {{ extra.price }}</span> }
+                @if (extra.description) { <span class="package-itinerary-desc"> — {{ extra.description }}</span> }
+              </span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <div class="booking-confirm-amounts">
+      <div class="booking-confirm-amount-row booking-confirm-amount-total">
+        <span>Total Price</span>
+        <span>{{ detailPackage.currencyCode }} {{ detailPackage.totalPrice | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <button modal-footer type="button" class="dest-btn booking-confirm-secondary" (click)="closePackageDetails()">Close</button>
+    <button modal-footer type="button" class="dest-btn" (click)="bookPackageFromDetails(detailPackage)">Book Package</button>
+  </app-modal>
+}
+
+<!-- Package Booking Modal -->
+@if (packageBookingDraft) {
+  <app-modal
+    [open]="true"
+    titleText="Book This Package"
+    [subtitleText]="packageBookingDraft.name"
+    icon="🛒"
+    [closeDisabled]="packageBookingDraftSubmitting"
+    (closed)="closePackageBookingModal()">
+
+    <div class="booking-confirm-row booking-confirm-row-top">
+      <div>
+        <h3 class="booking-confirm-service">{{ packageBookingDraft.name }}</h3>
+      </div>
+      <span class="book-modal-unit-price">{{ packageBookingDraft.currencyCode }} {{ packageBookingDraft.totalPrice | number:'1.2-2' }}</span>
+    </div>
+
+    <div class="book-modal-field">
+      <label class="book-modal-label" for="pkgBookDate">Start Date</label>
+      <input
+        id="pkgBookDate"
+        type="date"
+        class="form-input"
+        [min]="minBookingDate"
+        [(ngModel)]="packageBookingDraftStartDate"
+        [disabled]="packageBookingDraftSubmitting"/>
+    </div>
+
+    @if (packageBookingDraftError) {
+      <p class="book-modal-error">{{ packageBookingDraftError }}</p>
+    }
+
+    <button modal-footer type="button" class="dest-btn booking-confirm-secondary" [disabled]="packageBookingDraftSubmitting" (click)="closePackageBookingModal()">Cancel</button>
+    <button modal-footer type="button" class="dest-btn" [disabled]="!canConfirmPackageBooking" (click)="confirmPackageBooking()">
+      {{ packageBookingDraftSubmitting ? 'Reserving...' : 'Reserve & Continue to Payment' }}
+    </button>
+  </app-modal>
+}

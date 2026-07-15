@@ -1,0 +1,87 @@
+<div class="min-h-screen flex items-center justify-center bg-[var(--bg-root)] px-6 py-12">
+  <form class="w-full max-w-md" [formGroup]="otpGroup" (ngSubmit)="onSubmit()">
+
+    <div class="flex items-center gap-2.5 mb-8 justify-center">
+      <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md">
+        <svg class="size-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.519 60.519 0 003.478 2.405z" />
+        </svg>
+      </div>
+      <span class="text-lg font-bold tracking-tight text-[var(--text-primary)]">SMTS</span>
+    </div>
+
+    <h2 class="text-3xl font-bold text-[var(--text-primary)] mb-2 text-center" style="font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);">
+      Verify your email
+    </h2>
+    <p class="text-[var(--text-sec)] mb-8 text-center">
+      We sent a 6-digit code to
+      @if (email) { <span class="font-medium text-[var(--text-primary)]">{{ email }}</span> } @else { your email }.
+    </p>
+
+    <div class="mb-6">
+      <label class="form-label" for="otp-input">Verification code</label>
+      <input
+        id="otp-input"
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        autocomplete="one-time-code"
+        placeholder="enter 6-digit code"
+        class="form-input text-center tracking-[0.5em] text-lg"
+        formControlName="otp"
+      >
+      @if (otpGroup.get('otp')?.invalid && (otpGroup.get('otp')?.dirty || otpGroup.get('otp')?.touched)) {
+        <div class="form-error">
+          @if (otpGroup.get('otp')?.errors?.['required']) { <span>Verification code is required.</span> }
+          @if (otpGroup.get('otp')?.errors?.['pattern']) { <span>Enter the 6-digit code.</span> }
+        </div>
+      }
+    </div>
+
+    <button type="submit" [disabled]="isSubmitting()" class="btn btn-primary w-full py-3">
+      @if (isSubmitting()) {
+        <svg class="size-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <span>Verifying…</span>
+      } @else {
+        <span>Verify</span>
+      }
+    </button>
+
+    @if (errorMessage()) {
+      <div class="mt-5 p-4 rounded-xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 text-sm">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    @if (infoMessage()) {
+      <div class="mt-5 p-4 rounded-xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-sm">
+        {{ infoMessage() }}
+      </div>
+    }
+
+    <p class="text-center mt-8 text-sm text-[var(--text-sec)]">
+      Didn't get a code?
+      @if (cooldownSeconds() > 0) {
+        <span class="font-semibold text-[var(--text-muted)]">Resend in {{ cooldownSeconds() }}s</span>
+      } @else {
+        <button
+          type="button"
+          (click)="onResend()"
+          [disabled]="isResending()"
+          class="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 disabled:opacity-50"
+        >
+          @if (isResending()) { Sending… } @else { Resend code }
+        </button>
+      }
+    </p>
+
+    <p class="text-center mt-4 text-sm text-[var(--text-sec)]">
+      <a routerLink="/login" class="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">
+        Back to sign in
+      </a>
+    </p>
+  </form>
+</div>

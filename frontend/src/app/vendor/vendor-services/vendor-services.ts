@@ -4,19 +4,37 @@ import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } fr
 import { Router } from '@angular/router';
 import { VendorService } from '../../services/vendor.service';
 import { PackageItem, VendorServiceListing } from '../../models/vendor.model';
-import { ServiceStatus, ServiceType, PricingUnit, BookingMode, PackageItemType } from '../../enums/vendor.enums';
+import { ServiceStatus, ServiceType, VendorType, PricingUnit, BookingMode, PackageItemType } from '../../enums/vendor.enums';
 import { environment } from '../../../environments/environment';
+import { DestinationService } from '../../services/destination.service';
+import { Destination } from '../../models/destination.model';
+import { Card } from '../../shared/card/card';
+import { Modal } from '../../shared/modal/modal';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
+
+const VENDOR_TYPE_TO_SERVICE_TYPE: Record<VendorType, ServiceType> = {
+  [VendorType.HOTEL]: ServiceType.HOTEL_ROOM,
+  [VendorType.TOUR_GUIDE]: ServiceType.TOUR_PACKAGE,
+  [VendorType.TRANSPORT]: ServiceType.TRANSPORT_ROUTE,
+  [VendorType.TOURIST_SPOT]: ServiceType.TOURIST_SPOT,
+  [VendorType.TRADITIONAL_FOOD]: ServiceType.TRADITIONAL_FOOD,
+  [VendorType.TRADITIONAL_ITEM]: ServiceType.TRADITIONAL_ITEM,
+  [VendorType.MARKET]: ServiceType.MARKET,
+  [VendorType.DESTINATION]: ServiceType.DESTINATION,
+  [VendorType.TRAVEL_PACKAGE]: ServiceType.TRAVEL_PACKAGE,
+};
 
 @Component({
   selector: 'app-vendor-services',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, Card, Modal],
   templateUrl: './vendor-services.html',
   styleUrls: ['../shared-vendor.css', './vendor-services.css']
 })
 export class VendorServices implements OnInit {
   services: VendorServiceListing[] = [];
   loading = false;   // false on SSR; set true in browser ngOnInit to avoid hydration mismatch
+  vendorSuspended = false;
   showForm = false;
   editingId: string | null = null;
   submitting = false;
@@ -27,21 +45,29 @@ export class VendorServices implements OnInit {
   listError = '';
 
   private static readonly MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-  private static readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  private static readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-  serviceTypes = Object.values(ServiceType);
+  vendorType: VendorType | null = null;
   pricingUnits = Object.values(PricingUnit);
   bookingModes = Object.values(BookingMode);
   serviceStatuses = Object.values(ServiceStatus);
   packageItemTypes = Object.values(PackageItemType);
+  destinations: Destination[] = [];
+  detailServiceItem: VendorServiceListing | null = null;
+
+  get allowedServiceType(): ServiceType | null {
+    return this.vendorType ? VENDOR_TYPE_TO_SERVICE_TYPE[this.vendorType] : null;
+  }
 
   form!: FormGroup;
 
   constructor(
     private fb: FormBuilder,
     private vendorService: VendorService,
+    private destinationService: DestinationService,
     private router: Router,
     private cdr: ChangeDetectorRef,
+    private confirmDialog: ConfirmDialogService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
@@ -62,6 +88,25 @@ export class VendorServices implements OnInit {
     // Skip authenticated API calls during SSR to avoid NG0100 during hydration
     if (!isPlatformBrowser(this.platformId)) return;
     this.loadServices();
+    this.vendorService.getProfile().subscribe({
+      next: (v) => {
+        this.vendorType = v.vendorType;
+        this.vendorSuspended = v.status === 'SUSPENDED';
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        // Non-critical — backend still enforces the suspension block server-side
+      }
+    });
+    this.destinationService.getAll().subscribe({
+      next: (destinations) => {
+        this.destinations = destinations;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        // Non-critical — destination stays optional if this fails to load
+      }
+    });
   }
 
   buildForm(): void {
@@ -77,6 +122,7 @@ export class VendorServices implements OnInit {
       confirmationWindow: [24],
       status: ['DRAFT'],
       locationAddress: [''],
+      destinationId: [null],
       imageUrl: [''],
       cancellationPolicy: [''],
       tags: [''],
@@ -133,6 +179,9 @@ export class VendorServices implements OnInit {
   openCreate(): void {
     this.editingId = null;
     this.form.reset({ currencyCode: 'USD', bookingMode: 'MANUAL', confirmationWindow: 24, status: 'DRAFT' });
+    if (this.allowedServiceType) {
+      this.form.patchValue({ serviceType: this.allowedServiceType });
+    }
     this.packageItemsArray.clear();
     this.imageError = '';
     this.showForm = true;
@@ -141,6 +190,9 @@ export class VendorServices implements OnInit {
   openEdit(s: VendorServiceListing): void {
     this.editingId = s.serviceId || null;
     this.form.patchValue(s);
+    if (this.allowedServiceType) {
+      this.form.patchValue({ serviceType: this.allowedServiceType });
+    }
     this.packageItemsArray.clear();
     (s.packageItems ?? []).forEach(item => this.packageItemsArray.push(this.newPackageItemGroup(item)));
     this.imageError = '';
@@ -162,7 +214,7 @@ export class VendorServices implements OnInit {
     this.imageError = '';
 
     if (!VendorServices.ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      this.imageError = 'Unsupported image type. Use JPEG, PNG, WEBP or GIF.';
+      this.imageError = 'Unsupported image type. Use JPEG, PNG, or WEBP.';
       input.value = '';
       return;
     }
@@ -227,8 +279,15 @@ export class VendorServices implements OnInit {
     });
   }
 
-  delete(id: string): void {
-    if (!confirm('Delete this service? This cannot be undone.')) return;
+  async delete(id: string): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete this service?',
+      message: 'This cannot be undone. Any published listing will be removed from the catalog immediately.',
+      confirmLabel: 'Delete Service',
+      danger: true
+    });
+    if (!ok) return;
+
     this.listError = '';
     this.vendorService.deleteService(id).subscribe({
       next: () => this.loadServices(),
@@ -264,6 +323,40 @@ export class VendorServices implements OnInit {
 
   trackByValue(index: number, value: string): string {
     return value;
+  }
+
+  trackByDestination(index: number, destination: Destination): number {
+    return destination.id ?? index;
+  }
+
+  serviceShortDesc(s: VendorServiceListing): string {
+    if (!s.description) return '';
+    return s.description.length > 100 ? `${s.description.slice(0, 100)}…` : s.description;
+  }
+
+  serviceMetaPills(s: VendorServiceListing): string[] {
+    const pills = [
+      `${s.currencyCode} ${s.basePrice.toFixed(2)}`,
+      s.pricingUnit,
+      `Max ${s.maxCapacity}`,
+    ];
+    if (s.packageItems && s.packageItems.length > 0) {
+      pills.push(`${s.packageItems.length} itinerary item${s.packageItems.length > 1 ? 's' : ''}`);
+    }
+    return pills;
+  }
+
+  openServiceDetail(s: VendorServiceListing): void {
+    this.detailServiceItem = s;
+  }
+
+  closeServiceDetail(): void {
+    this.detailServiceItem = null;
+  }
+
+  editFromDetail(s: VendorServiceListing): void {
+    this.detailServiceItem = null;
+    this.openEdit(s);
   }
 }
 

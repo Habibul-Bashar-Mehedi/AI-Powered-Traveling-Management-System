@@ -6,7 +6,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ══════════════════════════════════════════════════════════════
-   AIPTMS — canonical design tokens (single source of truth)
+   APTMS — canonical design tokens (single source of truth)
    Every component stylesheet should read colors/radii/shadows from
    these variables rather than hardcoding hex values, so the whole
    app stays visually consistent as pages evolve independently.

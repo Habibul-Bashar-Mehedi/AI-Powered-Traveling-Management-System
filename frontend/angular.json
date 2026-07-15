@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "AIPTMS": {
+    "SMTS": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -68,10 +68,10 @@
           },
           "configurations": {
             "production": {
-              "buildTarget": "AIPTMS:build:production"
+              "buildTarget": "SMTS:build:production"
             },
             "development": {
-              "buildTarget": "AIPTMS:build:development"
+              "buildTarget": "SMTS:build:development"
             }
           },
           "defaultConfiguration": "development"

@@ -1,0 +1,47 @@
+<div class="profile-page">
+  <header class="profile-header">
+    <div class="profile-avatar">{{ userInitials }}</div>
+    <div>
+      <h1 class="profile-name">{{ username }}</h1>
+      <p class="profile-sub">Manage your bookings, history, and spending</p>
+    </div>
+  </header>
+
+  <section class="profile-actions">
+    <button type="button" class="profile-action-card" (click)="openDrawer('bookings')">
+      <span class="profile-action-icon">📋</span>
+      <span class="profile-action-label">View Bookings</span>
+      <span class="profile-action-sub">Track pending, confirmed, and cancelled requests</span>
+    </button>
+
+    <button type="button" class="profile-action-card" (click)="openDrawer('history')">
+      <span class="profile-action-icon">🧾</span>
+      <span class="profile-action-label">View History</span>
+      <span class="profile-action-sub">All hotel and vendor-service bookings, past and upcoming</span>
+    </button>
+
+    <button type="button" class="profile-action-card" (click)="openDrawer('spending')">
+      <span class="profile-action-icon">💳</span>
+      <span class="profile-action-label">View Spending</span>
+      <span class="profile-action-sub">See totals per destination and drill into each trip</span>
+    </button>
+  </section>
+</div>
+
+<app-side-drawer title="My Bookings" [open]="activeDrawer === 'bookings'" (closed)="closeDrawer()">
+  @if (activeDrawer === 'bookings') {
+    <app-my-bookings />
+  }
+</app-side-drawer>
+
+<app-side-drawer title="Booking History" [open]="activeDrawer === 'history'" (closed)="closeDrawer()">
+  @if (activeDrawer === 'history') {
+    <app-booking-history />
+  }
+</app-side-drawer>
+
+<app-side-drawer title="My Spending" [open]="activeDrawer === 'spending'" (closed)="closeDrawer()">
+  @if (activeDrawer === 'spending') {
+    <app-my-spending />
+  }
+</app-side-drawer>

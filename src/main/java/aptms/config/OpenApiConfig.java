@@ -32,12 +32,12 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
             .info(new Info()
-                .title("AI-Powered Travel Management System - Authentication API")
+                .title("Smart Travel Management System - Authentication API")
                 .version("1.0.0")
                 .description("""
                     # JWT Authentication API
-                    
-                    This API provides stateless JWT-based authentication for the AI-Powered Travel Management System.
+
+                    This API provides stateless JWT-based authentication for the Smart Travel Management System.
                     
                     ## Features
                     - User registration with JWT token issuance
@@ -73,11 +73,11 @@ public class OpenApiConfig {
                     - Account lockout after 5 failed login attempts
                     """)
                 .contact(new Contact()
-                    .name("APTMS Development Team")
-                    .email("support@aptms.com"))
+                    .name("SMTS Development Team")
+                    .email("support@smts.com"))
                 .license(new License()
                     .name("Proprietary")
-                    .url("https://aptms.com/license")))
+                    .url("https://smts.com/license")))
             .servers(List.of(
                 new Server()
                     .url("http://localhost:" + serverPort)

@@ -1,0 +1,92 @@
+@if (bookingStatusSummary) {
+  <div class="booking-status-strip">
+    @for (status of bookingStatusOptions; track status) {
+      <button
+        type="button"
+        class="booking-status-chip"
+        [class.booking-status-chip-active]="bookingStatusFilter === status"
+        (click)="onStatusChipClick(status)">
+        <span class="booking-status-chip-label">{{ bookingStatusLabel(status) }}</span>
+        <span class="booking-status-chip-count">{{ statusCount(status) }}</span>
+      </button>
+    }
+  </div>
+}
+
+<div class="my-bookings-panel">
+  <div class="my-bookings-toolbar">
+    <label class="booking-filter-label" for="bookingStatusFilter">Filter by status</label>
+    <select
+      id="bookingStatusFilter"
+      class="booking-filter-select"
+      [(ngModel)]="bookingStatusFilter"
+      (change)="onBookingStatusFilterChange()">
+      <option value="">All statuses</option>
+      @for (status of bookingStatusOptions; track status) {
+        <option [value]="status">{{ bookingStatusLabel(status) }}</option>
+      }
+    </select>
+    <button class="booking-refresh-btn" type="button" (click)="refreshBookings()">
+      Refresh
+    </button>
+  </div>
+
+  @if (myBookingsLoading) {
+    <app-loading-state variant="shimmer-rows" [count]="4"></app-loading-state>
+  } @else if (myBookings.length === 0) {
+    <p class="bookings-empty">No bookings yet. Browse Available Services on the dashboard to make your first booking.</p>
+  } @else {
+    <div class="bookings-list">
+      @for (booking of myBookings; track booking.bookingId) {
+        <article class="booking-card">
+          <div class="booking-card-main">
+            <h3 class="booking-service">{{ booking.serviceName }}</h3>
+            <p class="booking-meta">
+              {{ booking.startDate }}
+              @if (booking.endDate) {
+                <span> → {{ booking.endDate }}</span>
+              }
+              · Qty {{ booking.quantity }}
+            </p>
+            @if (booking.specialRequests) {
+              <p class="booking-note">{{ booking.specialRequests }}</p>
+            }
+            @if (booking.deliveryAddress) {
+              <p class="booking-note">Deliver to: {{ booking.deliveryAddress }}</p>
+            }
+            @if (booking.contactPhone) {
+              <p class="booking-note">Contact: {{ booking.contactPhone }}</p>
+            }
+            @if (booking.cancellationReason) {
+              <p class="booking-cancel-reason">Reason: {{ booking.cancellationReason }}</p>
+            }
+          </div>
+          <div class="booking-card-side">
+            <span class="status-badge" [class]="bookingStatusClass(booking.bookingStatus)">
+              {{ bookingStatusLabel(booking.bookingStatus) }}
+            </span>
+            <div class="booking-amount">৳{{ booking.grossAmount | number:'1.0-0' }}</div>
+            @if (canDownloadReceipt(booking.bookingStatus)) {
+              <button
+                type="button"
+                class="booking-receipt-btn"
+                [disabled]="receiptDownloadLoading === booking.bookingId"
+                (click)="downloadReceipt(booking)">
+                {{ receiptDownloadLoading === booking.bookingId ? 'Preparing…' : 'Download Receipt' }}
+              </button>
+            }
+            @if (canCancelBooking(booking.bookingStatus)) {
+              <button
+                type="button"
+                class="booking-cancel-btn"
+                [disabled]="bookingCancelLoading === booking.bookingId"
+                (click)="cancelMyBooking(booking)">
+                {{ bookingCancelLoading === booking.bookingId ? 'Cancelling…' : 'Cancel' }}
+              </button>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>

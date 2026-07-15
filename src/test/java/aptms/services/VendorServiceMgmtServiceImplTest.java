@@ -2,6 +2,7 @@ package aptms.services;
 
 import aptms.entities.Vendor;
 import aptms.entities.VendorService;
+import aptms.repositories.DestinationRepository;
 import aptms.repositories.VendorBookingRepository;
 import aptms.repositories.VendorRepository;
 import aptms.repositories.VendorServiceRepository;
@@ -31,6 +32,8 @@ class VendorServiceMgmtServiceImplTest {
     private VendorRepository vendorRepository;
     @Mock
     private VendorBookingRepository bookingRepository;
+    @Mock
+    private DestinationRepository destinationRepository;
 
     @InjectMocks
     private VendorServiceMgmtServiceImpl vendorServiceMgmtService;

@@ -1,5 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AdminBannerService } from '../../services/admin-banner.service';
@@ -32,7 +32,7 @@ export class BannerManagement implements OnInit {
   deleteTargetId: string | null = null;
 
   private static readonly MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-  private static readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  private static readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
   ctaTargets = [
     { value: 'offers', label: 'Offers & Packages section' },
@@ -47,7 +47,8 @@ export class BannerManagement implements OnInit {
     private adminBannerService: AdminBannerService,
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.form = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(150)]],
@@ -64,6 +65,11 @@ export class BannerManagement implements OnInit {
   }
 
   ngOnInit(): void {
+    // Skip authenticated API calls during SSR — tokens aren't available server-side,
+    // and Angular's non-destructive hydration never re-runs ngOnInit on the client,
+    // so an SSR-time failure here would leave the page stuck until the component
+    // is destroyed and recreated by a later client-side navigation.
+    if (!isPlatformBrowser(this.platformId)) return;
     this.load();
   }
 
@@ -137,7 +143,7 @@ export class BannerManagement implements OnInit {
     this.imageError = '';
 
     if (!BannerManagement.ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      this.imageError = 'Unsupported image type. Use JPEG, PNG, WEBP or GIF.';
+      this.imageError = 'Unsupported image type. Use JPEG, PNG, or WEBP.';
       input.value = '';
       return;
     }

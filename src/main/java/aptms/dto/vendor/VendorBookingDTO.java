@@ -37,6 +37,8 @@ public class VendorBookingDTO {
     private PaymentMethod paymentMethod;
     private String paymentReference;
     private String specialRequests;
+    private String deliveryAddress;
+    private String contactPhone;
     private String cancellationReason;
     private CancelledBy cancelledBy;
     private Instant createdAt;

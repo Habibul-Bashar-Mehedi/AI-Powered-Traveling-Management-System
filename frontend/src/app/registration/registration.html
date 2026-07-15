@@ -1,4 +1,4 @@
-<div class="min-h-screen flex bg-gray-50 dark:bg-slate-900">
+<div class="min-h-screen flex bg-[var(--bg-root)]">
 
   <!-- Left branding panel -->
   <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800">
@@ -12,7 +12,7 @@
             <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.519 60.519 0 003.478 2.405z" />
           </svg>
         </div>
-        <span class="text-xl font-bold tracking-tight" style="font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);">AIPTMS</span>
+        <span class="text-xl font-bold tracking-tight" style="font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);">SMTS</span>
       </a>
 
       <div class="max-w-md">
@@ -45,7 +45,7 @@
         </div>
       </div>
 
-      <p class="text-xs text-indigo-200">© 2026 AIPTMS. All rights reserved.</p>
+      <p class="text-xs text-indigo-200">© 2026 SMTS. All rights reserved.</p>
     </div>
   </div>
 
@@ -59,13 +59,13 @@
             <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.519 60.519 0 003.478 2.405z" />
           </svg>
         </div>
-        <span class="text-lg font-bold tracking-tight text-gray-900 dark:text-white">AIPTMS</span>
+        <span class="text-lg font-bold tracking-tight text-[var(--text-primary)]">SMTS</span>
       </div>
 
-      <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2" style="font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);">
+      <h2 class="text-3xl font-bold text-[var(--text-primary)] mb-2" style="font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);">
         Create your account
       </h2>
-      <p class="text-gray-500 dark:text-gray-400 mb-8">It only takes a minute to get started.</p>
+      <p class="text-[var(--text-sec)] mb-8">It only takes a minute to get started.</p>
 
       <!-- Full Name -->
       <div class="mb-4">
@@ -100,11 +100,10 @@
           formControlName="email"
         >
         @if(registrationGroup.get('email')?.invalid && (registrationGroup.get('email')?.dirty || registrationGroup.get('email')?.touched)) {
-          <div class="form-error">
-            @if(registrationGroup.get('email')?.errors?.['required']) { <span>Email is required.</span> }
-            @if(registrationGroup.get('email')?.errors?.['email']) { <span>Please enter a valid email address.</span> }
-            @if(registrationGroup.get('email')?.errors?.['gmailNotAllowed']) { <span>Gmail addresses are not allowed. Please use a different email provider.</span> }
-          </div>
+        <div class="form-error">
+          @if(registrationGroup.get('email')?.errors?.['required']) { <span>Email is required.</span> }
+          @if(registrationGroup.get('email')?.errors?.['email']) { <span>Please enter a valid email address.</span> }
+        </div>
         }
         @if(validationErrors['email']) {
           <div class="form-error">{{ validationErrors['email'] }}</div>
@@ -233,7 +232,7 @@
         </div>
       }
 
-      <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-8">
+      <p class="text-center text-sm text-[var(--text-sec)] mt-8">
         Already have an account?
         <a routerLink="/login" class="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">
           Sign in

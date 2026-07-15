@@ -1,0 +1,252 @@
+<div class="adm-root">
+
+  <!-- ══ Top Navbar (Same as other admin pages) ══ -->
+  <nav class="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex h-16 items-center justify-between">
+
+        <div class="flex items-center gap-8">
+          <a href="/" class="flex items-center gap-2">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200">
+              <svg class="size-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.519 60.519 0 003.478 2.405z" />
+              </svg>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">SMTS</span>
+          </a>
+
+          <div class="hidden md:flex md:items-center md:gap-6">
+            <a routerLink="/admin/vendors" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">
+              All Vendors
+            </a>
+            <a routerLink="/admin/users" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">
+              User Management
+            </a>
+            <a routerLink="/admin/banners" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">
+              Banners
+            </a>
+            <span class="text-sm font-medium text-indigo-600 dark:text-indigo-400">
+              Packages
+            </span>
+            <a routerLink="/admin/bookings" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">
+              Bookings
+            </a>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <button (click)="logout()" class="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ══ Main Content ══ -->
+  <main class="main-content">
+
+    <header class="content-header">
+      <div class="header-left">
+        <p class="header-eyebrow">Admin Control Panel</p>
+        <h1 class="content-title">Package Management</h1>
+        <p class="content-subtitle">Bundle real bookable services into curated travel packages</p>
+      </div>
+
+      <div class="header-right">
+        <div class="header-meta-card">
+          <span class="meta-label">Total Packages</span>
+          <span class="meta-value">{{ packages.length }}</span>
+        </div>
+        <button class="btn btn-primary-solid" (click)="openCreate()">+ New Package</button>
+      </div>
+    </header>
+
+    <div *ngIf="error" class="alert alert-error">⚠️ {{ error }}</div>
+
+    <div *ngIf="loading" class="loading-wrap">
+      <div class="spinner"></div>
+      <span>Loading…</span>
+    </div>
+
+    <div *ngIf="!loading">
+      <div *ngIf="packages.length === 0" class="empty-state">
+        <div class="empty-text">No packages yet</div>
+        <div class="empty-subtext">Create a package to bundle transport, hotel, and other services into one bookable offer.</div>
+      </div>
+
+      <div class="package-grid" *ngIf="packages.length > 0">
+        <div *ngFor="let pkg of packages; trackBy: trackByPackage">
+          <app-card
+            [imageUrl]="pkg.imageUrl ? resolveImageUrl(pkg.imageUrl) : null"
+            [imageAlt]="pkg.name"
+            [badgeText]="pkg.status"
+            [title]="pkg.name"
+            [subtitle]="packageSubtitle(pkg)"
+            [description]="pkg.description"
+            [showViewDetails]="false">
+            <div card-primary class="pkg-actions">
+              <button class="btn btn-ghost" [disabled]="actionLoading === pkg.packageId" (click)="openEdit(pkg)">Edit</button>
+              <button *ngIf="pkg.status !== 'PUBLISHED'" class="btn btn-approve" [disabled]="actionLoading === pkg.packageId" (click)="setStatus(pkg, 'PUBLISHED')">Publish</button>
+              <button *ngIf="pkg.status === 'PUBLISHED'" class="btn btn-suspend" [disabled]="actionLoading === pkg.packageId" (click)="setStatus(pkg, 'ARCHIVED')">Archive</button>
+              <button class="btn btn-reject" [disabled]="actionLoading === pkg.packageId" (click)="openDeleteConfirm(pkg.packageId!)">Delete</button>
+            </div>
+          </app-card>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── Create / Edit Modal ── -->
+  @if (showForm) {
+    <app-modal
+      [open]="true"
+      [titleText]="editingId ? 'Edit Package' : 'New Package'"
+      size="lg"
+      (closed)="closeForm()">
+
+      <div *ngIf="formError" class="alert alert-error">⚠️ {{ formError }}</div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" id="packageForm">
+
+        <label class="form-label">Package Image</label>
+        <div class="image-upload-row">
+          <div class="image-preview">
+            <img *ngIf="formImageUrl" [src]="resolveImageUrl(formImageUrl)" alt="Package preview"/>
+            <div *ngIf="!formImageUrl" class="image-preview-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <path d="M21 15l-5-5L5 21"/>
+              </svg>
+            </div>
+          </div>
+          <div class="image-upload-actions">
+            <label class="btn btn-ghost image-upload-btn">
+              {{ imageUploading ? 'Uploading…' : formImageUrl ? 'Change Image' : 'Upload Image' }}
+              <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onImageSelected($event)" [disabled]="imageUploading" hidden/>
+            </label>
+            <button type="button" class="btn btn-ghost" *ngIf="formImageUrl" (click)="removeImage()">Remove</button>
+            <p class="form-hint">JPEG, PNG, or WEBP · up to 5MB</p>
+            <p *ngIf="imageError" class="form-hint" style="color: var(--rose);">{{ imageError }}</p>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">Package Name <span class="required">*</span></label>
+            <input class="form-input" formControlName="name" type="text" placeholder="e.g. Cox's Bazar Getaway"/>
+            <p *ngIf="form.get('name')?.invalid && form.get('name')?.touched" class="form-hint" style="color: var(--rose);">
+              {{ form.get('name')?.errors?.['required'] ? 'Package name is required.' : 'Name must be 150 characters or fewer.' }}
+            </p>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Destination (optional)</label>
+            <select class="form-input" formControlName="destinationId">
+              <option [value]="null">— Not specified —</option>
+              <option *ngFor="let d of destinations; trackBy: trackByDestination" [value]="d.id">{{ d.name }}</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="form-label">Description <span class="required">*</span></label>
+        <textarea class="form-textarea" formControlName="description" rows="3" placeholder="What's included in this package…"></textarea>
+        <p *ngIf="form.get('description')?.invalid && form.get('description')?.touched" class="form-hint" style="color: var(--rose);">
+          Description is required.
+        </p>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">Total Price <span class="required">*</span></label>
+            <input class="form-input" formControlName="totalPrice" type="number" min="0" step="0.01" placeholder="0.00"/>
+            <p *ngIf="form.get('totalPrice')?.invalid && form.get('totalPrice')?.touched" class="form-hint" style="color: var(--rose);">
+              Total price is required and must be greater than 0.
+            </p>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Currency</label>
+            <input class="form-input" formControlName="currencyCode" type="text" maxlength="3" placeholder="BDT"/>
+          </div>
+        </div>
+
+        <!-- Components -->
+        <div formArrayName="components" class="component-section">
+          <label class="form-label">Components <span class="required">*</span></label>
+          <p class="form-hint">Each component reserves real inventory on an active service when this package is booked.</p>
+
+          <div class="component-row" *ngFor="let comp of componentsArray.controls; let i = index; trackBy: trackByIndex" [formGroupName]="i">
+            <div class="component-fields">
+              <select class="form-input" formControlName="serviceId">
+                <option value="">Select a service…</option>
+                <option *ngFor="let s of activeServices; trackBy: trackByIndex" [value]="s.serviceId">
+                  {{ s.serviceName }} ({{ s.serviceType }}) — {{ s.currencyCode }} {{ s.basePrice }}
+                </option>
+              </select>
+              <input class="form-input component-num" formControlName="quantity" type="number" min="1" placeholder="Qty"/>
+              <input class="form-input component-num" formControlName="dayNumber" type="number" min="1" placeholder="Day #"/>
+              <button type="button" class="remove-btn" (click)="removeComponent(i)" aria-label="Remove component">✕</button>
+            </div>
+            <p *ngIf="comp.get('serviceId')?.invalid && comp.get('serviceId')?.touched" class="form-hint" style="color: var(--rose);">
+              Pick a service for this component — it can't be saved empty.
+            </p>
+            <p *ngIf="comp.get('quantity')?.invalid && comp.get('quantity')?.touched" class="form-hint" style="color: var(--rose);">
+              Quantity is required and must be at least 1.
+            </p>
+            <input class="form-input" formControlName="notes" type="text" placeholder="Optional notes (e.g. 3-night stay)"/>
+          </div>
+
+          <button type="button" class="btn btn-ghost" (click)="addComponent()">+ Add Component</button>
+        </div>
+
+        <!-- Extras -->
+        <div formArrayName="extras" class="component-section">
+          <label class="form-label">Extras <span class="form-optional">(optional)</span></label>
+          <p class="form-hint">Purely descriptive add-ons — no inventory reserved.</p>
+
+          <div class="component-row" *ngFor="let extra of extrasArray.controls; let i = index; trackBy: trackByIndex" [formGroupName]="i">
+            <div class="component-fields">
+              <input class="form-input" formControlName="title" type="text" placeholder="e.g. Airport pickup"/>
+              <input class="form-input component-num" formControlName="price" type="number" min="0" step="0.01" placeholder="Price"/>
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="included"/> <span>Included</span>
+              </label>
+              <button type="button" class="remove-btn" (click)="removeExtra(i)" aria-label="Remove extra">✕</button>
+            </div>
+            <p *ngIf="extra.get('title')?.invalid && extra.get('title')?.touched" class="form-hint" style="color: var(--rose);">
+              Extra title is required.
+            </p>
+            <input class="form-input" formControlName="description" type="text" placeholder="Optional description"/>
+          </div>
+
+          <button type="button" class="btn btn-ghost" (click)="addExtra()">+ Add Extra</button>
+        </div>
+
+      </form>
+
+      <button modal-footer type="button" class="btn-outline" (click)="closeForm()">Cancel</button>
+      <button modal-footer type="submit" form="packageForm" class="btn btn-primary-solid" [disabled]="submitting">
+        {{ submitting ? 'Saving…' : editingId ? 'Update Package' : 'Save Draft' }}
+      </button>
+    </app-modal>
+  }
+
+  <!-- ── Delete confirmation ── -->
+  @if (deleteTargetId) {
+    <app-modal
+      [open]="true"
+      titleText="Delete this package?"
+      subtitleText="This cannot be undone."
+      icon="🗑️"
+      (closed)="closeDeleteConfirm()">
+      <p>Deleting a package does not affect bookings already made against it.</p>
+      <button modal-footer type="button" class="btn-outline" (click)="closeDeleteConfirm()">Cancel</button>
+      <button modal-footer type="button" class="btn btn-reject" (click)="confirmDelete()">Delete</button>
+    </app-modal>
+  }
+
+  <app-footer></app-footer>
+</div>

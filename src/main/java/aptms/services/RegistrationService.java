@@ -33,10 +33,6 @@ public class RegistrationService {
 
     @Transactional
     public User registerUser(User user) {
-        if (isGmailAddress(user.getEmail())) {
-            throw new InvalidException("Gmail addresses are not allowed for registration. Please use a different email provider.");
-        }
-
         if(userRepository.existsByEmail(user.getEmail())) {
             throw new DuplicateValueFoundExceptions(
                 String.format(DUPLICATE_ENTRY_MESSAGE, FIELD_EMAIL)
@@ -51,17 +47,6 @@ public class RegistrationService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         return userRepository.save(user);
-    }
-
-    /**
-     * Gmail (including its googlemail.com alias) is not accepted for registration.
-     */
-    private boolean isGmailAddress(String email) {
-        if (email == null) {
-            return false;
-        }
-        String domain = email.substring(email.lastIndexOf('@') + 1).trim().toLowerCase();
-        return domain.equals("gmail.com") || domain.equals("googlemail.com");
     }
 
     public String loginUser(String email, String password) {

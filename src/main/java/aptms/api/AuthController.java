@@ -32,6 +32,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static aptms.constants.EntityConstants.*;
@@ -76,52 +77,41 @@ public class AuthController {
     }
 
     /**
-     * Register new user and issue JWT tokens.
-     * 
+     * Register new user in PENDING_VERIFICATION status and send an OTP verification email.
+     *
      * POST /api/auth/register
-     * 
+     *
      * Requirements: 5.1, FR-REG-001, FR-REG-002, FR-REG-003
      */
     @Operation(
         summary = "Register new user",
         description = """
-            Register a new user account and receive JWT access and refresh tokens.
-            
-            **Token Information:**
-            - Access token expires in 15 minutes (900 seconds)
-            - Refresh token expires in 7 days (604800 seconds)
-            - Both tokens are returned in the response
-            
+            Register a new user account. The account starts in PENDING_VERIFICATION status —
+            no tokens are issued yet. A 6-digit OTP is emailed and must be confirmed via
+            POST /api/auth/verify-otp before the account is activated and JWTs are issued.
+
             **Validation Rules:**
             - Email: Valid format, unique in database
             - Password: Minimum 8 characters
             - Username: Required, 3-50 characters
             - Role: Valid enum value (USER, ADMIN, VENDOR)
-            
+
             **Requirements:** FR-REG-001, FR-REG-002, FR-REG-003
             """
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "201",
-            description = "User successfully registered and tokens issued",
+            description = "User created, pending email verification",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = AuthResponse.class),
+                schema = @Schema(implementation = RegisterResponse.class),
                 examples = @ExampleObject(
                     name = "Successful Registration",
                     value = """
                         {
-                          "user": {
-                            "id": "550e8400-e29b-41d4-a716-446655440000",
-                            "username": "johndoe",
-                            "email": "john@example.com",
-                            "roles": ["USER"]
-                          },
-                          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJpYXQiOjE3MTcyMDAwMDAsImV4cCI6MTcxNzIwMDkwMCwianRpIjoiN2M5ZTY2NzktNzQyNS00MGRlLTk0NGItZTA3ZmMxZjkwYWU3IiwiaXNzIjoiY29tLmFwdG1zLmF1dGgiLCJhdWQiOiJjb20uYXB0bXMuYXBpIiwicm9sZXMiOlsiVVNFUiJdLCJlbWFpbCI6ImpvaG5AZXhhbXBsZS5jb20ifQ.signature",
-                          "refreshToken": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-                          "tokenType": "Bearer",
-                          "expiresIn": 900
+                          "email": "john@example.com",
+                          "message": "Registration successful. Please check your email for a verification code."
                         }
                         """
                 )
@@ -171,15 +161,51 @@ public class AuthController {
         )
     })
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(
+    public ResponseEntity<RegisterResponse> register(
         @Parameter(description = "User registration data", required = true,
             schema = @Schema(implementation = RegisterRequest.class))
         @Valid @RequestBody RegisterRequest request) {
         log.info("Registration request received for email: {} (JWT enabled: {})",
             request.getEmail(), featureFlagService.isJwtEnabled());
         // Feature flag is checked for logging/metrics purposes; both paths delegate to authenticationService
-        AuthResponse response = authenticationService.register(request);
+        RegisterResponse response = authenticationService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * Verify a registration OTP and activate the account, issuing JWT tokens on success.
+     *
+     * POST /api/auth/verify-otp
+     */
+    @Operation(
+        summary = "Verify registration OTP",
+        description = "Validates the 6-digit code emailed at registration and activates the account, " +
+            "issuing JWT access and refresh tokens on success."
+    )
+    @PostMapping("/verify-otp")
+    public ResponseEntity<AuthResponse> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        log.info("OTP verification request received for email: {}", request.getEmail());
+        AuthResponse response = authenticationService.verifyOtp(request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Resend a registration OTP, subject to a cooldown.
+     *
+     * POST /api/auth/resend-otp
+     */
+    @Operation(
+        summary = "Resend registration OTP",
+        description = "Sends a fresh verification code, subject to a resend cooldown. Returns a generic " +
+            "success message regardless of whether the account exists, to avoid account enumeration."
+    )
+    @PostMapping("/resend-otp")
+    public ResponseEntity<Map<String, String>> resendOtp(@Valid @RequestBody ResendOtpRequest request) {
+        log.info("OTP resend request received for email: {}", request.getEmail());
+        authenticationService.resendOtp(request);
+        return ResponseEntity.ok(Map.of(
+            "message", "If an account is pending verification for this email, a new code has been sent."
+        ));
     }
 
     /**
@@ -244,6 +270,25 @@ public class AuthController {
                         {
                           "error": "INVALID_CREDENTIALS",
                           "message": "Invalid credentials",
+                          "timestamp": "2025-06-01T12:00:00Z",
+                          "path": "/api/auth/login"
+                        }
+                        """
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Account is pending email verification",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(
+                    name = "Email Not Verified",
+                    value = """
+                        {
+                          "error": "EMAIL_NOT_VERIFIED",
+                          "message": "Please verify your email address before logging in.",
                           "timestamp": "2025-06-01T12:00:00Z",
                           "path": "/api/auth/login"
                         }

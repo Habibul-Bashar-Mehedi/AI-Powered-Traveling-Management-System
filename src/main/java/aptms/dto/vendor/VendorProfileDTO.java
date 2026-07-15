@@ -43,5 +43,7 @@ public class VendorProfileDTO {
     private Boolean isEmailVerified;
     private Instant createdAt;
     private Instant approvedAt;
+    private String suspensionReason;
+    private Instant suspendedAt;
 }
 

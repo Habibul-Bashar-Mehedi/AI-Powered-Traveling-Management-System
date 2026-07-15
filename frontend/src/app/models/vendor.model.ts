@@ -1,6 +1,7 @@
 import {
   VendorType, VendorStatus, ServiceType, ServiceStatus, BookingMode,
-  PricingUnit, VendorBookingStatus, PayoutMethod, PayoutStatus, TransactionType, PaymentMethod, PackageItemType
+  PricingUnit, VendorBookingStatus, PayoutMethod, PayoutStatus, TransactionType, PaymentMethod, PackageItemType,
+  ReinstatementStatus
 } from '../enums/vendor.enums';
 
 export interface PackageItem {
@@ -41,6 +42,20 @@ export interface VendorProfile {
   isEmailVerified?: boolean;
   createdAt?: string;
   approvedAt?: string;
+  suspensionReason?: string;
+  suspendedAt?: string;
+}
+
+export interface ReinstatementRequest {
+  requestId?: string;
+  vendorId?: string;
+  vendorBusinessName?: string;
+  message: string;
+  status?: ReinstatementStatus;
+  rejectionReason?: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  reviewedByName?: string;
 }
 
 export interface PublicServiceListing {
@@ -66,8 +81,10 @@ export interface BookServiceRequest {
   endDate?: string;
   quantity?: number;
   specialRequests?: string;
-  paymentMethod: PaymentMethod;
-  paymentReference: string;
+  deliveryAddress?: string;
+  contactPhone?: string;
+  // Payment is no longer collected here — checkout happens via a real SSLCommerz
+  // redirect after the booking is reserved (see PayNowModal/PaymentService).
 }
 
 export interface ServiceAvailability {
@@ -94,6 +111,8 @@ export interface VendorServiceListing {
   locationLat?: number;
   locationLng?: number;
   locationAddress?: string;
+  destinationId?: number;
+  destinationName?: string;
   imageUrl?: string;
   tags?: string;
   metadata?: string;
@@ -125,6 +144,8 @@ export interface VendorBooking {
   paymentMethod?: PaymentMethod;
   paymentReference?: string;
   specialRequests?: string;
+  deliveryAddress?: string;
+  contactPhone?: string;
   cancellationReason?: string;
   cancelledBy?: string;
   createdAt: string;

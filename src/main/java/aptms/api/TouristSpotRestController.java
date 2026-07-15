@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 import static aptms.constants.EntityConstants.*;
 
@@ -26,16 +27,20 @@ public class TouristSpotRestController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<TouristSpot>> getAllTouristSpots() {
-        List<TouristSpot> spots = touristSpotService.getAllTouristSpot();
+    public ResponseEntity<List<TouristSpot>> getAllTouristSpots(
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
+            @RequestParam(required = false) Double radiusKm,
+            @RequestParam(required = false) Long destinationId) {
+        List<TouristSpot> spots = touristSpotService.getNearby(lat, lng, radiusKm, destinationId);
         return ResponseEntity.ok(spots);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<String> updateTouristSpot(@PathVariable long id, @RequestBody TouristSpotUpdateRequest request) {
-        touristSpotService.updateTouristSpot(id, request.name, request.description, 
-                request.visitingHours, request.adultEntryFees, request.childEntryFees, 
-                request.locationDescription);
+        touristSpotService.updateTouristSpot(id, request.name, request.description,
+                request.visitingHours, request.adultEntryFees, request.childEntryFees,
+                request.locationDescription, request.requiresTicket, request.linkedServiceId);
         return ResponseEntity.ok(String.format(ENTITY_UPDATED_MESSAGE, TOURIST_SPOT));
     }
 
@@ -53,5 +58,7 @@ public class TouristSpotRestController {
         public double adultEntryFees;
         public double childEntryFees;
         public String locationDescription;
+        public boolean requiresTicket;
+        public UUID linkedServiceId;
     }
 }

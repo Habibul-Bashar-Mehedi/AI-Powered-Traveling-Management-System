@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
@@ -114,6 +115,52 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(errorResponse);
     }
     
+    /**
+     * Handle OTP verification/resend failures.
+     * Returns HTTP 400 (429 for resend cooldown) with a specific error code.
+     */
+    @ExceptionHandler(OtpException.class)
+    public ResponseEntity<ErrorResponse> handleOtpException(
+            OtpException ex,
+            WebRequest request) {
+
+        HttpStatus status = ex.getErrorCode() == OtpException.ErrorCode.OTP_RESEND_COOLDOWN
+            ? HttpStatus.TOO_MANY_REQUESTS
+            : HttpStatus.BAD_REQUEST;
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+            .error(ex.getErrorCode().name())
+            .message(ex.getMessage())
+            .timestamp(Instant.now())
+            .path(getRequestPath(request))
+            .build();
+
+        logger.warn("OTP error: {} - {}", ex.getErrorCode(), ex.getMessage());
+
+        return ResponseEntity.status(status).body(errorResponse);
+    }
+
+    /**
+     * Handle login attempts on accounts still pending email verification.
+     * Returns HTTP 403 Forbidden.
+     */
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ResponseEntity<ErrorResponse> handleEmailNotVerified(
+            EmailNotVerifiedException ex,
+            WebRequest request) {
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+            .error("EMAIL_NOT_VERIFIED")
+            .message(ex.getMessage())
+            .timestamp(Instant.now())
+            .path(getRequestPath(request))
+            .build();
+
+        logger.warn("Login rejected, email not verified: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
+
     /**
      * Handle entity not found errors.
      * Returns HTTP 404 Not Found.
@@ -254,6 +301,29 @@ public class GlobalExceptionHandler {
         logger.warn("Business rule conflict: {}", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    /**
+     * Handle uploads that exceed the servlet-level multipart size ceiling
+     * (spring.servlet.multipart.max-file-size / max-request-size).
+     * Returns HTTP 413 Payload Too Large with a clear message, instead of
+     * falling through to the generic 500 handler.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(
+            MaxUploadSizeExceededException ex,
+            WebRequest request) {
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+            .error("PAYLOAD_TOO_LARGE")
+            .message("The uploaded file is too large.")
+            .timestamp(Instant.now())
+            .path(getRequestPath(request))
+            .build();
+
+        logger.warn("Upload rejected: exceeds max multipart size: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(errorResponse);
     }
 
     /**

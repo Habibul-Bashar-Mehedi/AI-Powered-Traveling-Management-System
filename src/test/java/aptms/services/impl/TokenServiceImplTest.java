@@ -17,8 +17,11 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -52,7 +55,6 @@ class TokenServiceImplTest {
     private ValueOperations<String, String> valueOperations;
     
     private TokenServiceImpl tokenService;
-    private BCryptPasswordEncoder passwordEncoder;
     
     @BeforeEach
     void setUp() {
@@ -61,7 +63,6 @@ class TokenServiceImplTest {
             tokenBlacklistRepository,
             redisTemplate
         );
-        passwordEncoder = new BCryptPasswordEncoder(10);
     }
     
     @Test
@@ -105,13 +106,13 @@ class TokenServiceImplTest {
         // Arrange
         User user = createTestUser();
         String plainToken = "test-token-12345";
-        String hashedToken = passwordEncoder.encode(plainToken);
+        String sha256Hash = sha256(plainToken);
         
-        RefreshToken token = createTestRefreshToken(user, hashedToken);
+        RefreshToken token = createTestRefreshToken(user, sha256Hash);
         token.setRevokedAt(null);
         token.setExpiresAt(Instant.now().plusSeconds(3600));
         
-        when(refreshTokenRepository.findAll()).thenReturn(List.of(token));
+        when(refreshTokenRepository.findByTokenHash(sha256Hash)).thenReturn(Optional.of(token));
         
         // Act
         RefreshToken result = tokenService.validateRefreshToken(plainToken);
@@ -127,13 +128,13 @@ class TokenServiceImplTest {
         // Arrange
         User user = createTestUser();
         String plainToken = "test-token-12345";
-        String hashedToken = passwordEncoder.encode(plainToken);
+        String sha256Hash = sha256(plainToken);
         
-        RefreshToken token = createTestRefreshToken(user, hashedToken);
+        RefreshToken token = createTestRefreshToken(user, sha256Hash);
         token.setRevokedAt(null);
         token.setExpiresAt(Instant.now().minusSeconds(3600)); // Expired
         
-        when(refreshTokenRepository.findAll()).thenReturn(List.of(token));
+        when(refreshTokenRepository.findByTokenHash(sha256Hash)).thenReturn(Optional.of(token));
         
         // Act & Assert
         assertThrows(InvalidException.class, () -> {
@@ -146,13 +147,13 @@ class TokenServiceImplTest {
         // Arrange
         User user = createTestUser();
         String plainToken = "test-token-12345";
-        String hashedToken = passwordEncoder.encode(plainToken);
+        String sha256Hash = sha256(plainToken);
         
-        RefreshToken token = createTestRefreshToken(user, hashedToken);
+        RefreshToken token = createTestRefreshToken(user, sha256Hash);
         token.setRevokedAt(Instant.now()); // Revoked
         token.setExpiresAt(Instant.now().plusSeconds(3600));
         
-        when(refreshTokenRepository.findAll()).thenReturn(List.of(token));
+        when(refreshTokenRepository.findByTokenHash(sha256Hash)).thenReturn(Optional.of(token));
         
         // Act & Assert
         assertThrows(InvalidException.class, () -> {
@@ -279,12 +280,12 @@ class TokenServiceImplTest {
         // Arrange
         User user = createTestUser();
         String plainToken = "test-token-12345";
-        String hashedToken = passwordEncoder.encode(plainToken);
+        String sha256Hash = sha256(plainToken);
         
-        RefreshToken token = createTestRefreshToken(user, hashedToken);
+        RefreshToken token = createTestRefreshToken(user, sha256Hash);
         token.setRevokedAt(Instant.now()); // Revoked
         
-        when(refreshTokenRepository.findAll()).thenReturn(List.of(token));
+        when(refreshTokenRepository.findByTokenHash(sha256Hash)).thenReturn(Optional.of(token));
         
         // Act
         boolean result = tokenService.detectTokenReuse(plainToken);
@@ -298,12 +299,12 @@ class TokenServiceImplTest {
         // Arrange
         User user = createTestUser();
         String plainToken = "test-token-12345";
-        String hashedToken = passwordEncoder.encode(plainToken);
+        String sha256Hash = sha256(plainToken);
         
-        RefreshToken token = createTestRefreshToken(user, hashedToken);
+        RefreshToken token = createTestRefreshToken(user, sha256Hash);
         token.setRevokedAt(null); // Not revoked
         
-        when(refreshTokenRepository.findAll()).thenReturn(List.of(token));
+        when(refreshTokenRepository.findByTokenHash(sha256Hash)).thenReturn(Optional.of(token));
         
         // Act
         boolean result = tokenService.detectTokenReuse(plainToken);
@@ -317,7 +318,7 @@ class TokenServiceImplTest {
         // Arrange
         String plainToken = "test-token-12345";
         
-        when(refreshTokenRepository.findAll()).thenReturn(new ArrayList<>());
+        when(refreshTokenRepository.findByTokenHash(anyString())).thenReturn(Optional.empty());
         
         // Act
         boolean result = tokenService.detectTokenReuse(plainToken);
@@ -350,5 +351,15 @@ class TokenServiceImplTest {
         token.setCreatedAt(Instant.now());
         token.setUpdatedAt(Instant.now());
         return token;
+    }
+    
+    private String sha256(String value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -138,6 +138,8 @@ public class VendorRegistrationServiceImpl implements VendorRegistrationService 
         dto.setIsEmailVerified(v.getIsEmailVerified());
         dto.setCreatedAt(v.getCreatedAt());
         dto.setApprovedAt(v.getApprovedAt());
+        dto.setSuspensionReason(v.getSuspensionReason());
+        dto.setSuspendedAt(v.getSuspendedAt());
         return dto;
     }
 }

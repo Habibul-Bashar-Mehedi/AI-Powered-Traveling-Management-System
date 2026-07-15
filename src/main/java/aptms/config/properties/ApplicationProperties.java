@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "app")
 @Data
 public class ApplicationProperties {
-    private String name = "AI-Powered Travel Management System";
+    private String name = "Smart Travel Management System";
     private String version = "1.0.0";
     private String apiVersion = "v1";
     private String baseUrl = "http://localhost:8080";

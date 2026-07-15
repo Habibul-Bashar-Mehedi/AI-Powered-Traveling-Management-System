@@ -34,6 +34,8 @@
     <div class="spinner"></div> Loading bookings…
   </div>
 
+  <div *ngIf="vendorSuspended" class="error-msg">⚠️ Your account is suspended — booking confirmations and rejections are blocked until you're reinstated.</div>
+
   <div *ngIf="!loading && bookings.length === 0" class="empty-state">
     <div class="empty-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -69,6 +71,8 @@
           <td>
             <div class="service-name">{{ b.serviceName }}</div>
             <div class="booking-qty">×{{ b.quantity }}</div>
+            <div class="booking-qty" *ngIf="b.deliveryAddress">📍 {{ b.deliveryAddress }}</div>
+            <div class="booking-qty" *ngIf="b.contactPhone">📞 {{ b.contactPhone }}</div>
           </td>
           <td>
             <div class="booking-date">{{ b.startDate }}</div>
@@ -86,11 +90,14 @@
           <td>
             <div class="action-row" *ngIf="b.bookingStatus === 'PENDING'">
               <button class="action-btn confirm-btn"
-                [disabled]="actionLoading === b.bookingId"
+                [disabled]="actionLoading === b.bookingId || vendorSuspended"
+                [title]="vendorSuspended ? 'Suspended vendors cannot confirm bookings' : ''"
                 (click)="confirm(b.bookingId)">
                   Confirm
               </button>
               <button class="action-btn reject-btn"
+                [disabled]="vendorSuspended"
+                [title]="vendorSuspended ? 'Suspended vendors cannot reject bookings' : ''"
                 (click)="startReject(b.bookingId)">
                   Reject
               </button>

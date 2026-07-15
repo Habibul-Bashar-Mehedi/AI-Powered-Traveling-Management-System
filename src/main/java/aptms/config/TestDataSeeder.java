@@ -9,6 +9,7 @@ import aptms.enums.PricingUnit;
 import aptms.enums.ServiceStatus;
 import aptms.enums.ServiceType;
 import aptms.enums.UserRole;
+import aptms.enums.UserStatus;
 import aptms.enums.VendorStatus;
 import aptms.enums.VendorType;
 import aptms.repositories.UserRepository;
@@ -83,6 +84,7 @@ public class TestDataSeeder implements CommandLineRunner {
         admin.setPassword(passwordEncoder.encode("Admin@123"));
         admin.setRole(UserRole.ADMIN);
         admin.setCountryId("BD");
+        admin.setStatus(UserStatus.ACTIVE);
         userRepository.save(admin);
         log.info("Seeded ADMIN  : admin@test.com");
     }
@@ -98,6 +100,7 @@ public class TestDataSeeder implements CommandLineRunner {
         user.setPassword(passwordEncoder.encode("User@1234"));
         user.setRole(UserRole.USER);
         user.setCountryId("BD");
+        user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
         log.info("Seeded USER   : user@test.com");
     }
@@ -114,6 +117,7 @@ public class TestDataSeeder implements CommandLineRunner {
         vendorUser.setPassword(passwordEncoder.encode("Vendor@123"));
         vendorUser.setRole(UserRole.VENDOR);
         vendorUser.setCountryId("BD");
+        vendorUser.setStatus(UserStatus.ACTIVE);
         vendorUser = userRepository.save(vendorUser);
 
         // 2. Create a pre-approved Vendor profile linked to that user

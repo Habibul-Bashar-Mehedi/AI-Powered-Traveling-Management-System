@@ -1,0 +1,61 @@
+<div class="pr-root">
+  <div class="pr-card">
+
+    @if (loading) {
+      <div class="pr-loading">
+        <div class="pr-spinner"></div>
+        <p>Checking your payment…</p>
+      </div>
+    } @else if (error) {
+      <div class="pr-icon pr-icon-error">✕</div>
+      <h1 class="pr-title">Couldn't Load Payment</h1>
+      <p class="pr-subtitle">{{ error }}</p>
+      <a routerLink="/dashboard" class="pr-btn pr-btn-primary">Back to Dashboard</a>
+    } @else if (status) {
+      @if (isPaid) {
+        <div class="pr-icon pr-icon-success">
+          <svg viewBox="0 0 52 52" class="pr-check">
+            <circle class="pr-check-circle" cx="26" cy="26" r="24" fill="none"/>
+            <path class="pr-check-mark" fill="none" d="M14 27l7 7 16-16"/>
+          </svg>
+        </div>
+        <h1 class="pr-title">Payment Successful</h1>
+        <p class="pr-subtitle">Your booking is confirmed and paid.</p>
+      } @else {
+        <div class="pr-icon pr-icon-error">
+          <svg viewBox="0 0 52 52" class="pr-cross">
+            <circle class="pr-cross-circle" cx="26" cy="26" r="24" fill="none"/>
+            <path class="pr-cross-mark" fill="none" d="M16 16l20 20M36 16l-20 20"/>
+          </svg>
+        </div>
+        <h1 class="pr-title">Payment {{ status.status === 'CANCELLED' ? 'Cancelled' : 'Failed' }}</h1>
+        <p class="pr-subtitle">Your booking has been released — no charge was made.</p>
+      }
+
+      <div class="pr-details">
+        <div class="pr-detail-row">
+          <span class="pr-label">Reference</span>
+          <span class="pr-value">{{ status.bookingReference }}</span>
+        </div>
+        <div class="pr-detail-row">
+          <span class="pr-label">Transaction ID</span>
+          <span class="pr-value pr-mono">{{ status.txId }}</span>
+        </div>
+        <div class="pr-detail-row pr-detail-total">
+          <span class="pr-label">Amount</span>
+          <span class="pr-value">{{ status.currencyCode }} {{ status.amount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="pr-actions">
+        @if (isPaid) {
+          <a routerLink="/profile" class="pr-btn pr-btn-primary">View My Bookings</a>
+        } @else {
+          <a routerLink="/dashboard" class="pr-btn pr-btn-primary">Try Again</a>
+        }
+        <a routerLink="/dashboard" class="pr-btn pr-btn-ghost">Back to Dashboard</a>
+      </div>
+    }
+
+  </div>
+</div>

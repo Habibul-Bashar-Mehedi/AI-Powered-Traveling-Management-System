@@ -1,9 +1,7 @@
 package aptms.dto.vendor;
 
-import aptms.enums.PaymentMethod;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -26,10 +24,12 @@ public class BookServiceRequestDTO {
     @Size(max = 1000)
     private String specialRequests;
 
-    @NotNull(message = "Payment method is required")
-    private PaymentMethod paymentMethod;
+    @Size(max = 500)
+    private String deliveryAddress;
 
-    @NotBlank(message = "Payment reference (mobile/account number) is required")
-    @Size(max = 100)
-    private String paymentReference;
+    @Size(max = 30)
+    private String contactPhone;
+
+    // Payment method/reference are no longer collected here — checkout now happens
+    // via a real SSLCommerz redirect (see PaymentController), not a self-declared field.
 }

@@ -61,6 +61,10 @@ public class VendorServiceDTO {
     private BigDecimal locationLng;
     private String locationAddress;
 
+    /** Optional — links the listing to an existing Destination for spending/analytics grouping. */
+    private Long destinationId;
+    private String destinationName;
+
     private String imageUrl;
 
     private String tags;

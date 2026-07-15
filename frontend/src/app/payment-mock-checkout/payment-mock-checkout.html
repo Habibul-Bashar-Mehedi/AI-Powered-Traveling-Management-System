@@ -1,0 +1,54 @@
+<div class="mc-root">
+  <div class="mc-card">
+
+    <div class="mc-badge">🧪 Test Mode — Simulated Checkout</div>
+
+    @if (loading) {
+      <div class="mc-loading">
+        <div class="mc-spinner"></div>
+        <p>Loading checkout…</p>
+      </div>
+    } @else if (error) {
+      <div class="mc-icon mc-icon-error">✕</div>
+      <h1 class="mc-title">Couldn't Load Checkout</h1>
+      <p class="mc-subtitle">{{ error }}</p>
+      <a routerLink="/dashboard" class="mc-btn mc-btn-ghost">Back to Dashboard</a>
+    } @else if (status) {
+      <h1 class="mc-title">Simulated Payment Gateway</h1>
+      <p class="mc-subtitle">
+        A real SSLCommerz sandbox isn't configured yet, so this test page stands in for
+        it — pick an outcome below to see the rest of the flow.
+      </p>
+
+      <div class="mc-details">
+        <div class="mc-detail-row">
+          <span class="mc-label">Reference</span>
+          <span class="mc-value">{{ status.bookingReference }}</span>
+        </div>
+        <div class="mc-detail-row">
+          <span class="mc-label">Transaction ID</span>
+          <span class="mc-value mc-mono">{{ status.txId }}</span>
+        </div>
+        <div class="mc-detail-row mc-detail-total">
+          <span class="mc-label">Amount Due</span>
+          <span class="mc-value">{{ status.currencyCode }} {{ status.amount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="mc-actions">
+        <button type="button" class="mc-btn mc-btn-success" [disabled]="resolving" (click)="resolve('PAID')">
+          @if (resolving) { <span class="mc-spinner mc-spinner-sm"></span> } @else { ✓ Simulate Successful Payment }
+        </button>
+        <button type="button" class="mc-btn mc-btn-danger" [disabled]="resolving" (click)="resolve('FAILED')">
+          @if (resolving) { <span class="mc-spinner mc-spinner-sm"></span> } @else { ✕ Simulate Failed Payment }
+        </button>
+        <button type="button" class="mc-btn mc-btn-ghost" [disabled]="resolving" (click)="resolve('CANCELLED')">
+          Cancel Payment
+        </button>
+      </div>
+
+      <p class="mc-footnote">No real money moves here — this page only exists because no live payment gateway is connected yet.</p>
+    }
+
+  </div>
+</div>

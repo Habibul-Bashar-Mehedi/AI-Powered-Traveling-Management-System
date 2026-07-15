@@ -21,6 +21,7 @@ export class Login implements OnInit {
   errorMessage = '';
   isAccountLocked = false;
   retryAfter: string | null = null;
+  isEmailNotVerified = false;
 
   constructor(
     private authService: AuthService,
@@ -75,6 +76,7 @@ export class Login implements OnInit {
     this.errorMessage = '';
     this.isAccountLocked = false;
     this.retryAfter = null;
+    this.isEmailNotVerified = false;
 
     const loginData: LoginRequest = {
       email: this.loginGroup.value.email!,
@@ -106,6 +108,10 @@ export class Login implements OnInit {
           if (error.error?.retry_after) {
             this.retryAfter = new Date(error.error.retry_after).toLocaleString();
           }
+        } else if (error.status === 403 && error.error?.error === 'EMAIL_NOT_VERIFIED') {
+          // Account is pending OTP verification
+          this.isEmailNotVerified = true;
+          this.errorMessage = "Please verify your email address before logging in.";
         } else if (error.status === 401) {
           // Invalid credentials
           this.errorMessage = "Invalid email or password. Please try again.";

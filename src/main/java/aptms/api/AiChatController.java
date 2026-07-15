@@ -3,6 +3,7 @@ package aptms.api;
 import aptms.dto.AiChatRequest;
 import aptms.dto.AiChatResponse;
 import aptms.services.AiChatService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,7 +20,7 @@ public class AiChatController {
     }
 
     @PostMapping("/chat")
-    public AiChatResponse chat(@RequestBody AiChatRequest request) {
+    public AiChatResponse chat(@Valid @RequestBody AiChatRequest request) {
         return aiChatService.chat(request);
     }
 }

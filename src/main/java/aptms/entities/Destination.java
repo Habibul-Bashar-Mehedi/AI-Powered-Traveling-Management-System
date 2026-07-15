@@ -30,7 +30,11 @@ public class Destination {
     
     @Column(nullable = false)
     private boolean isAlive = true;
-    
+
+    private Double latitude;
+
+    private Double longitude;
+
     @CreationTimestamp
     @Column(updatable = false)
     private Date createdAt;

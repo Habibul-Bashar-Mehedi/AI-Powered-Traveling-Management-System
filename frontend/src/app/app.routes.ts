@@ -13,8 +13,33 @@ export const routes: Routes = [
     loadComponent: () => import('./registration/registration').then(m => m.Registration)
   },
   {
+    path: 'verify-otp',
+    loadComponent: () => import('./verify-otp/verify-otp').then(m => m.VerifyOtp)
+  },
+  {
     path: 'dashboard',
     loadComponent: () => import('./dashboard/dashboard').then(m => m.Dashboard),
+    canActivate: [AuthGuard],
+    runGuardsAndResolvers: 'always'
+  },
+  {
+    path: 'profile',
+    loadComponent: () => import('./profile/profile').then(m => m.Profile),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'explore-nearby',
+    loadComponent: () => import('./explore-nearby/explore-nearby').then(m => m.ExploreNearby),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'payment/result',
+    loadComponent: () => import('./payment-result/payment-result').then(m => m.PaymentResult),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'payment/mock-checkout',
+    loadComponent: () => import('./payment-mock-checkout/payment-mock-checkout').then(m => m.PaymentMockCheckout),
     canActivate: [AuthGuard]
   },
   {
@@ -96,6 +121,10 @@ export const routes: Routes = [
       {
         path: 'banners',
         loadComponent: () => import('./admin/banner-management/banner-management').then(m => m.BannerManagement)
+      },
+      {
+        path: 'packages',
+        loadComponent: () => import('./admin/package-management/package-management').then(m => m.PackageManagement)
       },
       {
         path: 'bookings',

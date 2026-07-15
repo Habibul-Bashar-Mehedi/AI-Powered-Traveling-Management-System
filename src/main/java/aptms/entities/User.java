@@ -1,6 +1,7 @@
 package aptms.entities;
 
 import aptms.enums.UserRole;
+import aptms.enums.UserStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -43,7 +44,16 @@ public class User {
     
     @Column(length = 100)
     private String countryId;
-    
+
+    /**
+     * Account verification status. Defaults to ACTIVE so every existing creation path
+     * (test seeding, admin-created users) is unaffected; only the public self-registration
+     * flow explicitly sets this to PENDING_VERIFICATION until OTP verification succeeds.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private UserStatus status = UserStatus.ACTIVE;
+
     /**
      * Counter for consecutive failed login attempts.
      * Reset to 0 on successful login.

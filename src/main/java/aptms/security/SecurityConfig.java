@@ -129,6 +129,13 @@ public class SecurityConfig {
                 // Public marketing content for the landing page (read-only; mutations still require auth)
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/destination").permitAll()
 
+                // SSLCommerz calls these directly (server-to-server IPN, and browser-redirect
+                // success/fail/cancel) and cannot carry our JWT — trust comes from re-validating
+                // the transaction against SSLCommerz itself, not from the caller's identity.
+                .requestMatchers(org.springframework.http.HttpMethod.POST,
+                    "/api/payments/success", "/api/payments/fail", "/api/payments/cancel", "/api/payments/ipn"
+                ).permitAll()
+
                 // Vendor registration requires any authenticated user (not yet VENDOR role)
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/vendor/register").authenticated()
                 .requestMatchers("/api/v1/vendor/**").hasRole("VENDOR")

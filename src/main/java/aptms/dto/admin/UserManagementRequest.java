@@ -9,9 +9,10 @@ import jakarta.validation.constraints.Size;
 public record UserManagementRequest(
         @NotBlank @Size(max = 50) String username,
         @NotBlank @Email @Size(max = 100) String email,
-        @NotBlank @Size(min = 8, max = 100) String password,
+        @Size(max = 100) String password,
         @NotNull UserRole role,
-        @Size(max = 100) String countryId
+        @Size(max = 100) String countryId,
+        @Size(max = 20) String vendorType
 ) {
 }
 

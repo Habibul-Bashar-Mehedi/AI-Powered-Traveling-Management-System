@@ -227,7 +227,62 @@
 
 .alert-warning   { background: rgba(245,158,11,.06); border-color: rgba(245,158,11,.22); color: #b45309; }
 .alert-error     { background: rgba(244,63,94,.06);  border-color: rgba(244,63,94,.22);  color: #e11d48; }
-.alert-suspended { background: rgba(124,58,237,.06); border-color: rgba(124,58,237,.22); color: #6d28d9; }
+.alert-suspended { background: rgba(124,58,237,.06); border-color: rgba(124,58,237,.22); color: #6d28d9; align-items: flex-start; }
+
+.suspended-body { display: flex; flex-direction: column; gap: 10px; }
+
+.reinstatement-pending-note { font-size: 13px; color: #6d28d9; opacity: .85; margin: 0; }
+
+.reinstatement-rejected-note { font-size: 13px; color: #e11d48; margin: 0; }
+
+.btn-reinstate-request {
+  align-self: flex-start;
+  padding: 8px 16px;
+  border-radius: var(--r-sm, 8px);
+  border: 1px solid rgba(124,58,237,.35);
+  background: rgba(124,58,237,.1);
+  color: #6d28d9;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-reinstate-request:hover:not(:disabled) { background: rgba(124,58,237,.18); }
+.btn-reinstate-request:disabled { opacity: .5; cursor: not-allowed; }
+
+.reinstatement-form {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px; border-radius: var(--r-md);
+  background: rgba(124,58,237,.05);
+  border: 1px solid rgba(124,58,237,.18);
+}
+
+.reinstatement-form .form-label { font-size: 13px; font-weight: 600; color: #6d28d9; }
+
+.reinstatement-form .form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--r-sm, 8px);
+  border: 1px solid rgba(124,58,237,.3);
+  background: #fff;
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.reinstatement-error { color: #e11d48; font-size: 12.5px; margin: 0; }
+
+.reinstatement-form-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+.btn-ghost {
+  padding: 8px 16px;
+  border-radius: var(--r-sm, 8px);
+  border: 1px solid var(--border, #e6e8f0);
+  background: transparent;
+  color: var(--text-sec);
+  font-size: 13px;
+  cursor: pointer;
+}
 
 /* ═══════════════════════════════════
    SKELETON LOADING

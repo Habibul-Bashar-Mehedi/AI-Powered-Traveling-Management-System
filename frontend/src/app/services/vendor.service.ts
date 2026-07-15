@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { API_ENDPOINTS } from '../constants/api-endpoints';
-import { VendorProfile, VendorServiceListing } from '../models/vendor.model';
+import { VendorProfile, VendorServiceListing, ReinstatementRequest } from '../models/vendor.model';
 
 @Injectable({ providedIn: 'root' })
 export class VendorService {
@@ -48,6 +48,15 @@ export class VendorService {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<{ url: string }>(`${this.base}${API_ENDPOINTS.VENDOR.SERVICE_IMAGES}`, formData);
+  }
+
+  createReinstatementRequest(message: string): Observable<ReinstatementRequest> {
+    return this.http.post<ReinstatementRequest>(
+      `${this.base}${API_ENDPOINTS.VENDOR.REINSTATEMENT_REQUEST}`, { message });
+  }
+
+  getMyReinstatementRequests(): Observable<ReinstatementRequest[]> {
+    return this.http.get<ReinstatementRequest[]>(`${this.base}${API_ENDPOINTS.VENDOR.REINSTATEMENT_REQUEST}`);
   }
 }
 

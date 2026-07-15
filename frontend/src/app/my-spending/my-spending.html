@@ -1,0 +1,55 @@
+<div class="spending-toolbar">
+  <label class="booking-filter-label" for="spendingSort">Sort by</label>
+  <select
+    id="spendingSort"
+    class="booking-filter-select"
+    [value]="sort()"
+    (change)="onSortChange($any($event.target).value)">
+    <option value="totalSpent">Highest spend</option>
+    <option value="latest">Most recently visited</option>
+  </select>
+
+  <button class="booking-refresh-btn" type="button" (click)="load()">Refresh</button>
+</div>
+
+@if (loading()) {
+  <app-loading-state variant="shimmer-cards" [count]="3"></app-loading-state>
+} @else if (error()) {
+  <p class="bookings-empty history-error">{{ error() }}</p>
+} @else if (summaries().length === 0) {
+  <p class="bookings-empty">No bookings yet — your spending by destination will show up here once you've booked something.</p>
+} @else {
+  <div class="spending-grid">
+    @for (summary of summaries(); track summary.destinationId ?? 'other') {
+      <button type="button" class="spending-card" (click)="openDrilldown(summary)">
+        <h3 class="spending-destination">{{ summary.destinationName }}</h3>
+        <div class="spending-amount">৳{{ summary.totalSpent | number:'1.0-0' }}</div>
+        <div class="spending-meta">
+          {{ summary.bookingCount }} booking{{ summary.bookingCount === 1 ? '' : 's' }}
+        </div>
+        <div class="spending-meta">
+          {{ summary.firstTravelDate | date:'mediumDate' }} – {{ summary.lastTravelDate | date:'mediumDate' }}
+        </div>
+      </button>
+    }
+  </div>
+}
+
+@if (selectedDestination(); as destination) {
+  <div class="spending-modal-overlay" (click)="closeDrilldown()">
+    <div class="spending-modal" (click)="$event.stopPropagation()">
+      <div class="spending-modal-header">
+        <h3>{{ destination.destinationName }}</h3>
+        <button type="button" class="modal-close-btn" (click)="closeDrilldown()">✕</button>
+      </div>
+
+      @if (drilldownLoading()) {
+        <app-loading-state variant="shimmer-rows" [count]="2"></app-loading-state>
+      } @else if (drilldownError()) {
+        <p class="bookings-empty history-error">{{ drilldownError() }}</p>
+      } @else {
+        <app-booking-history-list [entries]="drilldownEntries()" emptyMessage="No bookings found for this destination." />
+      }
+    </div>
+  </div>
+}

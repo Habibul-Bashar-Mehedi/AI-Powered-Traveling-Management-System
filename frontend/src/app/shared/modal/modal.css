@@ -1,0 +1,126 @@
+:host {
+  display: contents;
+}
+
+.app-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+  animation: app-modal-backdrop-in 0.18s ease;
+}
+
+@keyframes app-modal-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.app-modal-panel {
+  width: 520px;
+  max-width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 40px 100px rgba(15, 23, 42, 0.25), var(--shadow-card);
+  animation: app-modal-panel-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.app-modal-panel--lg {
+  width: 680px;
+}
+
+@keyframes app-modal-panel-in {
+  from { opacity: 0; transform: scale(0.96) translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+.app-modal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.app-modal-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--blue), var(--violet));
+}
+
+.app-modal-heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-modal-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+
+.app-modal-subtitle {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-sec);
+}
+
+.app-modal-close {
+  margin-left: auto;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-sec);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: 0.15s;
+  line-height: 1;
+}
+
+.app-modal-close:hover:not(:disabled) {
+  color: var(--rose);
+  background: rgba(244, 63, 94, 0.1);
+}
+
+.app-modal-close:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.app-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+
+.app-modal-footer {
+  display: flex;
+  gap: 10px;
+  padding: 16px 24px 24px;
+  flex-shrink: 0;
+}
+
+.app-modal-footer:empty {
+  display: none;
+}

@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 import static aptms.constants.EntityConstants.*;
 
@@ -26,15 +27,19 @@ public class TraditionalItemRestController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<TraditionalItem>> getAllTraditionalItems() {
-        List<TraditionalItem> items = traditionalItemService.getAllTraditionalItem();
+    public ResponseEntity<List<TraditionalItem>> getAllTraditionalItems(
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
+            @RequestParam(required = false) Double radiusKm,
+            @RequestParam(required = false) Long destinationId) {
+        List<TraditionalItem> items = traditionalItemService.getNearby(lat, lng, radiusKm, destinationId);
         return ResponseEntity.ok(items);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<String> updateTraditionalItem(@PathVariable long id, @RequestBody TraditionalItemUpdateRequest request) {
-        traditionalItemService.updateTraditionalItem(id, request.categoryName, 
-                request.description, request.priceRange);
+        traditionalItemService.updateTraditionalItem(id, request.categoryName,
+                request.description, request.priceRange, request.destinationId, request.linkedServiceId);
         return ResponseEntity.ok(String.format(ENTITY_UPDATED_MESSAGE, TRADITIONAL_ITEM));
     }
 
@@ -49,5 +54,7 @@ public class TraditionalItemRestController {
         public String categoryName;
         public String description;
         public String priceRange;
+        public Long destinationId;
+        public UUID linkedServiceId;
     }
 }

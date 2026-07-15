@@ -11,8 +11,8 @@
     <groupId>sia</groupId>
     <artifactId>System</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>AI-Powered-Traveling-Management-System</name>
-    <description>AI-Powered-Traveling-Management-System</description>
+    <name>Smart-Travel-Management-System</name>
+    <description>Smart-Travel-Management-System</description>
     <url/>
     <licenses>
         <license/>
@@ -32,6 +32,18 @@
         <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.release/>
     </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>1.21.3</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -53,6 +65,12 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+        <!-- dotenv-java — loads .env file into System Properties before Spring starts -->
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-java</artifactId>
+            <version>3.0.2</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf-test</artifactId>
@@ -66,6 +84,58 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- H2 in-memory database (used by application-test.properties profile) -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers: Spring Boot integration (provides @ServiceConnection) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers: JUnit 5 integration -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers: MySQL module for real DB integration tests -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mysql</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers: base module (for GenericContainer — used for Redis) -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Override docker-java to 3.5.1 to fix Docker 29.x compatibility.
+             Docker Engine 29+ raised its minimum supported client API from 1.24 to 1.40.
+             docker-java 3.4.x uses API 1.32 by default; 3.5.1 uses a higher version.
+             These overrides force Testcontainers to use the newer docker-java at runtime. -->
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-api</artifactId>
+            <version>3.5.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-transport-zerodep</artifactId>
+            <version>3.5.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -138,6 +208,12 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- Mail (OTP email verification) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
         <!-- Spring Cache (in-memory ConcurrentMap, no external dependency) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -166,6 +242,30 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.3.0</version>
+        </dependency>
+
+        <!-- Apache Tika (core only): magic-byte content detection for upload validation.
+             Deliberately tika-core, not tika-parsers — we only need MIME sniffing from
+             file signatures, not document text extraction, so we avoid its large parser
+             dependency tree. -->
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>2.9.2</version>
+        </dependency>
+
+        <!-- openhtmltopdf: renders a Thymeleaf-produced HTML receipt to PDF bytes.
+             Pairs with the already-present spring-boot-starter-thymeleaf so receipt
+             layout is a normal HTML/CSS template, not hand-coded PDF drawing calls. -->
+        <dependency>
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-core</artifactId>
+            <version>1.0.10</version>
+        </dependency>
+        <dependency>
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-pdfbox</artifactId>
+            <version>1.0.10</version>
         </dependency>
 
     </dependencies>
@@ -198,13 +298,20 @@
                     </excludes>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <argLine>-XX:+EnableDynamicAgentLoading</argLine>
-                </configuration>
-            </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+                <!-- forkCount=0 keeps integration tests in the same JVM as Maven so they
+                     inherit DOCKER_HOST.  This is required because the shaded docker-java
+                     inside Testcontainers 1.21.3 reads the Docker API version from a
+                     classpath docker-java.properties file (src/test/resources), which is
+                     only on the classpath when running in the Maven JVM.
+                     See src/test/resources/docker-java.properties for the api.version override. -->
+                <forkCount>0</forkCount>
+                <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+            </configuration>
+        </plugin>
         </plugins>
     </build>
 

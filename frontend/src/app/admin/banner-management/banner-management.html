@@ -12,7 +12,7 @@
                 <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.519 60.519 0 003.478 2.405z" />
               </svg>
             </div>
-            <span class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">AIPTMS</span>
+            <span class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">SMTS</span>
           </a>
 
           <div class="hidden md:flex md:items-center md:gap-6">
@@ -31,6 +31,9 @@
             <span class="text-sm font-medium text-indigo-600 dark:text-indigo-400">
               Banners
             </span>
+            <a routerLink="/admin/packages" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">
+              Packages
+            </a>
             <a routerLink="/admin/bookings" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">
               Bookings
             </a>
@@ -206,7 +209,7 @@
             <div class="image-upload-actions">
               <label class="btn btn-ghost image-upload-btn">
                 {{ imageUploading ? 'Uploading…' : formImageUrl ? 'Change Image' : 'Upload Image' }}
-                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" (change)="onImageSelected($event)" [disabled]="imageUploading" hidden/>
+                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onImageSelected($event)" [disabled]="imageUploading" hidden/>
               </label>
               <button type="button" class="btn btn-ghost" *ngIf="formImageUrl" (click)="removeImage()">Remove</button>
               <p class="form-hint">JPEG, PNG, WEBP or GIF · up to 5MB</p>

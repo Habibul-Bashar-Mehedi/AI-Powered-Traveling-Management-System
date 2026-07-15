@@ -26,8 +26,11 @@ public class DestinationRestController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<Destination>> getAllDestination() {
-        List<Destination> destinations = destinationService.getAllDestinations();
+    public ResponseEntity<List<Destination>> getAllDestination(
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
+            @RequestParam(required = false) Double radiusKm) {
+        List<Destination> destinations = destinationService.findNearby(lat, lng, radiusKm);
         return ResponseEntity.ok(destinations);
     }
 
@@ -36,8 +39,10 @@ public class DestinationRestController {
         boolean updated = destinationService.updateDestination(
             id,
             destination.getName(),
-            destination.getRegion(), 
-            destination.getDescription()
+            destination.getRegion(),
+            destination.getDescription(),
+            destination.getLatitude(),
+            destination.getLongitude()
         );
 
         if(updated) {

@@ -1,5 +1,6 @@
 package aptms.services;
 
+import aptms.dto.vendor.AdminVendorUpdateDTO;
 import aptms.dto.vendor.VendorProfileDTO;
 import aptms.dto.vendor.PayoutRequestDTO;
 
@@ -22,6 +23,8 @@ public interface AdminVendorService {
     VendorProfileDTO suspendVendor(UUID vendorId, UUID adminUserId, String reason);
 
     VendorProfileDTO reinstateVendor(UUID vendorId, UUID adminUserId);
+
+    VendorProfileDTO updateVendor(UUID vendorId, UUID adminUserId, AdminVendorUpdateDTO dto);
 
     List<PayoutRequestDTO> getPendingPayouts();
 

@@ -1,16 +1,18 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, Inject, PLATFORM_ID } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from './services/auth.service';
 import { DestinationService } from './services/destination.service';
 import { ServiceCatalogService } from './services/service-catalog.service';
 import { ThemeService } from './services/theme.service';
+import { VendorBookingService, UserBookingStatusSummary } from './services/vendor-booking.service';
 import { Destination } from './models/destination.model';
 import { PublicServiceListing } from './models/vendor.model';
 import { filter, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { FooterComponent } from './shared/app-footer/app-footer';
+import { ConfirmDialog } from './shared/confirm-dialog/confirm-dialog';
 
 interface SearchResult {
   type: 'destination' | 'service';
@@ -21,14 +23,15 @@ interface SearchResult {
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, FooterComponent],
+  imports: [CommonModule, FormsModule, RouterOutlet, RouterLink, RouterLinkActive, FooterComponent, ConfirmDialog],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('AIPTMS');
+  protected readonly title = signal('SMTS');
   showMainNavbar = true;
   accountMenuOpen = false;
+  notificationCount = 0;
 
   readonly currentUser$;
 
@@ -46,7 +49,9 @@ export class App {
     private router: Router,
     private destinationService: DestinationService,
     private serviceCatalogService: ServiceCatalogService,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private vendorBookingService: VendorBookingService,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.currentUser$ = this.authService.currentUser$;
 
@@ -63,6 +68,32 @@ export class App {
       debounceTime(200),
       distinctUntilChanged()
     ).subscribe(query => this.runSearch(query));
+
+    // Only fetch the notification count for a logged-in user, and only in the
+    // browser — this endpoint requires a Bearer token, so calling it during SSR
+    // (no token yet) or while logged out produced an unhandled 401 that crashed
+    // out as an uncaught exception in the SSR process. Re-fires on login/logout
+    // too, since currentUser$ is a BehaviorSubject.
+    if (isPlatformBrowser(this.platformId)) {
+      this.currentUser$.subscribe(user => {
+        if (user) {
+          this.loadNotificationCount();
+        } else {
+          this.notificationCount = 0;
+        }
+      });
+    }
+  }
+
+  private loadNotificationCount(): void {
+    this.vendorBookingService.getMyBookingStatusSummary().subscribe({
+      next: (summary: UserBookingStatusSummary) => {
+        this.notificationCount = summary.counts?.PENDING ?? 0;
+      },
+      error: () => {
+        // Non-critical — the notification badge just stays at its last value.
+      }
+    });
   }
 
   /**

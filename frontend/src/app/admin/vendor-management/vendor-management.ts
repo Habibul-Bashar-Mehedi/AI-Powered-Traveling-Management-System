@@ -1,14 +1,14 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminVendorService } from '../../services/admin-vendor.service';
-import { VendorProfile, PayoutRequest } from '../../models/vendor.model';
-import { VendorStatus } from '../../enums/vendor.enums';
+import { AdminVendorService, AdminVendorUpdate } from '../../services/admin-vendor.service';
+import { VendorProfile, PayoutRequest, ReinstatementRequest } from '../../models/vendor.model';
+import { VendorStatus, ReinstatementStatus, VendorType } from '../../enums/vendor.enums';
 import { AuthService } from '../../services/auth.service';
 import { Router, RouterLink } from '@angular/router';
 import { FooterComponent } from '../../shared/app-footer/app-footer';
 
-type TabId = 'pending' | 'all' | 'payouts';
+type TabId = 'pending' | 'all' | 'payouts' | 'reinstatements';
 
 @Component({
   selector: 'app-vendor-management',
@@ -21,6 +21,7 @@ export class VendorManagement implements OnInit {
   activeTab: TabId = 'pending';
   vendors: VendorProfile[] = [];
   payouts: PayoutRequest[] = [];
+  reinstatementRequests: ReinstatementRequest[] = [];
   loading = false;
   actionLoading: string | null = null;
   error = '';
@@ -35,16 +36,34 @@ export class VendorManagement implements OnInit {
   payoutApprove: boolean | null = null;
   payoutNote = '';
 
+  // Reinstatement review modal
+  reinstateModalId: string | null = null;
+  reinstateApprove: boolean | null = null;
+  reinstateReason = '';
+
+  // Edit vendor modal
+  editVendorId: string | null = null;
+  editBusinessName = '';
+  editVendorType: VendorType | null = null;
+  vendorTypes = Object.values(VendorType);
+
   VendorStatus = VendorStatus;
+  ReinstatementStatus = ReinstatementStatus;
 
   constructor(
     private adminVendorService: AdminVendorService,
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit(): void {
+    // Skip authenticated API calls during SSR — tokens aren't available server-side,
+    // and Angular's non-destructive hydration never re-runs ngOnInit on the client,
+    // so an SSR-time failure here would leave the dashboard stuck until the component
+    // is destroyed and recreated by a later client-side navigation.
+    if (!isPlatformBrowser(this.platformId)) return;
     this.loadTab('pending');
   }
 
@@ -52,19 +71,21 @@ export class VendorManagement implements OnInit {
 
   getTabTitle(): string {
     switch (this.activeTab) {
-      case 'pending': return 'Pending Review';
-      case 'all':     return 'All Vendors';
-      case 'payouts': return 'Payout Requests';
-      default:        return 'Vendor Management';
+      case 'pending':        return 'Pending Review';
+      case 'all':            return 'All Vendors';
+      case 'payouts':        return 'Payout Requests';
+      case 'reinstatements': return 'Reinstatement Requests';
+      default:               return 'Vendor Management';
     }
   }
 
   getTabSubtitle(): string {
     switch (this.activeTab) {
-      case 'pending': return 'Review and approve new vendor applications';
-      case 'all':     return 'Manage all registered vendors and their status';
-      case 'payouts': return 'Process vendor payout requests and transactions';
-      default:        return 'Manage vendors and payouts';
+      case 'pending':        return 'Review and approve new vendor applications';
+      case 'all':            return 'Manage all registered vendors and their status';
+      case 'payouts':        return 'Process vendor payout requests and transactions';
+      case 'reinstatements': return 'Review suspended vendors\' requests to be reinstated';
+      default:               return 'Manage vendors and payouts';
     }
   }
 
@@ -86,6 +107,18 @@ export class VendorManagement implements OnInit {
       this.adminVendorService.getPendingPayouts().subscribe({
         next: (payouts) => {
           this.payouts = payouts || [];
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: onError
+      });
+      return;
+    }
+
+    if (tab === 'reinstatements') {
+      this.adminVendorService.getReinstatementRequests().subscribe({
+        next: (requests) => {
+          this.reinstatementRequests = requests || [];
           this.loading = false;
           this.cdr.detectChanges();
         },
@@ -216,6 +249,79 @@ export class VendorManagement implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  // ── Edit vendor actions ────────────────────────────────────────
+
+  openEdit(v: VendorProfile): void {
+    this.editVendorId = v.vendorId ?? null;
+    this.editBusinessName = v.businessName;
+    this.editVendorType = v.vendorType;
+  }
+
+  closeEdit(): void {
+    this.editVendorId = null;
+    this.editBusinessName = '';
+    this.editVendorType = null;
+  }
+
+  confirmEdit(): void {
+    if (!this.editVendorId) return;
+    const id = this.editVendorId;
+    const dto: AdminVendorUpdate = { businessName: this.editBusinessName, vendorType: this.editVendorType ?? undefined };
+    this.actionLoading = id;
+    this.closeEdit();
+
+    this.adminVendorService.updateVendor(id, dto).subscribe({
+      next: () => {
+        this.actionLoading = null;
+        this.loadTab(this.activeTab);
+      },
+      error: (err) => {
+        this.error = err?.error?.message || 'Update failed';
+        this.actionLoading = null;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // ── Reinstatement request actions ──────────────────────────────
+
+  openReinstateModal(id: string, approve: boolean): void {
+    this.reinstateModalId  = id;
+    this.reinstateApprove  = approve;
+    this.reinstateReason   = '';
+  }
+
+  closeReinstateModal(): void {
+    this.reinstateModalId = null;
+    this.reinstateApprove = null;
+    this.reinstateReason  = '';
+  }
+
+  confirmReinstateReview(): void {
+    if (!this.reinstateModalId || this.reinstateApprove === null) return;
+    const id      = this.reinstateModalId;
+    const approve = this.reinstateApprove;
+    const reason  = this.reinstateReason;
+    this.actionLoading = id;
+    this.closeReinstateModal();
+
+    this.adminVendorService.reviewReinstatementRequest(id, approve, reason || undefined).subscribe({
+      next: () => {
+        this.actionLoading = null;
+        this.loadTab('reinstatements');
+      },
+      error: (err) => {
+        this.error         = err?.error?.message || 'Failed to review reinstatement request';
+        this.actionLoading = null;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  trackByReinstatement(index: number, request: ReinstatementRequest): string {
+    return request.requestId ?? String(index);
   }
 
   // ── Utilities ─────────────────────────────────────────────────

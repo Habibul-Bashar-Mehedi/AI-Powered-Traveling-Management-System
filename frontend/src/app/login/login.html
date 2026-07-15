@@ -1,4 +1,4 @@
-<div class="min-h-screen flex bg-gray-50 dark:bg-slate-900">
+<div class="min-h-screen flex bg-[var(--bg-root)]">
 
   <!-- Left branding panel -->
   <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800">
@@ -12,7 +12,7 @@
             <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.519 60.519 0 003.478 2.405z" />
           </svg>
         </div>
-        <span class="text-xl font-bold tracking-tight" style="font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);">AIPTMS</span>
+        <span class="text-xl font-bold tracking-tight" style="font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);">SMTS</span>
       </a>
 
       <div class="max-w-md">
@@ -45,7 +45,7 @@
         </div>
       </div>
 
-      <p class="text-xs text-indigo-200">© 2026 AIPTMS. All rights reserved.</p>
+      <p class="text-xs text-indigo-200">© 2026 SMTS. All rights reserved.</p>
     </div>
   </div>
 
@@ -59,21 +59,21 @@
             <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.519 60.519 0 003.478 2.405z" />
           </svg>
         </div>
-        <span class="text-lg font-bold tracking-tight text-gray-900 dark:text-white">AIPTMS</span>
+        <span class="text-lg font-bold tracking-tight text-[var(--text-primary)]">SMTS</span>
       </div>
 
-      <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2" style="font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);">
+      <h2 class="text-3xl font-bold text-[var(--text-primary)] mb-2" style="font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);">
         Welcome back
       </h2>
-      <p class="text-gray-500 dark:text-gray-400 mb-8">Sign in to continue to your dashboard.</p>
+      <p class="text-[var(--text-sec)] mb-8">Sign in to continue to your dashboard.</p>
 
       <div class="mb-5">
         <label class="form-label">Email address</label>
         <div class="relative">
-          <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 dark:text-gray-500">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-[var(--text-muted)]">
             <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
           </span>
-          <input type="email" class="form-input pl-10" formControlName="email" placeholder="you@example.com" autocomplete="email">
+          <input type="email" class="form-input pl-10" formControlName="email" placeholder="you@gmail.com" autocomplete="email">
         </div>
 
         @if(email?.invalid && (email?.touched || email?.dirty)) {
@@ -87,7 +87,7 @@
       <div class="mb-6">
         <label class="form-label">Password</label>
         <div class="relative">
-          <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 dark:text-gray-500">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-[var(--text-muted)]">
             <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
           </span>
           <input type="password" class="form-input pl-10" formControlName="password" placeholder="Enter your password" autocomplete="current-password">
@@ -121,10 +121,17 @@
           @if(retryAfter) {
             <p class="mt-1 text-xs opacity-90">Please try again after: {{ retryAfter }}</p>
           }
+          @if(isEmailNotVerified) {
+            <p class="mt-2">
+              <a [routerLink]="['/verify-otp']" [queryParams]="{ email: email?.value }" class="font-semibold underline">
+                Enter your verification code
+              </a>
+            </p>
+          }
         </div>
       }
 
-      <p class="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
+      <p class="text-center mt-8 text-sm text-[var(--text-sec)]">
         Don't have an account?
         <a routerLink="/registration" class="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300">
           Create one

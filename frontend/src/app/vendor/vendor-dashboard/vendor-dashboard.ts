@@ -1,16 +1,18 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterModule, RouterOutlet } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { VendorService } from '../../services/vendor.service';
-import { VendorProfile } from '../../models/vendor.model';
+import { VendorProfile, ReinstatementRequest } from '../../models/vendor.model';
+import { ReinstatementStatus } from '../../enums/vendor.enums';
 import { FooterComponent } from '../../shared/app-footer/app-footer';
 
 @Component({
   selector: 'app-vendor-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, RouterOutlet, FooterComponent],
+  imports: [CommonModule, FormsModule, RouterModule, RouterOutlet, FooterComponent],
   templateUrl: './vendor-dashboard.html',
   styleUrls: ['./vendor-dashboard.css']
 })
@@ -20,6 +22,23 @@ export class VendorDashboard implements OnInit, OnDestroy {
   loading = false;   // start false to avoid SSR/hydration mismatch; set true in browser ngOnInit
   error: string | null = null;
   private navSyncSub?: Subscription;
+
+  // ─── Reinstatement request (suspended vendors only) ────────────────
+  reinstatementRequests: ReinstatementRequest[] = [];
+  showReinstatementForm = false;
+  reinstatementMessage = '';
+  reinstatementSubmitting = false;
+  reinstatementError = '';
+  ReinstatementStatus = ReinstatementStatus;
+
+  get hasPendingReinstatementRequest(): boolean {
+    return this.reinstatementRequests.some(r => r.status === ReinstatementStatus.PENDING);
+  }
+
+  /** Requests are loaded ordered by submittedAt desc, so index 0 is the most recent. */
+  get lastReinstatementRequest(): ReinstatementRequest | null {
+    return this.reinstatementRequests[0] ?? null;
+  }
 
   navItems = [
     { id: 'overview',  label: 'Overview',   path: '/vendor/dashboard' },
@@ -49,6 +68,9 @@ export class VendorDashboard implements OnInit, OnDestroy {
         this.loading = false;
         this.error = null;
         this.cdr.markForCheck();
+        if (v.status === 'SUSPENDED') {
+          this.loadReinstatementRequests();
+        }
       },
       error: (err) => {
         this.loading = false;
@@ -109,6 +131,48 @@ export class VendorDashboard implements OnInit, OnDestroy {
 
   trackByNavItem(index: number, item: { id: string; label: string; path: string }): string {
     return item.id;
+  }
+
+  // ─── Reinstatement request ──────────────────────────────────────────
+  loadReinstatementRequests(): void {
+    this.vendorService.getMyReinstatementRequests().subscribe({
+      next: (requests) => {
+        this.reinstatementRequests = requests || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        // Non-critical — banner still works without request history
+      }
+    });
+  }
+
+  openReinstatementForm(): void {
+    this.reinstatementMessage = '';
+    this.reinstatementError = '';
+    this.showReinstatementForm = true;
+  }
+
+  closeReinstatementForm(): void {
+    this.showReinstatementForm = false;
+  }
+
+  submitReinstatementRequest(): void {
+    if (this.reinstatementMessage.trim().length < 10 || this.reinstatementSubmitting) return;
+    this.reinstatementSubmitting = true;
+    this.reinstatementError = '';
+    this.vendorService.createReinstatementRequest(this.reinstatementMessage.trim()).subscribe({
+      next: () => {
+        this.reinstatementSubmitting = false;
+        this.showReinstatementForm = false;
+        this.loadReinstatementRequests();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.reinstatementError = err?.error?.message || 'Failed to submit reinstatement request.';
+        this.reinstatementSubmitting = false;
+        this.cdr.markForCheck();
+      }
+    });
   }
 }
 

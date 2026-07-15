@@ -1,0 +1,28 @@
+@switch (variant()) {
+  @case ('shimmer-cards') {
+    <div class="ls-cards">
+      @for (i of items; track $index) {
+        <div class="ls-card" [style.animation-delay.ms]="$index * 90"></div>
+      }
+    </div>
+  }
+  @case ('shimmer-rows') {
+    <div class="ls-rows">
+      @for (i of items; track $index) {
+        <div class="ls-row" [style.animation-delay.ms]="$index * 90">
+          <div class="ls-row-avatar"></div>
+          <div class="ls-row-lines">
+            <div class="ls-block ls-block-md"></div>
+            <div class="ls-block ls-block-sm"></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+  @default {
+    <div class="ls-spinner-wrap">
+      <span class="ls-spinner"></span>
+      @if (label()) { <span class="ls-spinner-label">{{ label() }}</span> }
+    </div>
+  }
+}

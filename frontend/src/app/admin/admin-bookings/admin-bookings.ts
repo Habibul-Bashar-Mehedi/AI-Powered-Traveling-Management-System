@@ -1,5 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AdminBookingService } from '../../services/admin-booking.service';
@@ -30,10 +30,16 @@ export class AdminBookings implements OnInit {
     private adminBookingService: AdminBookingService,
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit(): void {
+    // Skip authenticated API calls during SSR — tokens aren't available server-side,
+    // and Angular's non-destructive hydration never re-runs ngOnInit on the client,
+    // so an SSR-time failure here would leave the page stuck until the component
+    // is destroyed and recreated by a later client-side navigation.
+    if (!isPlatformBrowser(this.platformId)) return;
     this.loadSummary();
     this.loadBookings();
   }

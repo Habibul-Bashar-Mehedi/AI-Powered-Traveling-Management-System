@@ -1,16 +1,20 @@
 package aptms.services.impl;
 
 import aptms.config.CacheConfig;
+import aptms.dto.vendor.AdminVendorUpdateDTO;
 import aptms.dto.vendor.PayoutRequestDTO;
 import aptms.dto.vendor.VendorProfileDTO;
 import aptms.entities.PayoutRequest;
 import aptms.entities.User;
 import aptms.entities.Vendor;
+import aptms.entities.WalletTransaction;
 import aptms.enums.PayoutStatus;
+import aptms.enums.TransactionType;
 import aptms.enums.VendorStatus;
 import aptms.repositories.PayoutRequestRepository;
 import aptms.repositories.UserRepository;
 import aptms.repositories.VendorRepository;
+import aptms.repositories.WalletTransactionRepository;
 import aptms.services.AdminVendorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,9 +34,12 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AdminVendorServiceImpl implements AdminVendorService {
 
+    private static final int MIN_SUSPENSION_REASON_LENGTH = 10;
+
     private final VendorRepository vendorRepository;
     private final UserRepository userRepository;
     private final PayoutRequestRepository payoutRequestRepository;
+    private final WalletTransactionRepository walletTransactionRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -96,10 +103,35 @@ public class AdminVendorServiceImpl implements AdminVendorService {
         @CacheEvict(value = CacheConfig.CACHE_VENDORS_ALL,     allEntries = true)
     })
     public VendorProfileDTO suspendVendor(UUID vendorId, UUID adminUserId, String reason) {
+        if (reason == null || reason.trim().length() < MIN_SUSPENSION_REASON_LENGTH) {
+            throw new IllegalArgumentException(
+                    "Suspension reason must be at least " + MIN_SUSPENSION_REASON_LENGTH + " characters");
+        }
         Vendor vendor = getVendor(vendorId);
+        User admin = getUser(adminUserId);
         vendor.setStatus(VendorStatus.SUSPENDED);
-        vendor.setRejectionReason(reason);
+        vendor.setSuspensionReason(reason.trim());
+        vendor.setSuspendedAt(Instant.now());
+        vendor.setSuspendedBy(admin);
         log.info("Vendor {} suspended by admin {}", vendorId, adminUserId);
+        return VendorRegistrationServiceImpl.toDTO(vendorRepository.save(vendor));
+    }
+
+    @Override
+    @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = CacheConfig.CACHE_VENDORS_PENDING, allEntries = true),
+        @CacheEvict(value = CacheConfig.CACHE_VENDORS_ALL,     allEntries = true)
+    })
+    public VendorProfileDTO updateVendor(UUID vendorId, UUID adminUserId, AdminVendorUpdateDTO dto) {
+        Vendor vendor = getVendor(vendorId);
+        if (dto.getVendorType() != null) {
+            vendor.setVendorType(dto.getVendorType());
+        }
+        if (dto.getBusinessName() != null && !dto.getBusinessName().isBlank()) {
+            vendor.setBusinessName(dto.getBusinessName().trim());
+        }
+        log.info("Vendor {} updated by admin {}", vendorId, adminUserId);
         return VendorRegistrationServiceImpl.toDTO(vendorRepository.save(vendor));
     }
 
@@ -113,6 +145,9 @@ public class AdminVendorServiceImpl implements AdminVendorService {
         Vendor vendor = getVendor(vendorId);
         vendor.setStatus(VendorStatus.APPROVED);
         vendor.setRejectionReason(null);
+        vendor.setSuspensionReason(null);
+        vendor.setSuspendedAt(null);
+        vendor.setSuspendedBy(null);
         log.info("Vendor {} reinstated by admin {}", vendorId, adminUserId);
         return VendorRegistrationServiceImpl.toDTO(vendorRepository.save(vendor));
     }
@@ -136,11 +171,39 @@ public class AdminVendorServiceImpl implements AdminVendorService {
         request.setAdminNote(note);
 
         if (approve) {
-            request.setStatus(PayoutStatus.COMPLETED);
-            // Deduct from vendor wallet
             Vendor vendor = request.getVendor();
+
+            // Re-validate balance at approval time, not just at request time — it may have
+            // moved (e.g. another payout already approved) between the two.
+            if (vendor.getWalletBalance().compareTo(request.getAmount()) < 0) {
+                request.setStatus(PayoutStatus.FAILED);
+                request.setAdminNote((note == null ? "" : note + " — ")
+                        + "Auto-failed: vendor wallet balance is now insufficient.");
+                return toPayoutDTO(payoutRequestRepository.save(request));
+            }
+
+            // No real disbursement API exists for SSLCommerz (it's a collection gateway,
+            // not a payout/mass-transfer service) — this is a clearly-labeled realistic
+            // simulation: PROCESSING marks the transfer as "in flight" before settling to
+            // COMPLETED, exactly mirroring how a real bank/mobile-wallet payout would report
+            // an intermediate state.
+            request.setStatus(PayoutStatus.PROCESSING);
+
             vendor.setWalletBalance(vendor.getWalletBalance().subtract(request.getAmount()));
             vendorRepository.save(vendor);
+
+            WalletTransaction debit = new WalletTransaction();
+            debit.setVendor(vendor);
+            debit.setTransactionType(TransactionType.DEBIT);
+            debit.setAmount(request.getAmount());
+            debit.setBalanceAfter(vendor.getWalletBalance());
+            debit.setDescription("Payout " + request.getPayoutId() + " (" + request.getPayoutMethod() + ", simulated transfer)");
+            walletTransactionRepository.save(debit);
+
+            String simulatedTransferRef = "SIM-PAYOUT-" + request.getPayoutId().toString().substring(0, 8).toUpperCase();
+            request.setAdminNote((note == null ? "" : note + " — ")
+                    + "Simulated transfer ref " + simulatedTransferRef + " (no live disbursement API available).");
+            request.setStatus(PayoutStatus.COMPLETED);
         } else {
             request.setStatus(PayoutStatus.FAILED);
         }

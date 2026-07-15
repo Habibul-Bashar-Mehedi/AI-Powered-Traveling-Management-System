@@ -1,0 +1,17 @@
+@if (dialogService.pending(); as req) {
+  <app-modal
+    [open]="true"
+    [titleText]="req.title"
+    [icon]="req.danger ? '⚠️' : '❓'"
+    (closed)="dialogService.resolveWith(false)">
+
+    <p class="confirm-dialog-message">{{ req.message }}</p>
+
+    <button modal-footer type="button" class="confirm-dialog-btn confirm-dialog-btn-ghost" (click)="dialogService.resolveWith(false)">
+      {{ req.cancelLabel }}
+    </button>
+    <button modal-footer type="button" class="confirm-dialog-btn" [class.confirm-dialog-btn-danger]="req.danger" (click)="dialogService.resolveWith(true)">
+      {{ req.confirmLabel }}
+    </button>
+  </app-modal>
+}

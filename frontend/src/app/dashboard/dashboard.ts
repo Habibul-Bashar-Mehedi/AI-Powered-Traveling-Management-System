@@ -2,24 +2,28 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone, Inject, PLATFO
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
-  UserServiceRequestPayload,
-  UserServiceRequestType,
   UserBookingStatusSummary,
   VendorBookingService
 } from '../services/vendor-booking.service';
 import { VendorBooking, PublicServiceListing } from '../models/vendor.model';
-import { VendorBookingStatus, PaymentMethod, ServiceType } from '../enums/vendor.enums';
+import { VendorBookingStatus, ServiceType } from '../enums/vendor.enums';
 import { AuthService } from '../services/auth.service';
-import { DestinationService } from '../services/destination.service';
-import { Destination } from '../models/destination.model';
 import { AiChatService } from '../services/ai-chat.service';
 import { ServiceCatalogService } from '../services/service-catalog.service';
 import { BannerService } from '../services/banner.service';
 import { Banner } from '../models/banner.model';
-import { ThemeService } from '../services/theme.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { Card } from '../shared/card/card';
+import { Modal } from '../shared/modal/modal';
+import { ServiceBookingModal } from '../shared/service-booking-modal/service-booking-modal';
+import { PayNowModal } from '../shared/pay-now-modal/pay-now-modal';
+import { PaymentBookingType } from '../models/payment.model';
+import { PackageService } from '../services/package.service';
+import { PackageBookRequest, TravelPackage } from '../models/package.model';
+import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
+import { LoadingState } from '../shared/loading-state/loading-state';
 
 interface DashboardStat {
   label: string;
@@ -32,7 +36,7 @@ interface DashboardStat {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, RouterLink, Card, Modal, ServiceBookingModal, PayNowModal, LoadingState],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css'],
   host: {
@@ -45,123 +49,27 @@ export class Dashboard implements OnInit, OnDestroy {
     private ngZone: NgZone,
     private vendorBookingService: VendorBookingService,
     private authService: AuthService,
-    private destinationService: DestinationService,
     private aiChatService: AiChatService,
     private serviceCatalogService: ServiceCatalogService,
+    private packageService: PackageService,
     private bannerService: BannerService,
-    private themeService: ThemeService,
     private route: ActivatedRoute,
-    private router: Router,
+    private confirmDialog: ConfirmDialogService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
-  actionLoading: Record<string, boolean> = {};
-  actionMessage: Record<string, string> = {};
-  actionError: Record<string, string> = {};
 
   // ─── Banners (admin-managed offers) ────────────────────────────────
   banners: Banner[] = [];
   bannersLoading = false;
 
-  // ─── My Bookings ──────────────────────────────────────────────────
-  myBookings: VendorBooking[] = [];
-  myBookingsLoading = false;
-  showMyBookings = false;
-  bookingStatusFilter: VendorBookingStatus | '' = '';
+  // ─── Booking summary (feeds stats cards) ────────────────────────────
   bookingStatusSummary: UserBookingStatusSummary | null = null;
-  bookingCancelLoading: string | null = null;
-  bookingStatusOptions = Object.values(VendorBookingStatus);
-  private bookingsPollId?: ReturnType<typeof setInterval>;
-  private readonly bookingsPollMs = 15000;
 
   // ─── User Profile ───────────────────────────────────────────────
   user = {
     name: 'Traveler',
-    notifications: 0,
   };
-
-  get userInitials(): string {
-    const parts = this.user.name.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return 'T';
-    return parts.slice(0, 2).map(p => p[0]!.toUpperCase()).join('');
-  }
-
-  // ─── Notifications (derived from real booking activity) ───────────
-  notificationsOpen = false;
-
-  get notificationItems(): Array<{ id: string; icon: string; text: string; time: string; tone: 'pending' | 'confirmed' | 'rejected' }> {
-    return this.allBookings
-      .filter(b => b.bookingStatus !== VendorBookingStatus.COMPLETED)
-      .map(b => {
-        const eventTime = b.confirmedAt || b.completedAt || b.createdAt;
-        let text: string;
-        let tone: 'pending' | 'confirmed' | 'rejected';
-        let icon: string;
-        switch (b.bookingStatus) {
-          case VendorBookingStatus.CONFIRMED:
-            text = `${b.serviceName} was confirmed`;
-            tone = 'confirmed';
-            icon = '✅';
-            break;
-          case VendorBookingStatus.REJECTED:
-            text = `${b.serviceName} was rejected`;
-            tone = 'rejected';
-            icon = '⚠️';
-            break;
-          case VendorBookingStatus.CANCELLED:
-            text = `${b.serviceName} booking was cancelled`;
-            tone = 'rejected';
-            icon = '⚠️';
-            break;
-          default:
-            text = `Awaiting vendor confirmation for ${b.serviceName}`;
-            tone = 'pending';
-            icon = '⏳';
-        }
-        return { id: b.bookingId, icon, text, time: this.formatRelativeTime(eventTime), tone, sortKey: new Date(eventTime).getTime() };
-      })
-      .sort((a, b) => b.sortKey - a.sortKey)
-      .slice(0, 8);
-  }
-
-  toggleNotifications(): void {
-    this.notificationsOpen = !this.notificationsOpen;
-    this.accountMenuOpen = false;
-    this.cdr.detectChanges();
-  }
-
-  get isDarkTheme(): boolean {
-    return this.themeService.theme() === 'dark';
-  }
-
-  toggleTheme(): void {
-    this.themeService.toggleTheme();
-  }
-
-  private formatRelativeTime(iso: string): string {
-    const diffMs = Date.now() - new Date(iso).getTime();
-    const minutes = Math.floor(diffMs / 60000);
-    if (minutes < 1) return 'just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    if (days < 7) return `${days}d ago`;
-    return new Date(iso).toLocaleDateString();
-  }
-
-  // ─── Account menu ─────────────────────────────────────────────────
-  accountMenuOpen = false;
-
-  toggleAccountMenu(): void {
-    this.notificationsOpen = false;
-    this.accountMenuOpen = !this.accountMenuOpen;
-  }
-
-  logout(): void {
-    this.accountMenuOpen = false;
-    this.authService.logout().subscribe({ complete: () => this.router.navigate(['/login']) });
-  }
 
   // ─── Header date ──────────────────────────────────────────────────
   todayDate = new Date();
@@ -174,51 +82,81 @@ export class Dashboard implements OnInit, OnDestroy {
   upcomingBookings: VendorBooking[] = [];
   private readonly slideThemes = ['slide-theme-blue', 'slide-theme-cyan', 'slide-theme-amber', 'slide-theme-violet'];
 
-  // ─── Destinations ─────────────────────────────────────────────────
-  destinations: Destination[] = [];
-  destinationsLoading = false;
-
   // ─── Service catalog (real vendor listings, incl. images) ──────────
   catalogServices: PublicServiceListing[] = [];
   catalogLoading = false;
 
-  // ─── Booking modal (lets a user book more than one unit of a service) ──
+  // ─── Service catalog grouped into category tiles — selecting one filters
+  // the grid below to just that ServiceType instead of showing everything flat ──
+  selectedCategory: ServiceType | null = null;
+
+  private static readonly CATEGORY_META: Record<ServiceType, { label: string; icon: string; color: string }> = {
+    [ServiceType.HOTEL_ROOM]: { label: 'Hotels', icon: '🏨', color: 'cyan' },
+    [ServiceType.TOUR_PACKAGE]: { label: 'Tour Packages', icon: '🧭', color: 'violet' },
+    [ServiceType.TRANSPORT_ROUTE]: { label: 'Transport', icon: '🚌', color: 'amber' },
+    [ServiceType.TOURIST_SPOT]: { label: 'Tourist Spots', icon: '🗺️', color: 'rose' },
+    [ServiceType.TRADITIONAL_FOOD]: { label: 'Traditional Food', icon: '🍽️', color: 'emerald' },
+    [ServiceType.TRADITIONAL_ITEM]: { label: 'Traditional Items', icon: '🛍️', color: 'cyan' },
+    [ServiceType.MARKET]: { label: 'Markets', icon: '🏪', color: 'violet' },
+    [ServiceType.DESTINATION]: { label: 'Destinations', icon: '📍', color: 'amber' },
+    [ServiceType.TRAVEL_PACKAGE]: { label: 'Travel Packages', icon: '📦', color: 'rose' },
+  };
+
+  get serviceCategories(): { type: ServiceType; label: string; icon: string; color: string; count: number }[] {
+    const counts = new Map<ServiceType, number>();
+    for (const s of this.catalogServices) {
+      counts.set(s.serviceType, (counts.get(s.serviceType) || 0) + 1);
+    }
+    return Array.from(counts.entries()).map(([type, count]) => ({
+      type,
+      count,
+      ...Dashboard.CATEGORY_META[type]
+    }));
+  }
+
+  get filteredCatalogServices(): PublicServiceListing[] {
+    if (!this.selectedCategory) return this.catalogServices;
+    return this.catalogServices.filter(s => s.serviceType === this.selectedCategory);
+  }
+
+  get selectedCategoryLabel(): string {
+    return this.selectedCategory ? Dashboard.CATEGORY_META[this.selectedCategory].label : '';
+  }
+
+  selectCategory(type: ServiceType): void {
+    this.selectedCategory = type;
+  }
+
+  clearCategoryFilter(): void {
+    this.selectedCategory = null;
+  }
+
+  // ─── Booking modal (extracted to shared ServiceBookingModal — see openBookingModal) ──
   bookingDraft: PublicServiceListing | null = null;
-  bookingDraftQuantity = 1;
-  bookingDraftNotes = '';
-  bookingDraftSubmitting = false;
-  bookingDraftError = '';
-  private static readonly DEFAULT_MAX_QUANTITY = 20;
 
-  // ─── Payment method (simulated checkout — no live gateway integration) ──
-  readonly paymentOptions: Array<{
-    value: PaymentMethod;
-    label: string;
-    icon: string;
-    referenceLabel: string;
-    referencePlaceholder: string;
-    referenceType: 'tel' | 'text';
-    referencePattern?: string;
-  }> = [
-    { value: PaymentMethod.BKASH, label: 'bKash', icon: '📱', referenceLabel: 'bKash Number', referencePlaceholder: '01XXXXXXXXX', referenceType: 'tel', referencePattern: '^01[3-9][0-9]{8}$' },
-    { value: PaymentMethod.ROCKET, label: 'Rocket', icon: '🚀', referenceLabel: 'Rocket Number', referencePlaceholder: '01XXXXXXXXX', referenceType: 'tel', referencePattern: '^01[3-9][0-9]{8}$' },
-    { value: PaymentMethod.NAGAD, label: 'Nagad', icon: '🟠', referenceLabel: 'Nagad Number', referencePlaceholder: '01XXXXXXXXX', referenceType: 'tel', referencePattern: '^01[3-9][0-9]{8}$' },
-    { value: PaymentMethod.BANK_TRANSFER, label: 'Bank Transfer', icon: '🏦', referenceLabel: 'Account Number', referencePlaceholder: 'e.g. 1234567890', referenceType: 'text' },
-    { value: PaymentMethod.CARD, label: 'Card', icon: '💳', referenceLabel: 'Card Number', referencePlaceholder: 'e.g. 4111 1111 1111 1111', referenceType: 'text' }
-  ];
-  bookingDraftPaymentMethod: PaymentMethod | null = null;
-  bookingDraftPaymentReference = '';
+  // ─── Pay Now modal (opened right after a booking/package is reserved, unpaid) ──
+  payNowDraft: {
+    bookingType: PaymentBookingType;
+    bookingId: string;
+    bookingReference: string;
+    merchantName: string;
+    amount: number;
+    currencyCode: string;
+  } | null = null;
 
-  // ─── Booking date + live availability (prevents double-booking the same seat/room/day) ──
-  bookingDraftStartDate = '';
-  bookingDraftEndDate = '';
-  bookingDraftAvailability: number | null = null;
-  bookingDraftAvailabilityLoading = false;
-  bookingDraftAvailabilityError = '';
-  private availabilityRequestId = 0;
+  // ─── View Details modals (surface fields already present in the list payload) ──
+  detailService: PublicServiceListing | null = null;
+  detailPackage: TravelPackage | null = null;
 
-  // ─── Booking confirmation popup ─────────────────────────────────────
-  bookingConfirmation: (VendorBooking & { currencyCode?: string; vendorBusinessName?: string }) | null = null;
+  // ─── Travel packages (admin-curated bundles of real bookable services) ─────
+  packages: TravelPackage[] = [];
+  packagesLoading = false;
+
+  // ─── Package booking modal (one package = one bundle, no quantity picker) ──
+  packageBookingDraft: TravelPackage | null = null;
+  packageBookingDraftStartDate = '';
+  packageBookingDraftSubmitting = false;
+  packageBookingDraftError = '';
 
   // ─── Active nav item ──────────────────────────────────────────────
   activeNav = 'dashboard';
@@ -234,6 +172,11 @@ export class Dashboard implements OnInit, OnDestroy {
   intervalId: ReturnType<typeof setInterval> | undefined;
   private currentUserSubscription?: Subscription;
   private fragmentSubscription?: Subscription;
+  // Guards against a fast double-click/rapid-navigation destroying this
+  // component while one of the load*() calls below is still in flight — without
+  // this, the late response's callback fires on a torn-down view and throws when
+  // it calls detectChanges(), which can leave a section's *Loading flag stuck.
+  private loadSubscriptions = new Subscription();
 
   ngOnInit() {
     this.startAutoSlide();
@@ -248,29 +191,32 @@ export class Dashboard implements OnInit, OnDestroy {
       if (u?.username) {
         this.user.name = u.username;
         this.chatUsername = u.username;
-        this.cdr.detectChanges();
+        // No manual detectChanges() here: a BehaviorSubject replays its current value
+        // synchronously on subscribe, so this first emission runs nested inside
+        // ngOnInit — i.e. still inside Angular's own initial view-creation check.
+        // Forcing a recursive detectChanges() from there caused NG0100 elsewhere in
+        // this same view once other async data (e.g. notification counts) arrived.
       }
     });
     if (isPlatformBrowser(this.platformId)) {
       this.loadBookingStatusSummary();
       this.loadAllBookingsForStats();
+      // These three also require an auth token, unavailable during SSR — same
+      // reason as above. Running them unguarded during SSR previously left this
+      // data stuck empty after hydration (ngOnInit never re-runs client-side),
+      // exactly like the admin dashboard's missing-guard bug.
+      this.loadCatalogServices();
+      this.loadPackages();
+      this.loadBanners();
     }
-    this.loadDestinations();
-    this.loadCatalogServices();
-    this.loadBanners();
 
-    // Respond to the nav bar's "My Bookings" / "Packages" links every time they're
-    // clicked, not just on first load — a fragment-only navigation while already on
-    // /dashboard doesn't re-run ngOnInit, so a snapshot check here would silently do
-    // nothing on repeat clicks. Subscribing to the fragment stream fixes that.
+    // Respond to the nav bar's "Packages" link every time it's clicked, not just
+    // on first load — a fragment-only navigation while already on /dashboard
+    // doesn't re-run ngOnInit, so a snapshot check here would silently do nothing
+    // on repeat clicks. Subscribing to the fragment stream fixes that.
     this.fragmentSubscription = this.route.fragment.subscribe(fragment => {
       if (!fragment) return;
-      if (fragment === 'my-bookings' && !this.showMyBookings) {
-        this.toggleMyBookings();
-      }
       if (isPlatformBrowser(this.platformId)) {
-        // Wait a tick so conditionally-rendered content (e.g. the just-expanded
-        // bookings panel) is in the DOM before we scroll to it.
         setTimeout(() => document.getElementById(fragment)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
       }
     });
@@ -280,7 +226,7 @@ export class Dashboard implements OnInit, OnDestroy {
     if (this.intervalId) clearInterval(this.intervalId);
     this.fragmentSubscription?.unsubscribe();
     this.currentUserSubscription?.unsubscribe();
-    this.stopBookingsPolling();
+    this.loadSubscriptions.unsubscribe();
   }
 
   startAutoSlide() {
@@ -290,18 +236,20 @@ export class Dashboard implements OnInit, OnDestroy {
   next() {
     const len = this.upcomingBookings.length || 1;
     this.currentIndex = (this.currentIndex + 1) % len;
-    this.cdr.detectChanges();
+    // No manual detectChanges() here: setInterval/click handlers are already
+    // zone-patched, so zone.js schedules change detection for us. Forcing an
+    // extra synchronous detectChanges() on top of that raced with other async
+    // updates elsewhere in this view (e.g. a child component's fetch-based HTTP
+    // response landing in the same tick) and caused NG0100.
   }
 
   prev() {
     const len = this.upcomingBookings.length || 1;
     this.currentIndex = (this.currentIndex - 1 + len) % len;
-    this.cdr.detectChanges();
   }
 
   goToSlide(i: number) {
     this.currentIndex = i;
-    this.cdr.detectChanges();
   }
 
   slideTheme(i: number): string {
@@ -358,9 +306,10 @@ export class Dashboard implements OnInit, OnDestroy {
         this.messages.push({ sender: 'bot', text: botText, timestamp: new Date() });
         this.saveChatHistory();
       });
-    } catch {
+    } catch (err: unknown) {
+      const errMsg = (err as any)?.error?.message || (err as any)?.message || 'Connection error. Please check your network and try again.';
       this.ngZone.run(() => {
-        this.messages.push({ sender: 'bot', text: '⚠️ Connection error. Please check your network and try again.', timestamp: new Date() });
+        this.messages.push({ sender: 'bot', text: '⚠️ ' + errMsg, timestamp: new Date() });
       });
     } finally {
       this.ngZone.run(() => {
@@ -376,17 +325,23 @@ export class Dashboard implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  clearChat() {
-    if (confirm('Delete all chat history?')) {
-      this.messages = [];
-      if (isPlatformBrowser(this.platformId)) localStorage.removeItem('chatHist');
-      this.messages.push({
-        sender: 'bot',
-        text: '️ Chat cleared. Ready to help you plan your next adventure!',
-        timestamp: new Date(),
-      });
-      this.cdr.detectChanges();
-    }
+  async clearChat() {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Clear chat history?',
+      message: 'This deletes your entire conversation with the AI assistant. This cannot be undone.',
+      confirmLabel: 'Clear Chat',
+      danger: true
+    });
+    if (!ok) return;
+
+    this.messages = [];
+    if (isPlatformBrowser(this.platformId)) localStorage.removeItem('chatHist');
+    this.messages.push({
+      sender: 'bot',
+      text: '️ Chat cleared. Ready to help you plan your next adventure!',
+      timestamp: new Date(),
+    });
+    this.cdr.detectChanges();
   }
 
   onEnterPress(event: any) {
@@ -430,269 +385,169 @@ export class Dashboard implements OnInit, OnDestroy {
     this.activeNav = id;
   }
 
-  onDestinationAction(dest: Destination): void {
-    this.submitServiceRequest('EXPLORE_TOURIST_PLACES', dest.name, `Exploration request for ${dest.name}, ${dest.region}.`);
-  }
-
-  // ─── Destinations ────────────────────────────────────────────────
-  loadDestinations(): void {
-    this.destinationsLoading = true;
-    this.destinationService.getAll().subscribe({
-      next: (destinations) => {
-        this.destinations = destinations;
-        this.destinationsLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.destinationsLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
   // ─── Service catalog ─────────────────────────────────────────────
   loadCatalogServices(): void {
     this.catalogLoading = true;
-    this.serviceCatalogService.getActiveServices().subscribe({
-      next: (page) => {
+    this.loadSubscriptions.add(this.serviceCatalogService.getActiveServices().subscribe({
+      next: (page) => this.applyViewState(() => {
         this.catalogServices = page.content;
         this.catalogLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
+      }),
+      error: () => this.applyViewState(() => {
         this.catalogLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
+      })
+    }));
   }
 
-  // ─── Booking modal (choose date, quantity, then confirm) ────────────────
-  get bookingDraftIsHotel(): boolean {
-    return this.bookingDraft?.serviceType === ServiceType.HOTEL_ROOM;
+  // ─── Travel packages ──────────────────────────────────────────────────
+  loadPackages(): void {
+    this.packagesLoading = true;
+    this.loadSubscriptions.add(this.packageService.getPublishedPackages().subscribe({
+      next: (page) => this.applyViewState(() => {
+        this.packages = page.content;
+        this.packagesLoading = false;
+      }),
+      error: () => this.applyViewState(() => {
+        this.packagesLoading = false;
+      })
+    }));
   }
 
-  get minBookingDate(): string {
-    return new Date().toISOString().slice(0, 10);
+  packageSubtitle(pkg: TravelPackage): string {
+    return `${pkg.currencyCode} ${pkg.totalPrice} · ${pkg.components.length} component${pkg.components.length === 1 ? '' : 's'}`;
   }
 
-  get bookingDraftMaxQuantity(): number {
-    const serviceMax = this.bookingDraft?.maxCapacity && this.bookingDraft.maxCapacity > 0
-      ? this.bookingDraft.maxCapacity
-      : Dashboard.DEFAULT_MAX_QUANTITY;
-    return this.bookingDraftAvailability !== null
-      ? Math.min(serviceMax, this.bookingDraftAvailability)
-      : serviceMax;
+  openPackageDetails(pkg: TravelPackage): void {
+    this.detailPackage = pkg;
   }
 
-  get bookingDraftUnitLabel(): string {
-    switch (this.bookingDraft?.pricingUnit) {
-      case 'PER_NIGHT': return 'Night(s)';
-      case 'PER_PERSON': return 'Traveler(s)';
-      case 'PER_SEAT': return 'Seat(s)';
-      case 'PER_TRIP': return 'Trip(s)';
-      default: return 'Unit(s)';
-    }
+  closePackageDetails(): void {
+    this.detailPackage = null;
   }
 
-  get bookingDraftTotal(): number {
-    return (this.bookingDraft?.basePrice ?? 0) * this.bookingDraftQuantity;
+  bookPackageFromDetails(pkg: TravelPackage): void {
+    this.detailPackage = null;
+    this.openPackageBookingModal(pkg);
   }
 
-  get isBookingDateValid(): boolean {
-    if (!this.bookingDraftStartDate) return false;
-    if (this.bookingDraftIsHotel) {
-      return !!this.bookingDraftEndDate && this.bookingDraftEndDate >= this.bookingDraftStartDate;
-    }
-    return true;
+  openPackageBookingModal(pkg: TravelPackage): void {
+    this.packageBookingDraft = pkg;
+    this.packageBookingDraftStartDate = this.minBookingDate;
+    this.packageBookingDraftSubmitting = false;
+    this.packageBookingDraftError = '';
   }
 
-  openBookingModal(service: PublicServiceListing): void {
-    this.bookingDraft = service;
-    this.bookingDraftQuantity = 1;
-    this.bookingDraftNotes = '';
-    this.bookingDraftError = '';
-    this.bookingDraftSubmitting = false;
-    this.bookingDraftPaymentMethod = null;
-    this.bookingDraftPaymentReference = '';
-    this.bookingDraftAvailability = null;
-    this.bookingDraftAvailabilityError = '';
-    this.bookingDraftStartDate = this.minBookingDate;
-    this.bookingDraftEndDate = '';
-    this.onBookingDateChange();
+  closePackageBookingModal(): void {
+    if (this.packageBookingDraftSubmitting) return;
+    this.packageBookingDraft = null;
   }
 
-  closeBookingModal(): void {
-    if (this.bookingDraftSubmitting) return;
-    this.bookingDraft = null;
+  get canConfirmPackageBooking(): boolean {
+    return !!this.packageBookingDraftStartDate
+      && !this.packageBookingDraftSubmitting;
   }
 
-  onBookingDateChange(): void {
-    this.bookingDraftError = '';
-    if (!this.isBookingDateValid) {
-      this.bookingDraftAvailability = null;
-      return;
-    }
-    this.refreshAvailability();
-  }
+  confirmPackageBooking(): void {
+    const pkg = this.packageBookingDraft;
+    if (!pkg || !pkg.packageId || this.packageBookingDraftSubmitting) return;
 
-  private refreshAvailability(): void {
-    const service = this.bookingDraft;
-    if (!service || !this.isBookingDateValid) return;
-
-    const requestId = ++this.availabilityRequestId;
-    this.bookingDraftAvailabilityLoading = true;
-    this.bookingDraftAvailabilityError = '';
+    this.packageBookingDraftSubmitting = true;
+    this.packageBookingDraftError = '';
     this.cdr.detectChanges();
 
-    const endDate = this.bookingDraftIsHotel ? this.bookingDraftEndDate : undefined;
-    this.serviceCatalogService.getAvailability(service.serviceId, this.bookingDraftStartDate, endDate).subscribe({
-      next: (res) => {
-        if (requestId !== this.availabilityRequestId) return; // a newer date change superseded this response
-        this.bookingDraftAvailabilityLoading = false;
-        this.bookingDraftAvailability = res.available;
-        this.setBookingDraftQuantity(this.bookingDraftQuantity);
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        if (requestId !== this.availabilityRequestId) return;
-        this.bookingDraftAvailabilityLoading = false;
-        this.bookingDraftAvailability = null;
-        this.bookingDraftAvailabilityError = err?.error?.message || 'Could not check availability for this date.';
-        this.cdr.detectChanges();
-      }
-    });
-  }
+    const request: PackageBookRequest = {
+      startDate: this.packageBookingDraftStartDate
+    };
 
-  decrementBookingQuantity(): void {
-    this.setBookingDraftQuantity(this.bookingDraftQuantity - 1);
-  }
-
-  incrementBookingQuantity(): void {
-    this.setBookingDraftQuantity(this.bookingDraftQuantity + 1);
-  }
-
-  setBookingDraftQuantity(value: number): void {
-    const max = Math.max(this.bookingDraftMaxQuantity, 0);
-    if (!Number.isFinite(value)) value = 1;
-    this.bookingDraftQuantity = max === 0 ? 0 : Math.min(Math.max(Math.round(value), 1), max);
-  }
-
-  get selectedPaymentOption() {
-    return this.paymentOptions.find(o => o.value === this.bookingDraftPaymentMethod) ?? null;
-  }
-
-  selectPaymentMethod(method: PaymentMethod): void {
-    if (this.bookingDraftPaymentMethod !== method) {
-      this.bookingDraftPaymentReference = '';
-    }
-    this.bookingDraftPaymentMethod = method;
-    this.bookingDraftError = '';
-  }
-
-  get isPaymentReferenceValid(): boolean {
-    const option = this.selectedPaymentOption;
-    if (!option) return false;
-    const value = this.bookingDraftPaymentReference.trim();
-    if (!value) return false;
-    return option.referencePattern ? new RegExp(option.referencePattern).test(value) : true;
-  }
-
-  get canConfirmBooking(): boolean {
-    return this.isBookingDateValid
-      && !this.bookingDraftAvailabilityLoading
-      && this.bookingDraftAvailability !== null
-      && this.bookingDraftAvailability > 0
-      && this.bookingDraftQuantity > 0
-      && this.bookingDraftQuantity <= this.bookingDraftAvailability
-      && !!this.bookingDraftPaymentMethod
-      && this.isPaymentReferenceValid
-      && !this.bookingDraftSubmitting;
-  }
-
-  confirmBooking(): void {
-    const service = this.bookingDraft;
-    if (!service || this.bookingDraftSubmitting) return;
-
-    if (!this.isBookingDateValid) {
-      this.bookingDraftError = this.bookingDraftIsHotel
-        ? 'Please select a valid check-in and check-out date.'
-        : 'Please select a booking date.';
-      return;
-    }
-    if (this.bookingDraftAvailability === null) {
-      this.bookingDraftError = 'Still checking availability for this date — please wait a moment.';
-      return;
-    }
-    if (this.bookingDraftAvailability <= 0) {
-      this.bookingDraftError = 'This service is fully booked for the selected date(s). Try another date.';
-      return;
-    }
-    if (this.bookingDraftQuantity > this.bookingDraftAvailability) {
-      this.bookingDraftError = `Only ${this.bookingDraftAvailability} left for the selected date(s).`;
-      return;
-    }
-    if (!this.bookingDraftPaymentMethod) {
-      this.bookingDraftError = 'Please select a payment method.';
-      return;
-    }
-    if (!this.isPaymentReferenceValid) {
-      this.bookingDraftError = `Enter a valid ${this.selectedPaymentOption?.referenceLabel.toLowerCase()}.`;
-      return;
-    }
-
-    this.bookingDraftSubmitting = true;
-    this.bookingDraftError = '';
-    this.cdr.detectChanges();
-
-    this.serviceCatalogService.bookService(service.serviceId, {
-      startDate: this.bookingDraftStartDate,
-      endDate: this.bookingDraftIsHotel ? this.bookingDraftEndDate : undefined,
-      quantity: this.bookingDraftQuantity,
-      specialRequests: this.bookingDraftNotes.trim() || undefined,
-      paymentMethod: this.bookingDraftPaymentMethod,
-      paymentReference: this.bookingDraftPaymentReference.trim()
-    }).subscribe({
+    this.packageService.bookPackage(pkg.packageId, request).subscribe({
       next: (booking) => {
-        this.bookingDraftSubmitting = false;
-        this.bookingDraft = null;
-        this.bookingConfirmation = {
-          ...booking,
-          currencyCode: service.currencyCode,
-          vendorBusinessName: service.vendorBusinessName
+        this.packageBookingDraftSubmitting = false;
+        this.packageBookingDraft = null;
+        this.payNowDraft = {
+          bookingType: 'PACKAGE_BOOKING',
+          bookingId: booking.packageBookingId,
+          bookingReference: booking.packageBookingId,
+          merchantName: booking.packageName,
+          amount: booking.totalGrossAmount,
+          currencyCode: pkg.currencyCode || 'BDT'
         };
         this.refreshBookingsAfterMutation();
         this.cdr.detectChanges();
       },
       error: (err) => {
-        this.bookingDraftSubmitting = false;
-        this.bookingDraftError = err?.error?.message || 'Failed to book this service. Please try again.';
-        // Someone else may have booked the remaining capacity between our last check and
-        // this submit — re-check so the quantity cap on screen reflects reality.
-        this.refreshAvailability();
+        this.packageBookingDraftSubmitting = false;
+        this.packageBookingDraftError = err?.error?.message || 'Failed to book this package. Please try again.';
         this.cdr.detectChanges();
       }
     });
   }
 
-  closeBookingConfirmation(): void {
-    this.bookingConfirmation = null;
+  // ─── Booking modal (delegated to shared ServiceBookingModal) ────────────
+  get minBookingDate(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  openBookingModal(service: PublicServiceListing): void {
+    this.bookingDraft = service;
+  }
+
+  closeBookingModal(): void {
+    this.bookingDraft = null;
+  }
+
+  onServiceBooked(booking: VendorBooking): void {
+    const service = this.bookingDraft;
+    this.bookingDraft = null;
+    this.payNowDraft = {
+      bookingType: 'VENDOR_BOOKING',
+      bookingId: booking.bookingId,
+      bookingReference: booking.bookingId,
+      merchantName: service?.vendorBusinessName || booking.vendorBusinessName || booking.serviceName,
+      amount: booking.grossAmount,
+      currencyCode: service?.currencyCode || 'BDT'
+    };
+    this.refreshBookingsAfterMutation();
+    this.cdr.detectChanges();
+  }
+
+  closePayNowModal(): void {
+    this.payNowDraft = null;
   }
 
   onEscapeKey(): void {
-    if (this.bookingConfirmation) {
-      this.closeBookingConfirmation();
-    } else if (this.bookingDraft) {
-      this.closeBookingModal();
+    if (this.payNowDraft) {
+      this.closePayNowModal();
+    } else if (this.packageBookingDraft) {
+      this.closePackageBookingModal();
+    } else if (this.detailService) {
+      this.closeServiceDetails();
+    } else if (this.detailPackage) {
+      this.closePackageDetails();
     }
   }
 
-  viewMyBookingsFromConfirmation(): void {
-    this.bookingConfirmation = null;
-    if (!this.showMyBookings) {
-      this.toggleMyBookings();
-    }
-    if (!isPlatformBrowser(this.platformId)) return;
-    document.getElementById('my-bookings')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // ─── Service catalog card details ────────────────────────────────
+  serviceSubtitle(service: PublicServiceListing): string {
+    return `${service.vendorBusinessName} · ${service.currencyCode} ${service.basePrice.toFixed(2)} / ${service.pricingUnit}`;
+  }
+
+  servicePackageBadge(service: PublicServiceListing): string | null {
+    return service.packageItems && service.packageItems.length > 0
+      ? `📦 ${service.packageItems.length}-stop package`
+      : null;
+  }
+
+  openServiceDetails(service: PublicServiceListing): void {
+    this.detailService = service;
+  }
+
+  closeServiceDetails(): void {
+    this.detailService = null;
+  }
+
+  bookFromDetails(service: PublicServiceListing): void {
+    this.detailService = null;
+    this.openBookingModal(service);
   }
 
   resolveImageUrl(url: string | null | undefined): string {
@@ -704,17 +559,15 @@ export class Dashboard implements OnInit, OnDestroy {
   // ─── Banners (admin-managed offers) ────────────────────────────
   loadBanners(): void {
     this.bannersLoading = true;
-    this.bannerService.getActiveBanners().subscribe({
-      next: (banners) => {
+    this.loadSubscriptions.add(this.bannerService.getActiveBanners().subscribe({
+      next: (banners) => this.applyViewState(() => {
         this.banners = banners || [];
         this.bannersLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
+      }),
+      error: () => this.applyViewState(() => {
         this.bannersLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
+      })
+    }));
   }
 
   bannerCtaClick(banner: Banner): void {
@@ -730,32 +583,50 @@ export class Dashboard implements OnInit, OnDestroy {
   // ─── My Bookings ───────────────────────────────────────────────
   loadBookingStatusSummary(): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    this.vendorBookingService.getMyBookingStatusSummary().subscribe({
-      next: (summary) => {
+    this.loadSubscriptions.add(this.vendorBookingService.getMyBookingStatusSummary().subscribe({
+      next: (summary) => this.applyViewState(() => {
         this.bookingStatusSummary = summary;
-        this.user.notifications = summary.counts?.PENDING ?? 0;
         this.buildStats();
-        this.cdr.detectChanges();
-      },
+      }),
       error: () => {
         // Non-critical — dashboard still works without summary counts
       }
-    });
+    }));
   }
 
   private loadAllBookingsForStats(): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    this.vendorBookingService.getMyBookings().subscribe({
-      next: (bookings) => {
+    this.loadSubscriptions.add(this.vendorBookingService.getMyBookings().subscribe({
+      next: (bookings) => this.applyViewState(() => {
         this.allBookings = bookings;
         this.buildUpcomingBookings();
         this.buildStats();
-        this.cdr.detectChanges();
-      },
+      }),
       error: () => {
         // Non-critical — dashboard still works without stats/upcoming trips
       }
-    });
+    }));
+  }
+
+  /**
+   * Applies an HTTP-driven state mutation and forces a view update.
+   *
+   * This app's HttpClient uses withFetch(), and fetch() responses can resolve
+   * outside Angular's zone (documented elsewhere in this file, in sendMessage()) —
+   * zone.js then never schedules a tick, so without an explicit detectChanges()
+   * here the fetched data silently never renders. Confirmed by removing this call
+   * entirely: catalog services/destinations/banners kept showing their loading
+   * state forever despite the HTTP request completing successfully.
+   *
+   * Note: this can still occasionally produce a harmless NG0100
+   * (ExpressionChangedAfterItHasBeenCheckedError) console warning in dev mode if
+   * two of these land close together — that check is stripped from production
+   * builds entirely, so it never reaches real users. Correct rendering matters
+   * more than a dev-console warning, so detectChanges() stays.
+   */
+  private applyViewState(update: () => void): void {
+    update();
+    this.cdr.detectChanges();
   }
 
   private buildUpcomingBookings(): void {
@@ -806,89 +677,8 @@ export class Dashboard implements OnInit, OnDestroy {
     ];
   }
 
-  loadMyBookings(silent = false): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    if (!silent) {
-      this.myBookingsLoading = true;
-      this.cdr.detectChanges();
-    }
-    const status = this.bookingStatusFilter
-      ? (this.bookingStatusFilter as VendorBookingStatus)
-      : undefined;
-
-    this.vendorBookingService.getMyBookings(status).subscribe({
-      next: (bookings) => {
-        this.myBookings = bookings;
-        this.myBookingsLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.myBookingsLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  toggleMyBookings(): void {
-    this.showMyBookings = !this.showMyBookings;
-    this.cdr.detectChanges();
-    if (this.showMyBookings) {
-      this.loadMyBookings();
-      this.startBookingsPolling();
-      return;
-    }
-    this.stopBookingsPolling();
-    // Clear the #my-bookings fragment so a page reload doesn't silently re-expand
-    // the panel via the ngOnInit deep-link check below.
-    this.router.navigate([], { relativeTo: this.route, fragment: undefined, replaceUrl: true });
-  }
-
-  onBookingStatusFilterChange(): void {
-    this.loadMyBookings();
-  }
-
-  onStatusChipClick(status: VendorBookingStatus): void {
-    this.bookingStatusFilter = this.bookingStatusFilter === status ? '' : status;
-    this.showMyBookings = true;
-    this.cdr.detectChanges();
-    this.loadMyBookings();
-    if (!this.bookingsPollId) {
-      this.startBookingsPolling();
-    }
-  }
-
-  statusCount(status: VendorBookingStatus): number {
-    return this.bookingStatusSummary?.counts?.[status] ?? 0;
-  }
-
-  canCancelBooking(status: VendorBookingStatus): boolean {
-    return status === VendorBookingStatus.PENDING || status === VendorBookingStatus.CONFIRMED;
-  }
-
-  cancelMyBooking(booking: VendorBooking): void {
-    const reason = 'Cancelled from user dashboard';
-    this.bookingCancelLoading = booking.bookingId;
-    this.vendorBookingService.cancelMyBooking(booking.bookingId, reason).subscribe({
-      next: () => {
-        this.bookingCancelLoading = null;
-        this.refreshBookingsAfterMutation();
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.bookingCancelLoading = null;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
   bookingStatusLabel(status: string): string {
     return status.charAt(0) + status.slice(1).toLowerCase();
-  }
-
-  paymentMethodDisplay(method: string | undefined | null): string {
-    if (!method) return '—';
-    const option = this.paymentOptions.find(o => o.value === method);
-    return option ? `${option.icon} ${option.label}` : method;
   }
 
   packageItemIcon(itemType: string): string {
@@ -912,63 +702,8 @@ export class Dashboard implements OnInit, OnDestroy {
     }
   }
 
-  refreshBookings(): void {
-    this.refreshBookingsAfterMutation();
-  }
-
   private refreshBookingsAfterMutation(): void {
     this.loadBookingStatusSummary();
     this.loadAllBookingsForStats();
-    if (this.showMyBookings) {
-      this.loadMyBookings(true);
-    }
-  }
-
-  private startBookingsPolling(): void {
-    this.stopBookingsPolling();
-    if (!isPlatformBrowser(this.platformId)) return;
-    this.bookingsPollId = setInterval(() => {
-      if (this.showMyBookings) {
-        this.loadMyBookings(true);
-        this.loadBookingStatusSummary();
-      }
-    }, this.bookingsPollMs);
-  }
-
-  private stopBookingsPolling(): void {
-    if (this.bookingsPollId) {
-      clearInterval(this.bookingsPollId);
-      this.bookingsPollId = undefined;
-    }
-  }
-
-  private submitServiceRequest(requestType: UserServiceRequestType, key: string, note: string): void {
-    const payload: UserServiceRequestPayload = {
-      requestType,
-      title: key,
-      quantity: 1,
-      specialRequests: note
-    };
-
-    this.actionLoading[key] = true;
-    this.actionMessage[key] = '';
-    this.actionError[key] = '';
-
-    this.vendorBookingService.createUserServiceRequest(payload).subscribe({
-      next: () => {
-        this.actionLoading[key] = false;
-        this.actionMessage[key] = 'Request sent. Vendor will review and respond from the vendor dashboard.';
-        this.refreshBookingsAfterMutation();
-        if (!this.bookingsPollId) {
-          this.startBookingsPolling();
-        }
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.actionLoading[key] = false;
-        this.actionError[key] = err?.error?.message || 'Could not submit request right now.';
-        this.cdr.detectChanges();
-      }
-    });
   }
 }

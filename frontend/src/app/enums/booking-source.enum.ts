@@ -1,0 +1,4 @@
+export enum BookingSource {
+  HOTEL_DIRECT = 'HOTEL_DIRECT',
+  VENDOR_SERVICE = 'VENDOR_SERVICE'
+}

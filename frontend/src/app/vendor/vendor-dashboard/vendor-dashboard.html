@@ -12,7 +12,7 @@
                 <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.519 60.519 0 003.478 2.405z" />
               </svg>
             </div>
-            <span class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">AIPTMS</span>
+            <span class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">SMTS</span>
           </a>
 
           <div class="hidden md:flex md:items-center md:gap-6">
@@ -210,7 +210,59 @@
         <line x1="12" y1="9" x2="12" y2="13"/>
         <line x1="12" y1="17" x2="12.01" y2="17"/>
       </svg>
-      <span>Your account is suspended. Please contact support for assistance.</span>
+      <div class="suspended-body">
+        <span>
+          Your account was suspended{{ vendor?.suspendedAt ? ' on ' + (vendor?.suspendedAt | date:'mediumDate') : '' }}.
+          @if (vendor?.suspensionReason) {
+            <span> Reason: {{ vendor?.suspensionReason }}</span>
+          }
+          New services and booking confirmations/rejections are blocked until reinstated.
+        </span>
+
+        @if (hasPendingReinstatementRequest) {
+          <p class="reinstatement-pending-note">
+            A reinstatement request is pending admin review since
+            {{ reinstatementRequests[0].submittedAt | date:'medium' }}.
+          </p>
+        } @else {
+          @if (lastReinstatementRequest?.status === ReinstatementStatus.REJECTED) {
+            <p class="reinstatement-rejected-note">
+              Your last request ({{ lastReinstatementRequest?.reviewedAt | date:'mediumDate' }}) was rejected.
+              @if (lastReinstatementRequest?.rejectionReason) {
+                <span> Reason: {{ lastReinstatementRequest?.rejectionReason }}</span>
+              }
+            </p>
+          }
+          <button type="button" class="btn-reinstate-request" (click)="openReinstatementForm()">
+            Request Reinstatement
+          </button>
+        }
+
+        @if (showReinstatementForm) {
+          <div class="reinstatement-form">
+            <label class="form-label" for="reinstatementMessage">Why should your account be reinstated?</label>
+            <textarea
+              id="reinstatementMessage"
+              class="form-textarea"
+              rows="4"
+              [(ngModel)]="reinstatementMessage"
+              placeholder="Explain the steps you've taken and why your account should be reinstated (min. 10 characters)…"></textarea>
+            @if (reinstatementError) {
+              <p class="reinstatement-error">{{ reinstatementError }}</p>
+            }
+            <div class="reinstatement-form-actions">
+              <button type="button" class="btn-ghost" (click)="closeReinstatementForm()">Cancel</button>
+              <button
+                type="button"
+                class="btn-reinstate-request"
+                [disabled]="reinstatementMessage.trim().length < 10 || reinstatementSubmitting"
+                (click)="submitReinstatementRequest()">
+                {{ reinstatementSubmitting ? 'Submitting…' : 'Submit Request' }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
     </div>
 
     <router-outlet></router-outlet>

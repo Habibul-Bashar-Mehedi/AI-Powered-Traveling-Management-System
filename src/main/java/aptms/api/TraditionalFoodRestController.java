@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 import static aptms.constants.EntityConstants.*;
 
@@ -26,15 +27,19 @@ public class TraditionalFoodRestController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<TraditionalFood>> getAllTraditionalFoods() {
-        List<TraditionalFood> foods = traditionalFoodService.getAllTraditionalFood();
+    public ResponseEntity<List<TraditionalFood>> getAllTraditionalFoods(
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
+            @RequestParam(required = false) Double radiusKm,
+            @RequestParam(required = false) Long destinationId) {
+        List<TraditionalFood> foods = traditionalFoodService.getNearby(lat, lng, radiusKm, destinationId);
         return ResponseEntity.ok(foods);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<String> updateTraditionalFood(@PathVariable long id, @RequestBody TraditionalFoodUpdateRequest request) {
-        traditionalFoodService.updateTraditionalFood(id, request.dishName, request.description, 
-                request.culturalContext, request.priceRange, request.recommendedLocation);
+        traditionalFoodService.updateTraditionalFood(id, request.dishName, request.description,
+                request.culturalContext, request.priceRange, request.recommendedLocation, request.linkedServiceId);
         return ResponseEntity.ok(String.format(ENTITY_UPDATED_MESSAGE, TRADITIONAL_FOOD));
     }
 
@@ -51,5 +56,6 @@ public class TraditionalFoodRestController {
         public String culturalContext;
         public String priceRange;
         public String recommendedLocation;
+        public UUID linkedServiceId;
     }
 }

@@ -4,22 +4,22 @@ import { isPlatformBrowser } from '@angular/common';
 /**
  * TokenStorageService
  * 
- * Securely manages JWT tokens with XSS prevention strategy:
- * - Access tokens stored in memory only (not persisted) - prevents XSS attacks from stealing long-lived tokens
- * - Refresh tokens stored in sessionStorage (not localStorage) - cleared on tab close, reducing exposure window
+ * Manages JWT tokens using sessionStorage for persistence across page refreshes:
+ * - Access tokens stored in sessionStorage so login survives page refresh
+ * - Refresh tokens stored in sessionStorage (not localStorage) - cleared on tab close
  * - Never use localStorage for tokens (persistent XSS risk)
  * 
  * Security Rationale:
- * - Memory-only access tokens mean XSS attacks can only steal tokens valid for 15 minutes
- * - SessionStorage refresh tokens are cleared when browser tab closes
- * - This approach balances security with usability (no re-login on page refresh within same session)
+ * - sessionStorage is scoped to the current tab and cleared on tab close
+ * - This prevents persistent XSS from accessing tokens after the tab is closed
+ * - In-memory-only access tokens cause logout on every refresh, which is worse UX
  */
 @Injectable({
   providedIn: 'root'
 })
 export class TokenStorageService {
   
-  private accessToken: string | null = null;
+  private readonly ACCESS_TOKEN_KEY = 'access_token';
   private readonly REFRESH_TOKEN_KEY = 'refresh_token';
   private isBrowser: boolean;
   
@@ -28,23 +28,26 @@ export class TokenStorageService {
   }
   
   /**
-   * Store tokens (access in memory, refresh in sessionStorage)
-   * @param accessToken JWT access token (15 min TTL)
-   * @param refreshToken Refresh token (7 day TTL)
+   * Store tokens in sessionStorage
+   * @param accessToken JWT access token
+   * @param refreshToken Refresh token
    */
   setTokens(accessToken: string, refreshToken: string): void {
-    this.accessToken = accessToken;
     if (this.isBrowser) {
+      sessionStorage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
       sessionStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
     }
   }
   
   /**
-   * Get access token from memory
+   * Get access token from sessionStorage
    * @returns Access token or null if not set
    */
   getAccessToken(): string | null {
-    return this.accessToken;
+    if (this.isBrowser) {
+      return sessionStorage.getItem(this.ACCESS_TOKEN_KEY);
+    }
+    return null;
   }
   
   /**
@@ -62,8 +65,8 @@ export class TokenStorageService {
    * Clear all tokens (logout)
    */
   clearTokens(): void {
-    this.accessToken = null;
     if (this.isBrowser) {
+      sessionStorage.removeItem(this.ACCESS_TOKEN_KEY);
       sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
     }
   }

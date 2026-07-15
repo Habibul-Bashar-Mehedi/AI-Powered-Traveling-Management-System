@@ -14,6 +14,8 @@ public record UserManagementResponse(
         Integer failedLoginAttempts,
         Instant lockoutUntil,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        UUID vendorId,
+        String vendorType
 ) {
 }

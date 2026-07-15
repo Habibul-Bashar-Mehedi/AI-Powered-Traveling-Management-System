@@ -6,6 +6,7 @@ import aptms.entities.Vendor;
 import aptms.entities.VendorBooking;
 import aptms.enums.CancelledBy;
 import aptms.enums.VendorBookingStatus;
+import aptms.enums.VendorStatus;
 import aptms.repositories.UserRepository;
 import aptms.repositories.VendorBookingRepository;
 import aptms.repositories.VendorRepository;
@@ -54,10 +55,14 @@ public class VendorBookingServiceImpl implements VendorBookingService {
     @Transactional
     public VendorBookingDTO confirmBooking(UUID userId, UUID bookingId) {
         Vendor vendor = getVendorByUserId(userId);
+        assertNotSuspended(vendor);
         VendorBooking booking = getBookingForVendor(bookingId, vendor.getVendorId());
 
         if (booking.getBookingStatus() != VendorBookingStatus.PENDING) {
             throw new IllegalStateException("Booking is not in PENDING state");
+        }
+        if (booking.getPaymentStatus() != aptms.enums.VendorPaymentStatus.PAID) {
+            throw new IllegalStateException("This booking has not been paid yet and cannot be confirmed.");
         }
         booking.setBookingStatus(VendorBookingStatus.CONFIRMED);
         booking.setConfirmedAt(Instant.now());
@@ -74,6 +79,7 @@ public class VendorBookingServiceImpl implements VendorBookingService {
     @Transactional
     public VendorBookingDTO rejectBooking(UUID userId, UUID bookingId, String reason) {
         Vendor vendor = getVendorByUserId(userId);
+        assertNotSuspended(vendor);
         VendorBooking booking = getBookingForVendor(bookingId, vendor.getVendorId());
 
         if (booking.getBookingStatus() != VendorBookingStatus.PENDING) {
@@ -164,6 +170,14 @@ public class VendorBookingServiceImpl implements VendorBookingService {
                 .orElseThrow(() -> new IllegalArgumentException("Vendor not found for user: " + userId));
     }
 
+    private void assertNotSuspended(Vendor vendor) {
+        if (vendor.getStatus() == VendorStatus.SUSPENDED) {
+            throw new IllegalStateException(
+                    "Your vendor account is suspended and cannot confirm or reject bookings. " +
+                    "Request reinstatement from your dashboard.");
+        }
+    }
+
     private VendorBooking getBookingForVendor(UUID bookingId, UUID vendorId) {
         return bookingRepository.findByBookingIdAndVendorVendorId(bookingId, vendorId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found: " + bookingId));
@@ -194,6 +208,8 @@ public class VendorBookingServiceImpl implements VendorBookingService {
         dto.setPaymentMethod(b.getPaymentMethod());
         dto.setPaymentReference(maskPaymentReference(b.getPaymentReference()));
         dto.setSpecialRequests(b.getSpecialRequests());
+        dto.setDeliveryAddress(b.getDeliveryAddress());
+        dto.setContactPhone(b.getContactPhone());
         dto.setCancellationReason(b.getCancellationReason());
         dto.setCancelledBy(b.getCancelledBy());
         dto.setCreatedAt(b.getCreatedAt());

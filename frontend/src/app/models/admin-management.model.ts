@@ -20,6 +20,8 @@ export interface AdminUser {
   lockoutUntil: string | null;
   createdAt: string;
   updatedAt: string;
+  vendorId?: string;
+  vendorType?: string;
 }
 
 export interface AdminUserRequest {
@@ -28,5 +30,6 @@ export interface AdminUserRequest {
   password?: string;
   role: UserRole;
   countryId?: string;
+  vendorType?: string;
 }
 

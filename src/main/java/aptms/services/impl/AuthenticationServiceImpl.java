@@ -4,17 +4,24 @@ import aptms.config.properties.JwtConfigProperties;
 import aptms.dto.AuthResponse;
 import aptms.dto.LoginRequest;
 import aptms.dto.RegisterRequest;
+import aptms.dto.RegisterResponse;
+import aptms.dto.ResendOtpRequest;
 import aptms.dto.UserDTO;
+import aptms.dto.VerifyOtpRequest;
 import aptms.entities.RefreshToken;
 import aptms.entities.User;
 import aptms.enums.BlacklistReason;
+import aptms.enums.UserStatus;
 import aptms.exceptions.DuplicateValueFoundExceptions;
+import aptms.exceptions.EmailNotVerifiedException;
 import aptms.exceptions.InvalidException;
+import aptms.exceptions.OtpException;
 import aptms.repositories.RefreshTokenRepository;
 import aptms.repositories.UserRepository;
 import aptms.services.AuthenticationEventLogger;
 import aptms.services.AuthenticationService;
 import aptms.services.JwtService;
+import aptms.services.OtpService;
 import aptms.services.SecurityMetricsService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -54,7 +61,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private static final int MAX_FAILED_ATTEMPTS = 5;
     private static final int LOCKOUT_DURATION_MINUTES = 15;
     private static final int BCRYPT_STRENGTH = 10;
-    
+
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtService jwtService;
@@ -63,7 +70,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final AuthenticationEventLogger eventLogger;
     private final SecurityMetricsService metricsService;
-    
+    private final OtpService otpService;
+
     public AuthenticationServiceImpl(
             UserRepository userRepository,
             RefreshTokenRepository refreshTokenRepository,
@@ -71,7 +79,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             TokenServiceImpl tokenService,
             JwtConfigProperties jwtConfig,
             AuthenticationEventLogger eventLogger,
-            SecurityMetricsService metricsService) {
+            SecurityMetricsService metricsService,
+            OtpService otpService) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.jwtService = jwtService;
@@ -80,24 +89,19 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         this.passwordEncoder = new BCryptPasswordEncoder(BCRYPT_STRENGTH);
         this.eventLogger = eventLogger;
         this.metricsService = metricsService;
-        
+        this.otpService = otpService;
+
         logger.info("AuthenticationService initialized");
     }
     
     @Override
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public RegisterResponse register(RegisterRequest request) {
         logger.info("Registration attempt for email: {}", request.getEmail());
 
         // Capture request context
         String ipAddress = getClientIpAddress();
         String userAgent = getUserAgent();
-
-        if (isGmailAddress(request.getEmail())) {
-            logger.warn("Registration rejected: Gmail address not allowed: {}", request.getEmail());
-            eventLogger.logRegistrationFailure(request.getEmail(), ipAddress, userAgent, "Gmail address not allowed");
-            throw new InvalidException("Gmail addresses are not allowed for registration. Please use a different email provider.");
-        }
 
         // Check if email already exists
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -107,8 +111,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 String.format(DUPLICATE_ENTRY_MESSAGE, FIELD_EMAIL)
             );
         }
-        
-        // Create user entity
+
+        // Create user entity — pending until OTP verification succeeds
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
@@ -116,29 +120,63 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setRole(request.getRole());
         user.setCountryId(request.getCountryId());
         user.setFailedLoginAttempts(0);
+        user.setStatus(UserStatus.PENDING_VERIFICATION);
         user.setCreatedAt(Instant.now());
         user.setUpdatedAt(Instant.now());
-        
+
         // Save user
         user = userRepository.save(user);
-        logger.info("User registered successfully: {} ({})", user.getId(), user.getEmail());
-        
+        logger.info("User registered successfully: {} ({}), pending email verification", user.getId(), user.getEmail());
+
         // Log registration success event
         eventLogger.logRegistrationSuccess(user.getId(), user.getEmail(), ipAddress, userAgent);
-        
-        // Generate tokens
+
+        // Generate and send OTP
+        otpService.generateAndSend(user.getEmail());
+        eventLogger.logOtpSent(user.getEmail(), ipAddress, userAgent);
+
+        return RegisterResponse.builder()
+            .email(user.getEmail())
+            .message("Registration successful. Please check your email for a verification code.")
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse verifyOtp(VerifyOtpRequest request) {
+        logger.info("OTP verification attempt for email: {}", request.getEmail());
+
+        String ipAddress = getClientIpAddress();
+        String userAgent = getUserAgent();
+
+        User user = userRepository.findActiveByEmail(request.getEmail())
+            .orElseThrow(() -> {
+                eventLogger.logOtpVerificationFailure(request.getEmail(), ipAddress, userAgent, "user_not_found");
+                return new OtpException(OtpException.ErrorCode.OTP_INVALID, "Invalid verification code.");
+            });
+
+        try {
+            otpService.verify(request.getEmail(), request.getOtp());
+        } catch (OtpException ex) {
+            String reason = ex.getErrorCode().name().toLowerCase();
+            eventLogger.logOtpVerificationFailure(request.getEmail(), ipAddress, userAgent, reason);
+            throw ex;
+        }
+
+        user.setStatus(UserStatus.ACTIVE);
+        user = userRepository.save(user);
+        logger.info("Email verified, account activated for user: {}", user.getId());
+        eventLogger.logOtpVerificationSuccess(user.getId(), user.getEmail(), ipAddress, userAgent);
+
+        // Issue tokens now that the account is active
         String accessToken = jwtService.generateAccessToken(user);
         String refreshTokenString = jwtService.generateRefreshToken(user);
-        
-        // Store refresh token
+
         RefreshToken refreshToken = createRefreshToken(user, refreshTokenString);
         tokenService.storeRefreshToken(refreshToken);
-        
-        // Build response
+
         UserDTO userDTO = buildUserDTO(user);
-        
-        logger.info("Registration completed for user: {}", user.getId());
-        
+
         return AuthResponse.builder()
             .user(userDTO)
             .accessToken(accessToken)
@@ -147,7 +185,29 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             .expiresIn(jwtConfig.getAccessTokenTtlSeconds())
             .build();
     }
-    
+
+    @Override
+    @Transactional(readOnly = true)
+    public void resendOtp(ResendOtpRequest request) {
+        String ipAddress = getClientIpAddress();
+        String userAgent = getUserAgent();
+
+        if (!otpService.canResend(request.getEmail())) {
+            throw new OtpException(OtpException.ErrorCode.OTP_RESEND_COOLDOWN,
+                "Please wait before requesting another code.");
+        }
+
+        // Avoid enumeration: only actually (re)send if a pending-verification account exists,
+        // but always return the same generic outcome either way.
+        userRepository.findActiveByEmail(request.getEmail())
+            .filter(u -> u.getStatus() == UserStatus.PENDING_VERIFICATION)
+            .ifPresent(u -> {
+                otpService.generateAndSend(u.getEmail());
+                otpService.markResent(u.getEmail());
+                eventLogger.logOtpResent(u.getEmail(), ipAddress, userAgent);
+            });
+    }
+
     @Override
     @Transactional
     public AuthResponse login(LoginRequest request) {
@@ -177,7 +237,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     "Please try again after %s", user.getLockoutUntil())
             );
         }
-        
+
+        // Check if email is verified (checked before password, matching the lockout
+        // check's ordering — a locked-and-unverified account still reports lockout first)
+        if (user.getStatus() == UserStatus.PENDING_VERIFICATION) {
+            logger.warn("Login failed: email not verified: {}", user.getId());
+            eventLogger.logLoginFailure(request.getEmail(), ipAddress, userAgent, "Email not verified");
+            metricsService.recordFailedLogin(request.getEmail(), "email_not_verified");
+            throw new EmailNotVerifiedException("Please verify your email address before logging in.");
+        }
+
         // Verify password
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             // Increment failed attempts
@@ -475,16 +544,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return "unknown";
     }
     
-    /**
-     * Gmail (including its googlemail.com alias) is not accepted for registration.
-     */
-    private boolean isGmailAddress(String email) {
-        if (email == null) {
-            return false;
-        }
-        String domain = email.substring(email.lastIndexOf('@') + 1).trim().toLowerCase();
-        return domain.equals("gmail.com") || domain.equals("googlemail.com");
-    }
 
     /**
      * Get user agent from current request context.
@@ -511,7 +570,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (userAgent == null || userAgent.isEmpty()) {
             return "Unknown";
         }
-        
+
         // Simple device detection
         if (userAgent.contains("Mobile")) {
             return "Mobile";

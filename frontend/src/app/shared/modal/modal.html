@@ -1,0 +1,31 @@
+@if (open()) {
+  <div class="app-modal-backdrop" role="presentation" (click)="onBackdropClick()">
+    <div
+      class="app-modal-panel"
+      [class.app-modal-panel--lg]="size() === 'lg'"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="titleId"
+      (click)="$event.stopPropagation()">
+
+      <header class="app-modal-header">
+        @if (icon()) {
+          <div class="app-modal-icon">{{ icon() }}</div>
+        }
+        <div class="app-modal-heading">
+          <h2 [id]="titleId" class="app-modal-title">{{ titleText() }}</h2>
+          @if (subtitleText()) {
+            <p class="app-modal-subtitle">{{ subtitleText() }}</p>
+          }
+        </div>
+        <button type="button" class="app-modal-close" aria-label="Close" [disabled]="closeDisabled()" (click)="requestClose()">✕</button>
+      </header>
+
+      <div class="app-modal-body">
+        <ng-content></ng-content>
+      </div>
+
+      <footer class="app-modal-footer"><ng-content select="[modal-footer]"></ng-content></footer>
+    </div>
+  </div>
+}

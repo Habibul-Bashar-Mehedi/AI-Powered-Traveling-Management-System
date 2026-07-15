@@ -1,0 +1,157 @@
+<app-modal
+  [open]="true"
+  titleText="Book This Service"
+  [subtitleText]="service.serviceName"
+  icon="🛒"
+  [closeDisabled]="submitting"
+  (closed)="requestClose()">
+
+  <div class="booking-confirm-row booking-confirm-row-top">
+    <div>
+      <h3 class="booking-confirm-service">{{ service.serviceName }}</h3>
+      <p class="booking-confirm-vendor">{{ service.vendorBusinessName }}</p>
+    </div>
+    <span class="book-modal-unit-price">{{ service.currencyCode }} {{ service.basePrice | number:'1.2-2' }} <small>/ {{ service.pricingUnit }}</small></span>
+  </div>
+
+  @if (service.packageItems && service.packageItems.length > 0) {
+    <div class="book-modal-field">
+      <label class="book-modal-label">What's Included</label>
+      <ul class="package-itinerary-list">
+        @for (item of service.packageItems; track $index) {
+          <li class="package-itinerary-item">
+            <span class="package-itinerary-icon">{{ packageItemIcon(item.itemType) }}</span>
+            <span class="package-itinerary-text">
+              @if (item.dayNumber) { <strong>Day {{ item.dayNumber }}:</strong> }
+              {{ item.title }}
+              @if (item.description) { <span class="package-itinerary-desc"> — {{ item.description }}</span> }
+            </span>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <div class="book-modal-field">
+    @if (isHotel) {
+      <label class="book-modal-label">Check-in &amp; Check-out</label>
+      <div class="book-modal-date-row">
+        <input
+          type="date"
+          class="form-input"
+          aria-label="Check-in date"
+          [min]="minBookingDate"
+          [(ngModel)]="startDate"
+          (ngModelChange)="onDateChange()"
+          [disabled]="submitting"/>
+        <span class="book-modal-date-sep">→</span>
+        <input
+          type="date"
+          class="form-input"
+          aria-label="Check-out date"
+          [min]="startDate || minBookingDate"
+          [(ngModel)]="endDate"
+          (ngModelChange)="onDateChange()"
+          [disabled]="submitting"/>
+      </div>
+    } @else {
+      <label class="book-modal-label" for="svcBookDate">Booking Date</label>
+      <input
+        id="svcBookDate"
+        type="date"
+        class="form-input"
+        [min]="minBookingDate"
+        [(ngModel)]="startDate"
+        (ngModelChange)="onDateChange()"
+        [disabled]="submitting"/>
+    }
+    @if (availabilityLoading) {
+      <p class="form-hint">Checking availability…</p>
+    } @else if (availabilityError) {
+      <p class="book-modal-availability book-modal-availability-error">{{ availabilityError }}</p>
+    } @else if (availability !== null) {
+      @if (availability > 0) {
+        <p class="book-modal-availability book-modal-availability-ok">✓ {{ availability }} {{ unitLabel.toLowerCase() }} available for this date</p>
+      } @else {
+        <p class="book-modal-availability book-modal-availability-error">Fully booked for this date — try another date.</p>
+      }
+    }
+  </div>
+
+  <div class="book-modal-field">
+    <label class="book-modal-label" for="svcBookQuantity">Quantity ({{ unitLabel }})</label>
+    <div class="qty-stepper">
+      <button type="button" class="qty-btn" [disabled]="quantity <= 1 || submitting" (click)="decrementQuantity()" aria-label="Decrease quantity">−</button>
+      <input
+        id="svcBookQuantity"
+        class="qty-input"
+        type="number"
+        min="1"
+        [max]="maxQuantity"
+        [(ngModel)]="quantity"
+        (ngModelChange)="setQuantity($event)"
+        [disabled]="submitting"/>
+      <button type="button" class="qty-btn" [disabled]="quantity >= maxQuantity || submitting" (click)="incrementQuantity()" aria-label="Increase quantity">+</button>
+    </div>
+    <p class="form-hint">Up to {{ maxQuantity }} {{ unitLabel.toLowerCase() }} per booking. Book more than one to reserve multiple at once.</p>
+  </div>
+
+  @if (isDeliveredOrder) {
+    <div class="book-modal-field">
+      <label class="book-modal-label" for="svcBookAddress">Delivery address</label>
+      <textarea
+        id="svcBookAddress"
+        class="form-textarea"
+        rows="2"
+        maxlength="500"
+        placeholder="Where should this order be delivered?"
+        [(ngModel)]="deliveryAddress"
+        [disabled]="submitting"
+        required></textarea>
+    </div>
+    <div class="book-modal-field">
+      <label class="book-modal-label" for="svcBookPhone">Contact phone</label>
+      <input
+        id="svcBookPhone"
+        type="tel"
+        class="form-input"
+        maxlength="30"
+        placeholder="Phone number to confirm/coordinate this order"
+        [(ngModel)]="contactPhone"
+        [disabled]="submitting"
+        required/>
+    </div>
+  }
+
+  <div class="book-modal-field">
+    <label class="book-modal-label" for="svcBookNotes">Special requests <span class="book-modal-optional">(optional)</span></label>
+    <textarea
+      id="svcBookNotes"
+      class="form-textarea book-modal-notes"
+      rows="2"
+      maxlength="1000"
+      placeholder="e.g. window seat, early check-in, dietary needs..."
+      [(ngModel)]="notes"
+      [disabled]="submitting"></textarea>
+  </div>
+
+  <div class="booking-confirm-amounts">
+    <div class="booking-confirm-amount-row">
+      <span>{{ service.currencyCode }} {{ service.basePrice | number:'1.2-2' }} × {{ quantity }}</span>
+      <span>{{ service.currencyCode }} {{ total | number:'1.2-2' }}</span>
+    </div>
+    <div class="booking-confirm-amount-row booking-confirm-amount-total">
+      <span>Total</span>
+      <span>{{ service.currencyCode }} {{ total | number:'1.2-2' }}</span>
+    </div>
+  </div>
+
+  @if (error) {
+    <p class="book-modal-error">{{ error }}</p>
+  }
+
+  <button modal-footer type="button" class="dest-btn booking-confirm-secondary" [disabled]="submitting" (click)="requestClose()">Cancel</button>
+  <button modal-footer type="button" class="dest-btn" [disabled]="!canConfirm" (click)="confirm()">
+    {{ submitting ? 'Reserving...' : 'Reserve & Continue to Payment' }}
+  </button>
+</app-modal>

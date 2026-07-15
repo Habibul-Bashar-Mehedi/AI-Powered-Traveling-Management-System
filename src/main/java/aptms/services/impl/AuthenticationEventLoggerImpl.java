@@ -153,4 +153,54 @@ public class AuthenticationEventLoggerImpl implements AuthenticationEventLogger 
             StructuredArguments.keyValue("timestamp", Instant.now().toString())
         );
     }
+
+    @Override
+    public void logOtpSent(String email, String ipAddress, String userAgent) {
+        logger.info("OTP sent",
+            StructuredArguments.keyValue("event_type", AuthEventType.OTP_SENT),
+            StructuredArguments.keyValue("email", email),
+            StructuredArguments.keyValue("ip_address", ipAddress),
+            StructuredArguments.keyValue("user_agent", userAgent),
+            StructuredArguments.keyValue("success", true),
+            StructuredArguments.keyValue("timestamp", Instant.now().toString())
+        );
+    }
+
+    @Override
+    public void logOtpVerificationSuccess(UUID userId, String email, String ipAddress, String userAgent) {
+        logger.info("OTP verification successful",
+            StructuredArguments.keyValue("event_type", AuthEventType.OTP_VERIFICATION_SUCCESS),
+            StructuredArguments.keyValue("user_id", userId),
+            StructuredArguments.keyValue("email", email),
+            StructuredArguments.keyValue("ip_address", ipAddress),
+            StructuredArguments.keyValue("user_agent", userAgent),
+            StructuredArguments.keyValue("success", true),
+            StructuredArguments.keyValue("timestamp", Instant.now().toString())
+        );
+    }
+
+    @Override
+    public void logOtpVerificationFailure(String email, String ipAddress, String userAgent, String reason) {
+        logger.warn("OTP verification failed",
+            StructuredArguments.keyValue("event_type", AuthEventType.OTP_VERIFICATION_FAILURE),
+            StructuredArguments.keyValue("email", email),
+            StructuredArguments.keyValue("ip_address", ipAddress),
+            StructuredArguments.keyValue("user_agent", userAgent),
+            StructuredArguments.keyValue("reason", reason),
+            StructuredArguments.keyValue("success", false),
+            StructuredArguments.keyValue("timestamp", Instant.now().toString())
+        );
+    }
+
+    @Override
+    public void logOtpResent(String email, String ipAddress, String userAgent) {
+        logger.info("OTP resent",
+            StructuredArguments.keyValue("event_type", AuthEventType.OTP_RESENT),
+            StructuredArguments.keyValue("email", email),
+            StructuredArguments.keyValue("ip_address", ipAddress),
+            StructuredArguments.keyValue("user_agent", userAgent),
+            StructuredArguments.keyValue("success", true),
+            StructuredArguments.keyValue("timestamp", Instant.now().toString())
+        );
+    }
 }

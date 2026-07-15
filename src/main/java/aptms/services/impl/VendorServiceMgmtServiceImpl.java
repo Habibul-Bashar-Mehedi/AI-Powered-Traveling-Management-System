@@ -2,11 +2,15 @@ package aptms.services.impl;
 
 import aptms.dto.vendor.PackageItemDTO;
 import aptms.dto.vendor.VendorServiceDTO;
+import aptms.entities.Destination;
 import aptms.entities.PackageItem;
 import aptms.entities.Vendor;
 import aptms.entities.VendorService;
 import aptms.enums.ServiceStatus;
+import aptms.enums.ServiceType;
+import aptms.enums.VendorStatus;
 import aptms.exceptions.IdNotFoundException;
+import aptms.repositories.DestinationRepository;
 import aptms.repositories.VendorBookingRepository;
 import aptms.repositories.VendorRepository;
 import aptms.repositories.VendorServiceRepository;
@@ -29,6 +33,7 @@ public class VendorServiceMgmtServiceImpl implements VendorServiceMgmtService {
     private final VendorServiceRepository serviceRepository;
     private final VendorRepository vendorRepository;
     private final VendorBookingRepository bookingRepository;
+    private final DestinationRepository destinationRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -42,6 +47,8 @@ public class VendorServiceMgmtServiceImpl implements VendorServiceMgmtService {
     @Transactional
     public VendorServiceDTO createService(UUID userId, VendorServiceDTO dto) {
         Vendor vendor = getVendorByUserId(userId);
+        assertNotSuspended(vendor);
+        assertServiceTypeMatchesVendor(vendor, dto.getServiceType());
         VendorService entity = new VendorService();
         entity.setVendor(vendor);
         mapDtoToEntity(dto, entity);
@@ -90,6 +97,30 @@ public class VendorServiceMgmtServiceImpl implements VendorServiceMgmtService {
                 .orElseThrow(() -> new IdNotFoundException("Vendor not found for user: " + userId));
     }
 
+    private Destination resolveDestination(Long destinationId) {
+        if (destinationId == null) return null;
+        return destinationRepository.findById(destinationId)
+                .orElseThrow(() -> new IllegalArgumentException("Destination not found: " + destinationId));
+    }
+
+    private void assertServiceTypeMatchesVendor(Vendor vendor, ServiceType serviceType) {
+        ServiceType allowed = vendor.getVendorType().toServiceType();
+        if (serviceType != allowed) {
+            throw new IllegalArgumentException(
+                "Vendor type '" + vendor.getVendorType()
+                    + "' can only create services of type '" + allowed
+                    + "'. Requested: '" + serviceType + "'.");
+        }
+    }
+
+    private void assertNotSuspended(Vendor vendor) {
+        if (vendor.getStatus() == VendorStatus.SUSPENDED) {
+            throw new IllegalStateException(
+                    "Your vendor account is suspended and cannot create new services. " +
+                    "Request reinstatement from your dashboard.");
+        }
+    }
+
     private void mapDtoToEntity(VendorServiceDTO dto, VendorService entity) {
         entity.setServiceName(dto.getServiceName());
         entity.setServiceType(dto.getServiceType());
@@ -107,6 +138,7 @@ public class VendorServiceMgmtServiceImpl implements VendorServiceMgmtService {
         entity.setLocationLat(dto.getLocationLat());
         entity.setLocationLng(dto.getLocationLng());
         entity.setLocationAddress(dto.getLocationAddress());
+        entity.setDestination(resolveDestination(dto.getDestinationId()));
         entity.setTags(dto.getTags());
         entity.setMetadata(dto.getMetadata());
         entity.setImageUrl(dto.getImageUrl());
@@ -148,6 +180,10 @@ public class VendorServiceMgmtServiceImpl implements VendorServiceMgmtService {
         dto.setLocationLat(e.getLocationLat());
         dto.setLocationLng(e.getLocationLng());
         dto.setLocationAddress(e.getLocationAddress());
+        if (e.getDestination() != null) {
+            dto.setDestinationId(e.getDestination().getId());
+            dto.setDestinationName(e.getDestination().getName());
+        }
         dto.setTags(e.getTags());
         dto.setMetadata(e.getMetadata());
         dto.setImageUrl(e.getImageUrl());

@@ -49,8 +49,7 @@ export class Registration implements OnInit {
       ]),
       email: new FormControl('', [
         Validators.required,
-        Validators.email,
-        this.notGmailValidator
+        Validators.email
       ]),
       role: new FormControl(UserRole.USER, [Validators.required]),
       password: new FormControl('', [
@@ -71,16 +70,6 @@ export class Registration implements OnInit {
     const password = group.get('password')?.value;
     const confirmPassword = group.get('confirmPassword')?.value;
     return password === confirmPassword ? null : { passwordMismatch: true };
-  }
-
-  /**
-   * Gmail (including its googlemail.com alias) is not accepted for registration.
-   * The backend enforces this too — this is just for immediate feedback.
-   */
-  private notGmailValidator(control: AbstractControl): ValidationErrors | null {
-    const email = (control.value || '').trim().toLowerCase();
-    const domain = email.split('@')[1];
-    return domain === 'gmail.com' || domain === 'googlemail.com' ? { gmailNotAllowed: true } : null;
   }
 
   /**
@@ -122,9 +111,9 @@ export class Registration implements OnInit {
     };
 
     this.authService.register(registerRequest).subscribe({
-      next: (response) => {
-        // Role-based redirect after successful registration
-        this.router.navigate([this.authService.getPostAuthRedirectUrl(response.user?.roles?.[0])]);
+      next: () => {
+        // Account is PENDING_VERIFICATION — send the user to enter their OTP.
+        this.router.navigate(['/verify-otp'], { queryParams: { email: registerRequest.email } });
       },
       error: (error: HttpErrorResponse) => {
         this.isSubmitting = false;

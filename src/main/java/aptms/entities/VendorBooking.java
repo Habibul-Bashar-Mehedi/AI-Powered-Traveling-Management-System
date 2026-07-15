@@ -39,6 +39,11 @@ public class VendorBooking {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    /** Set only when this booking was created as one component of a Package booking. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "package_booking_id")
+    private PackageBooking packageBooking;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "booking_status", nullable = false, length = 20)
     private VendorBookingStatus bookingStatus = VendorBookingStatus.PENDING;
@@ -74,6 +79,14 @@ public class VendorBooking {
 
     @Column(name = "special_requests", columnDefinition = "TEXT")
     private String specialRequests;
+
+    /** Delivery address for orders that need to be sent to the customer (e.g. traditional food/item orders). Null for stay/ticket-style bookings. */
+    @Column(name = "delivery_address", length = 500)
+    private String deliveryAddress;
+
+    /** Contact phone the vendor should use to confirm/coordinate an order. Null for stay/ticket-style bookings. */
+    @Column(name = "contact_phone", length = 30)
+    private String contactPhone;
 
     @Column(name = "cancellation_reason", columnDefinition = "TEXT")
     private String cancellationReason;

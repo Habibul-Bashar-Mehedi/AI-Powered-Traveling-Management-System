@@ -1,0 +1,46 @@
+<div class="history-toolbar">
+  <label class="booking-filter-label" for="historyTypeFilter">Type</label>
+  <select
+    id="historyTypeFilter"
+    class="booking-filter-select"
+    [value]="typeFilter()"
+    (change)="onTypeFilterChange($any($event.target).value)">
+    <option value="">All types</option>
+    <option [value]="BookingSource.HOTEL_DIRECT">Hotel (Direct)</option>
+    <option [value]="BookingSource.VENDOR_SERVICE">Vendor Service</option>
+  </select>
+
+  <label class="booking-filter-label" for="historyStatusFilter">Status</label>
+  <select
+    id="historyStatusFilter"
+    class="booking-filter-select"
+    [value]="statusFilter()"
+    (change)="onStatusFilterChange($any($event.target).value)">
+    <option value="">All statuses</option>
+    @for (status of statusOptions; track status) {
+      <option [value]="status">{{ statusLabel(status) }}</option>
+    }
+  </select>
+
+  <button class="booking-refresh-btn" type="button" (click)="load(page())">Refresh</button>
+</div>
+
+@if (loading()) {
+  <app-loading-state variant="shimmer-rows" [count]="4"></app-loading-state>
+} @else if (error()) {
+  <p class="bookings-empty history-error">{{ error() }}</p>
+} @else {
+  <app-booking-history-list
+    [entries]="entries()"
+    emptyMessage="No bookings found for the selected filters."
+    [downloadingId]="downloadingId()"
+    (downloadReceipt)="downloadReceipt($event)" />
+
+  @if (entries().length > 0) {
+    <div class="history-pagination">
+      <button type="button" class="booking-refresh-btn" [disabled]="!hasPrev()" (click)="prevPage()">← Previous</button>
+      <span class="history-page-info">Page {{ page() + 1 }} of {{ totalPages() || 1 }} · {{ totalElements() }} total</span>
+      <button type="button" class="booking-refresh-btn" [disabled]="!hasNext()" (click)="nextPage()">Next →</button>
+    </div>
+  }
+}

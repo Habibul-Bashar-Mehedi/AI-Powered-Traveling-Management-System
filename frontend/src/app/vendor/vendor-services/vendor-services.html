@@ -6,13 +6,15 @@
       <h1 class="page-title">My Services</h1>
       <p class="page-sub">Manage your service listings · {{ services.length }} total</p>
     </div>
-    <button class="btn-primary" (click)="openCreate()">+ New Service</button>
+    <button class="btn-primary" [disabled]="vendorSuspended" [title]="vendorSuspended ? 'Suspended vendors cannot create new services' : ''" (click)="openCreate()">+ New Service</button>
   </div>
 
   <!-- Loading -->
   <div *ngIf="loading" class="loading-row">
     <div class="spinner"></div> Loading services…
   </div>
+
+  <div *ngIf="vendorSuspended" class="error-msg">⚠️ Your account is suspended — new services cannot be created until you're reinstated.</div>
 
   <div *ngIf="listError" class="error-msg">⚠️ {{ listError }}</div>
 
@@ -27,87 +29,72 @@
     </div>
     <h3>No services yet</h3>
     <p>Create your first service listing to start receiving bookings</p>
-    <button class="btn-primary" (click)="openCreate()">Create First Service</button>
+    <button class="btn-primary" [disabled]="vendorSuspended" (click)="openCreate()">Create First Service</button>
   </div>
 
   <!-- Services grid -->
   <div *ngIf="!loading && services.length > 0" class="services-grid">
-    <div *ngFor="let s of services; trackBy: trackByService" class="service-card">
-      <div class="service-image-wrap">
-        <img *ngIf="s.imageUrl" [src]="resolveImageUrl(s.imageUrl)" [alt]="s.serviceName" class="service-image"/>
-        <div *ngIf="!s.imageUrl" class="service-image-placeholder">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2"/>
-            <circle cx="8.5" cy="8.5" r="1.5"/>
-            <path d="M21 15l-5-5L5 21"/>
-          </svg>
-        </div>
-      </div>
-
-      <div class="service-card-header">
-        <span class="service-type-badge">{{ s.serviceType }}</span>
-        <span class="service-status-badge" [ngClass]="statusBadgeClass(s.status)">
+    <div *ngFor="let s of services; trackBy: trackByService">
+      <app-card
+        [imageUrl]="s.imageUrl ? resolveImageUrl(s.imageUrl) : null"
+        [imageAlt]="s.serviceName"
+        [title]="s.serviceName"
+        [subtitle]="s.serviceType"
+        [description]="serviceShortDesc(s)"
+        [metaPills]="serviceMetaPills(s)"
+        (viewDetails)="openServiceDetail(s)">
+        <span class="service-status-badge" [class]="statusBadgeClass(s.status)">
           ● {{ s.status }}
         </span>
-      </div>
 
-      <h3 class="service-name">{{ s.serviceName }}</h3>
-      <p class="service-desc">{{ s.description | slice:0:100 }}{{ s.description && s.description.length > 100 ? '…' : '' }}</p>
+        <div class="service-stats" *ngIf="s.totalBookings !== undefined">
+          <span> {{ s.totalBookings }} bookings</span>
+          <span *ngIf="s.averageRating">⭐ {{ s.averageRating | number:'1.1-1' }}</span>
+        </div>
 
-      <div class="service-meta">
-        <span class="meta-pill"> {{ s.currencyCode }} {{ s.basePrice | number:'1.2-2' }}</span>
-        <span class="meta-pill"> {{ s.pricingUnit }}</span>
-        <span class="meta-pill"> Max {{ s.maxCapacity }}</span>
-        <span class="meta-pill" *ngIf="s.packageItems && s.packageItems.length > 0"> {{ s.packageItems.length }} itinerary item{{ s.packageItems.length > 1 ? 's' : '' }}</span>
-      </div>
-
-      <div class="service-stats" *ngIf="s.totalBookings !== undefined">
-        <span> {{ s.totalBookings }} bookings</span>
-        <span *ngIf="s.averageRating">⭐ {{ s.averageRating | number:'1.1-1' }}</span>
-      </div>
-
-      <div class="service-actions">
-        <button class="action-btn edit-btn" (click)="openEdit(s)">
-          <svg class="action-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          Edit
-        </button>
-        <button class="action-btn"
-          [class.active-btn]="s.status !== 'ACTIVE'"
-          [class.inactive-btn]="s.status === 'ACTIVE'"
-          (click)="toggleStatus(s, s.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')">
-          <svg *ngIf="s.status === 'ACTIVE'" class="action-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
-          </svg>
-          <svg *ngIf="s.status !== 'ACTIVE'" class="action-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="5 3 19 12 5 21 5 3"/>
-          </svg>
-          {{ s.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
-        </button>
-        <button class="action-btn delete-btn" (click)="delete(s.serviceId!)">
-          <svg class="action-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-            <path d="M10 11v6"/><path d="M14 11v6"/>
-          </svg>
-        </button>
-      </div>
+        <div card-primary class="service-actions">
+          <button class="action-btn edit-btn" (click)="openEdit(s)">
+            <svg class="action-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Edit
+          </button>
+          <button class="action-btn"
+            [class.active-btn]="s.status !== 'ACTIVE'"
+            [class.inactive-btn]="s.status === 'ACTIVE'"
+            (click)="toggleStatus(s, s.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')">
+            <svg *ngIf="s.status === 'ACTIVE'" class="action-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+            </svg>
+            <svg *ngIf="s.status !== 'ACTIVE'" class="action-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            {{ s.status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}
+          </button>
+          <button class="action-btn delete-btn" (click)="delete(s.serviceId!)">
+            <svg class="action-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/>
+            </svg>
+          </button>
+        </div>
+      </app-card>
     </div>
   </div>
 
   <!-- ── Service Form Modal ── -->
-  <div *ngIf="showForm" class="modal-backdrop" (click)="closeForm()">
-    <div class="modal" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>{{ editingId ? 'Edit Service' : 'New Service Listing' }}</h2>
-        <button class="modal-close" (click)="closeForm()">✕</button>
-      </div>
+  @if (showForm) {
+    <app-modal
+      [open]="true"
+      [titleText]="editingId ? 'Edit Service' : 'New Service Listing'"
+      size="lg"
+      (closed)="closeForm()">
 
       <div *ngIf="error" class="error-msg">⚠️ {{ error }}</div>
 
-      <form [formGroup]="form" (ngSubmit)="submit()" class="modal-body">
+      <form [formGroup]="form" (ngSubmit)="submit()" id="vendorServiceForm">
 
         <div class="field-group">
           <label class="field-label">Service Image</label>
@@ -125,7 +112,7 @@
             <div class="image-upload-actions">
               <label class="btn-outline image-upload-btn">
                 {{ imageUploading ? 'Uploading…' : formImageUrl ? 'Change Image' : 'Upload Image' }}
-                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" (change)="onImageSelected($event)" [disabled]="imageUploading" hidden/>
+                <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onImageSelected($event)" [disabled]="imageUploading" hidden/>
               </label>
               <button type="button" class="btn-outline" *ngIf="formImageUrl" (click)="removeImage()">Remove</button>
               <p class="field-hint">JPEG, PNG, WEBP or GIF · up to 5MB</p>
@@ -140,12 +127,9 @@
             <input class="field-input" formControlName="serviceName" type="text" placeholder="e.g. Deluxe Ocean View Room"/>
           </div>
           <div class="field-group">
-            <label class="field-label">Service Type *</label>
-            <select class="field-input" formControlName="serviceType">
-              <option value="">Select…</option>
-              <option *ngFor="let t of serviceTypes; trackBy: trackByValue" [value]="t">{{ t }}</option>
-            </select>
-            <p class="field-hint">Hotel Room / Transport Route for a single service. Tour Package to bundle several legs (e.g. transport + hotel + return transport) into one listing — optional, not required.</p>
+            <label class="field-label">Service Type</label>
+            <input class="field-input" formControlName="serviceType" type="text" readonly [value]="allowedServiceType || ''"/>
+            <p class="field-hint">Determined by your registered vendor type. Contact support to change your vendor type.</p>
           </div>
         </div>
 
@@ -222,6 +206,13 @@
             <label class="field-label">Location Address</label>
             <input class="field-input" formControlName="locationAddress" type="text" placeholder="Street / area"/>
           </div>
+          <div class="field-group">
+            <label class="field-label">Destination (optional)</label>
+            <select class="field-input" formControlName="destinationId">
+              <option [value]="null">— Not specified —</option>
+              <option *ngFor="let d of destinations; trackBy: trackByDestination" [value]="d.id">{{ d.name }}</option>
+            </select>
+          </div>
         </div>
 
         <div class="field-group">
@@ -235,15 +226,88 @@
           <input class="field-input" formControlName="tags" type="text" placeholder="wifi, pool, ac"/>
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn-outline" (click)="closeForm()">Cancel</button>
-          <button type="submit" class="btn-primary" [disabled]="form.invalid || submitting">
-            {{ submitting ? 'Saving…' : editingId ? 'Update Service' : 'Create Service' }}
-          </button>
-        </div>
       </form>
-    </div>
-  </div>
+
+      <button modal-footer type="button" class="btn-outline" (click)="closeForm()">Cancel</button>
+      <button modal-footer type="submit" form="vendorServiceForm" class="btn-primary" [disabled]="form.invalid || submitting">
+        {{ submitting ? 'Saving…' : editingId ? 'Update Service' : 'Create Service' }}
+      </button>
+    </app-modal>
+  }
+
+  <!-- ── Service Details Modal ── -->
+  @if (detailServiceItem) {
+    <app-modal
+      [open]="true"
+      [titleText]="detailServiceItem.serviceName"
+      [subtitleText]="detailServiceItem.serviceType"
+      icon="🔎"
+      size="lg"
+      (closed)="closeServiceDetail()">
+
+      @if (detailServiceItem.imageUrl) {
+        <img [src]="resolveImageUrl(detailServiceItem.imageUrl)" [alt]="detailServiceItem.serviceName" class="detail-modal-image"/>
+      }
+
+      <p class="detail-modal-desc">{{ detailServiceItem.description }}</p>
+
+      <dl class="detail-modal-grid">
+        <div class="detail-modal-item">
+          <dt>Status</dt>
+          <dd>{{ detailServiceItem.status }}</dd>
+        </div>
+        <div class="detail-modal-item">
+          <dt>Price</dt>
+          <dd>{{ detailServiceItem.currencyCode }} {{ detailServiceItem.basePrice | number:'1.2-2' }} / {{ detailServiceItem.pricingUnit }}</dd>
+        </div>
+        <div class="detail-modal-item">
+          <dt>Max Capacity</dt>
+          <dd>{{ detailServiceItem.maxCapacity }}</dd>
+        </div>
+        <div class="detail-modal-item" *ngIf="detailServiceItem.bookingMode">
+          <dt>Booking Mode</dt>
+          <dd>{{ detailServiceItem.bookingMode }}</dd>
+        </div>
+        <div class="detail-modal-item" *ngIf="detailServiceItem.confirmationWindow">
+          <dt>Confirmation Window</dt>
+          <dd>{{ detailServiceItem.confirmationWindow }} hrs</dd>
+        </div>
+        <div class="detail-modal-item" *ngIf="detailServiceItem.locationAddress">
+          <dt>Location</dt>
+          <dd>{{ detailServiceItem.locationAddress }}</dd>
+        </div>
+        <div class="detail-modal-item" *ngIf="detailServiceItem.destinationName">
+          <dt>Destination</dt>
+          <dd>{{ detailServiceItem.destinationName }}</dd>
+        </div>
+        <div class="detail-modal-item" *ngIf="detailServiceItem.tags">
+          <dt>Tags</dt>
+          <dd>{{ detailServiceItem.tags }}</dd>
+        </div>
+        <div class="detail-modal-item" *ngIf="detailServiceItem.averageRating">
+          <dt>Rating</dt>
+          <dd>⭐ {{ detailServiceItem.averageRating | number:'1.1-1' }}</dd>
+        </div>
+        <div class="detail-modal-item" *ngIf="detailServiceItem.totalBookings !== undefined">
+          <dt>Bookings</dt>
+          <dd>{{ detailServiceItem.totalBookings }}</dd>
+        </div>
+      </dl>
+
+      <div class="field-group" *ngIf="detailServiceItem.packageItems && detailServiceItem.packageItems.length > 0">
+        <label class="field-label">Itinerary</label>
+        <ul class="detail-modal-itinerary">
+          <li *ngFor="let item of detailServiceItem.packageItems">
+            <span *ngIf="item.dayNumber">Day {{ item.dayNumber }}: </span>{{ item.title }}
+            <span *ngIf="item.description"> — {{ item.description }}</span>
+          </li>
+        </ul>
+      </div>
+
+      <button modal-footer type="button" class="btn-outline" (click)="closeServiceDetail()">Close</button>
+      <button modal-footer type="button" class="btn-primary" (click)="editFromDetail(detailServiceItem)">Edit Service</button>
+    </app-modal>
+  }
 
 </div>
 

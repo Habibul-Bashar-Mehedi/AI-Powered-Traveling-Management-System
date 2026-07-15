@@ -6,7 +6,10 @@ import { tap, catchError, map, switchMap, finalize, shareReplay, take } from 'rx
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { API_ENDPOINTS } from '../constants/api-endpoints';
-import { User, LoginRequest, RegisterRequest, AuthResponse } from '../models/user.model';
+import {
+  User, LoginRequest, RegisterRequest, AuthResponse,
+  RegisterResponse, ResendOtpResponse
+} from '../models/user.model';
 import { TokenStorageService } from './token-storage.service';
 import { UserRole } from '../enums/user-role.enum';
 
@@ -45,16 +48,47 @@ export class AuthService {
   }
 
   /**
-   * Register new user and receive JWT tokens
+   * Register new user. Account starts PENDING_VERIFICATION — no tokens are
+   * issued until the OTP is verified via verifyOtp().
    * @param request Registration request data
-   * @returns Observable<AuthResponse> with user info and tokens
+   * @returns Observable<RegisterResponse> confirming the account was created
    */
-  register(request: RegisterRequest): Observable<AuthResponse> {
+  register(request: RegisterRequest): Observable<RegisterResponse> {
     const url = `${this.baseUrl}${API_ENDPOINTS.AUTH.REGISTER}`;
-    return this.http.post<AuthResponse>(url, request).pipe(
-      tap(response => this.handleAuthResponse(response)),
+    return this.http.post<RegisterResponse>(url, request).pipe(
       catchError(error => {
         console.error('Registration failed:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Verify a registration OTP and receive JWT tokens on success.
+   * @param email Email the OTP was sent to
+   * @param otp 6-digit verification code
+   * @returns Observable<AuthResponse> with user info and tokens
+   */
+  verifyOtp(email: string, otp: string): Observable<AuthResponse> {
+    const url = `${this.baseUrl}${API_ENDPOINTS.AUTH.VERIFY_OTP}`;
+    return this.http.post<AuthResponse>(url, { email, otp }).pipe(
+      tap(response => this.handleAuthResponse(response)),
+      catchError(error => {
+        console.error('OTP verification failed:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Resend a registration OTP, subject to a cooldown enforced by the backend.
+   * @param email Email to resend the OTP to
+   */
+  resendOtp(email: string): Observable<ResendOtpResponse> {
+    const url = `${this.baseUrl}${API_ENDPOINTS.AUTH.RESEND_OTP}`;
+    return this.http.post<ResendOtpResponse>(url, { email }).pipe(
+      catchError(error => {
+        console.error('OTP resend failed:', error);
         return throwError(() => error);
       })
     );
@@ -234,6 +268,17 @@ export class AuthService {
     }
 
     if (this.isAuthenticated()) {
+      // Token exists in sessionStorage but user subject may be null after
+      // page refresh — restore it from the server.
+      if (!this.currentUserSubject.value) {
+        return this.getCurrentUser().pipe(
+          map(() => true),
+          catchError(() => {
+            this.clearAuthState();
+            return of(false);
+          })
+        );
+      }
       return of(true);
     }
 

@@ -1,0 +1,90 @@
+<div class="pn-backdrop" role="presentation" (click)="requestClose()">
+  <div class="pn-panel" role="dialog" aria-modal="true" aria-labelledby="payNowTitle" (click)="$event.stopPropagation()">
+
+    <div class="pn-glow pn-glow-a"></div>
+    <div class="pn-glow pn-glow-b"></div>
+
+    <button type="button" class="pn-close" aria-label="Close" [disabled]="submitting" (click)="requestClose()">✕</button>
+
+    <div class="pn-icon">🔒</div>
+    <h2 id="payNowTitle" class="pn-title">Complete Your Payment</h2>
+    <p class="pn-subtitle">You'll be redirected to a secure payment page to finish checkout</p>
+
+    <div class="pn-summary">
+      <div class="pn-summary-row">
+        <span class="pn-label">Booking Reference</span>
+        <span class="pn-value">{{ bookingReference }}</span>
+      </div>
+      @if (merchantName) {
+        <div class="pn-summary-row">
+          <span class="pn-label">Merchant</span>
+          <span class="pn-value">{{ merchantName }}</span>
+        </div>
+      }
+      <div class="pn-summary-row pn-summary-total">
+        <span class="pn-label">Amount Due</span>
+        <span class="pn-value pn-amount">{{ currencyCode }} {{ amount | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="pn-providers">
+      @for (provider of providerOptions; track provider.value) {
+        <button
+          type="button"
+          class="pn-provider-pill"
+          [class]="'pn-provider-pill-' + provider.value.toLowerCase()"
+          [class.pn-provider-pill-active]="selectedProvider === provider.value"
+          [disabled]="submitting"
+          [attr.aria-pressed]="selectedProvider === provider.value"
+          (click)="selectProvider(provider.value)">
+          {{ provider.label }}
+        </button>
+      }
+    </div>
+
+    <div class="pn-field">
+      <label for="pnMobileNumber" class="pn-field-label">Mobile Number</label>
+      <input
+        id="pnMobileNumber"
+        type="tel"
+        class="pn-field-input"
+        [class.pn-field-input-error]="mobileNumberTouched && !isMobileNumberValid"
+        placeholder="01XXXXXXXXX"
+        inputmode="numeric"
+        maxlength="11"
+        [(ngModel)]="mobileNumber"
+        (blur)="onMobileNumberBlur()"
+        [disabled]="submitting"/>
+      @if (mobileNumberTouched && !isMobileNumberValid) {
+        <p class="pn-field-error">Enter a valid Bangladeshi mobile number (e.g. 01712345678).</p>
+      }
+    </div>
+
+    <p class="pn-methods-hint">
+      @if (selectedProvider) {
+        We'll take you straight to
+        @for (p of providerOptions; track p.value) {
+          @if (p.value === selectedProvider) { {{ p.label }} }
+        }
+        on the secure checkout page.
+      } @else {
+        Pick a wallet to skip straight to it on the secure checkout page — optional.
+      }
+    </p>
+
+    @if (error) {
+      <p class="pn-error">{{ error }}</p>
+    }
+
+    <button type="button" class="pn-pay-btn" [disabled]="!canProceed" (click)="payNow()">
+      @if (submitting) {
+        <span class="pn-spinner"></span> Redirecting…
+      } @else {
+        Proceed to Pay →
+      }
+    </button>
+    <button type="button" class="pn-cancel-btn" [disabled]="submitting" (click)="requestClose()">Not now</button>
+
+    <p class="pn-footnote">Payments are processed securely — we never see or store your mobile wallet PIN.</p>
+  </div>
+</div>

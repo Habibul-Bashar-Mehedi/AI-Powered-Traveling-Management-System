@@ -9,6 +9,7 @@ import aptms.entities.Vendor;
 import aptms.enums.AdminOrderStatus;
 import aptms.enums.UserRole;
 import aptms.enums.VendorStatus;
+import aptms.enums.VendorType;
 import aptms.exceptions.DuplicateValueFoundExceptions;
 import aptms.exceptions.IdNotFoundException;
 import aptms.repositories.*;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -67,7 +69,13 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setRole(request.role());
         user.setCountryId(request.countryId());
-        return toUserResponse(userRepository.save(user));
+        user = userRepository.save(user);
+
+        if (request.role() == UserRole.VENDOR && request.vendorType() != null && !request.vendorType().isBlank()) {
+            createMinimalVendor(user, request.vendorType());
+        }
+
+        return toUserResponse(user);
     }
 
     @Override
@@ -88,7 +96,21 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
             user.setPassword(passwordEncoder.encode(request.password()));
         }
 
-        return toUserResponse(userRepository.save(user));
+        user = userRepository.save(user);
+
+        if (request.role() == UserRole.VENDOR && request.vendorType() != null && !request.vendorType().isBlank()) {
+            VendorType vendorType = VendorType.valueOf(request.vendorType().toUpperCase());
+            Optional<Vendor> existingVendor = vendorRepository.findByUserId(user.getId());
+            if (existingVendor.isPresent()) {
+                Vendor vendor = existingVendor.get();
+                vendor.setVendorType(vendorType);
+                vendorRepository.save(vendor);
+            } else {
+                createMinimalVendor(user, request.vendorType());
+            }
+        }
+
+        return toUserResponse(user);
     }
 
     @Override
@@ -414,6 +436,15 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     }
 
     private UserManagementResponse toUserResponse(User user) {
+        UUID vendorId = null;
+        String vendorType = null;
+        if (user.getRole() == UserRole.VENDOR) {
+            Optional<Vendor> vendor = vendorRepository.findByUserId(user.getId());
+            if (vendor.isPresent()) {
+                vendorId = vendor.get().getVendorId();
+                vendorType = vendor.get().getVendorType().name();
+            }
+        }
         return new UserManagementResponse(
                 user.getId(),
                 user.getUsername(),
@@ -423,7 +454,9 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 user.getFailedLoginAttempts(),
                 user.getLockoutUntil(),
                 user.getCreatedAt(),
-                user.getUpdatedAt()
+                user.getUpdatedAt(),
+                vendorId,
+                vendorType
         );
     }
 
@@ -486,6 +519,20 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
                 vendor.getApprovedAt(),
                 vendor.getApprovedBy() == null ? null : vendor.getApprovedBy().getId()
         );
+    }
+
+    private void createMinimalVendor(User user, String vendorTypeStr) {
+        VendorType vendorType = VendorType.valueOf(vendorTypeStr.toUpperCase());
+        Vendor vendor = new Vendor();
+        vendor.setUser(user);
+        vendor.setBusinessName(user.getUsername() + " (Vendor)");
+        vendor.setVendorType(vendorType);
+        vendor.setEmail(user.getEmail());
+        vendor.setPhone("N/A");
+        vendor.setAddressLine1("N/A");
+        vendor.setCity("N/A");
+        vendor.setCountryCode("N/A");
+        vendorRepository.save(vendor);
     }
 
     private String normalize(String value) {

@@ -1,0 +1,270 @@
+.booking-confirm-row-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.booking-confirm-service {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.booking-confirm-vendor {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text-sec);
+}
+
+.booking-confirm-amounts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.booking-confirm-amount-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13.5px;
+  color: var(--text-sec);
+}
+
+.booking-confirm-amount-total {
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.dest-btn {
+  margin-top: 0;
+  width: auto;
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: 600;
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(6, 182, 212, 0.08));
+  color: var(--blue-light);
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.dest-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  color: #fff;
+}
+
+.dest-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.booking-confirm-secondary {
+  background: var(--bg-card-2);
+  border: 1px solid var(--border);
+  color: var(--text-sec);
+}
+
+.booking-confirm-secondary:hover {
+  background: var(--bg-card-2);
+  color: var(--text-primary);
+}
+
+.book-modal-unit-price {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.book-modal-unit-price small {
+  font-weight: 500;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.book-modal-field {
+  margin-bottom: 16px;
+}
+
+.book-modal-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-sec);
+  margin-bottom: 8px;
+}
+
+.book-modal-optional {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.qty-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-input);
+}
+
+.qty-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--bg-card-2);
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.qty-btn:hover:not(:disabled) {
+  background: var(--border);
+}
+
+.qty-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.qty-input {
+  width: 60px;
+  height: 40px;
+  border: none;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: transparent;
+  -moz-appearance: textfield;
+}
+
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-family: var(--font-body);
+  resize: vertical;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--border-glow);
+}
+
+.form-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.book-modal-error {
+  margin-top: 4px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(244, 63, 94, 0.08);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  color: var(--rose);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-family: var(--font-body);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--border-glow);
+}
+
+.book-modal-date-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.book-modal-date-row .form-input {
+  flex: 1;
+}
+
+.book-modal-date-sep {
+  color: var(--text-muted);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.book-modal-availability {
+  margin-top: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.book-modal-availability-ok {
+  color: var(--emerald);
+}
+
+.book-modal-availability-error {
+  color: var(--rose);
+}
+
+.package-itinerary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--bg-card-2);
+  border-radius: var(--radius-md);
+  list-style: none;
+}
+
+.package-itinerary-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.package-itinerary-icon {
+  flex-shrink: 0;
+}
+
+.package-itinerary-desc {
+  color: var(--text-sec);
+  font-weight: 400;
+}

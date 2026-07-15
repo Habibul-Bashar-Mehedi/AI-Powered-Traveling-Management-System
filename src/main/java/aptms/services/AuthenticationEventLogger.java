@@ -110,4 +110,27 @@ public interface AuthenticationEventLogger {
      * @param path Request path
      */
     void logTokenValidationFailure(String ipAddress, String userAgent, String errorCode, String path);
+
+    /**
+     * Log that an OTP verification code was sent (registration or resend).
+     * Never includes the OTP value itself.
+     */
+    void logOtpSent(String email, String ipAddress, String userAgent);
+
+    /**
+     * Log a successful OTP verification (account activated).
+     */
+    void logOtpVerificationSuccess(UUID userId, String email, String ipAddress, String userAgent);
+
+    /**
+     * Log a failed OTP verification attempt.
+     *
+     * @param reason Failure reason (e.g. "invalid_code", "expired", "max_attempts") — never the OTP value.
+     */
+    void logOtpVerificationFailure(String email, String ipAddress, String userAgent, String reason);
+
+    /**
+     * Log an OTP resend request.
+     */
+    void logOtpResent(String email, String ipAddress, String userAgent);
 }

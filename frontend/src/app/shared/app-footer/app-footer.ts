@@ -11,6 +11,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class FooterComponent {
   readonly currentYear = new Date().getFullYear();
+  shortDescription = 'SMTS — helping travelers plan smarter trips and helping local businesses reach them.';
 
   constructor(
     private router: Router,

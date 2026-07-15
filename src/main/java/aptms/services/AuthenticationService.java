@@ -3,6 +3,9 @@ package aptms.services;
 import aptms.dto.AuthResponse;
 import aptms.dto.LoginRequest;
 import aptms.dto.RegisterRequest;
+import aptms.dto.RegisterResponse;
+import aptms.dto.ResendOtpRequest;
+import aptms.dto.VerifyOtpRequest;
 
 import java.util.UUID;
 
@@ -17,23 +20,33 @@ import java.util.UUID;
 public interface AuthenticationService {
     
     /**
-     * Register new user and issue tokens.
-     * 
-     * Performs the following operations:
-     * 1. Validate input (email uniqueness, password strength)
-     * 2. Hash password with BCrypt
-     * 3. Create user entity
-     * 4. Generate access token and refresh token
-     * 5. Store refresh token in database
-     * 6. Return authentication response with tokens
-     * 
+     * Register new user in PENDING_VERIFICATION status and send an OTP verification email.
+     * No tokens are issued until the OTP is verified via {@link #verifyOtp}.
+     *
      * @param request Registration request DTO
-     * @return Authentication response with user info and tokens
+     * @return Registration response confirming the account was created and an OTP was sent
      * @throws aptms.exceptions.DuplicateValueFoundExceptions if email already exists
      * @throws IllegalArgumentException if validation fails
      */
-    AuthResponse register(RegisterRequest request);
-    
+    RegisterResponse register(RegisterRequest request);
+
+    /**
+     * Verify a registration OTP and activate the account, issuing tokens on success.
+     *
+     * @param request Email + OTP code
+     * @return Authentication response with user info and tokens
+     * @throws aptms.exceptions.OtpException if the code is invalid, expired, or attempts are exhausted
+     */
+    AuthResponse verifyOtp(VerifyOtpRequest request);
+
+    /**
+     * Resend a registration OTP, subject to a cooldown.
+     *
+     * @param request Email to resend the OTP to
+     * @throws aptms.exceptions.OtpException if the resend cooldown hasn't elapsed
+     */
+    void resendOtp(ResendOtpRequest request);
+
     /**
      * Authenticate user and issue tokens.
      * 
@@ -52,6 +65,7 @@ public interface AuthenticationService {
      * @return Authentication response with user info and tokens
      * @throws aptms.exceptions.InvalidException if credentials are invalid
      * @throws aptms.exceptions.InvalidException if account is locked (HTTP 423)
+     * @throws aptms.exceptions.EmailNotVerifiedException if the account is pending email verification (HTTP 403)
      */
     AuthResponse login(LoginRequest request);
     

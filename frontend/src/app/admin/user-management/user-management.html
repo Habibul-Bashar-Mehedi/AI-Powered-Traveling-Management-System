@@ -12,7 +12,7 @@
                 <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.519 60.519 0 003.478 2.405z" />
               </svg>
             </div>
-            <span class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">AIPTMS</span>
+            <span class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">SMTS</span>
           </a>
 
           <div class="hidden md:flex md:items-center md:gap-6">
@@ -30,6 +30,9 @@
             </span>
             <a routerLink="/admin/banners" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">
               Banners
+            </a>
+            <a routerLink="/admin/packages" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">
+              Packages
             </a>
             <a routerLink="/admin/bookings" class="text-sm font-medium text-gray-600 dark:text-gray-300 transition hover:text-indigo-600 dark:hover:text-indigo-400">
               Bookings
@@ -273,6 +276,14 @@
         <select class="form-input" [(ngModel)]="form.role">
           <option *ngFor="let role of roleOptions; trackBy: trackByValue" [ngValue]="role">{{ roleLabels[role] }}</option>
         </select>
+
+        <div *ngIf="form.role === 'VENDOR'">
+          <label class="form-label">Vendor Type</label>
+          <select class="form-input" [(ngModel)]="form.vendorType">
+            <option value="">Select vendor type</option>
+            <option *ngFor="let vt of vendorTypeOptions; trackBy: trackByValue" [ngValue]="vt">{{ vt }}</option>
+          </select>
+        </div>
 
         <label class="form-label">Country ID <span class="form-label-hint">(optional)</span></label>
         <input type="text" class="form-input" maxlength="10" [(ngModel)]="form.countryId" placeholder="BD" />

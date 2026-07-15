@@ -1,0 +1,31 @@
+@if (entries().length === 0) {
+  <p class="bookings-empty">{{ emptyMessage() }}</p>
+} @else {
+  <div class="bookings-list">
+    @for (entry of entries(); track entry.id) {
+      <article class="booking-card">
+        <div class="booking-card-main">
+          <h3 class="booking-service">{{ sourceIcon(entry) }} {{ entry.title }}</h3>
+          <p class="booking-meta">
+            Booked {{ entry.bookingDate | date:'mediumDate' }} · Travel {{ entry.travelDate | date:'mediumDate' }}
+          </p>
+        </div>
+        <div class="booking-card-side">
+          <span class="status-badge" [class]="statusBadgeClass(entry.status)">
+            {{ statusLabel(entry.status) }}
+          </span>
+          <div class="booking-amount">৳{{ entry.amount | number:'1.0-0' }}</div>
+          @if (canDownloadReceipt(entry)) {
+            <button
+              type="button"
+              class="booking-receipt-btn"
+              [disabled]="downloadingId() === entry.id"
+              (click)="downloadReceipt.emit(entry)">
+              {{ downloadingId() === entry.id ? 'Preparing…' : 'Download Receipt' }}
+            </button>
+          }
+        </div>
+      </article>
+    }
+  </div>
+}

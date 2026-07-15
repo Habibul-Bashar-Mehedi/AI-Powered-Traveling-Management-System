@@ -1,12 +1,14 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { AdminManagementService } from '../../services/admin-management.service';
 import { AdminUser, AdminUserRequest } from '../../models/admin-management.model';
 import { UserRole, UserRoleLabels } from '../../enums/user-role.enum';
+import { VendorType } from '../../enums/vendor.enums';
 import { FooterComponent } from '../../shared/app-footer/app-footer';
+import { ConfirmDialogService } from '../../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-user-management',
@@ -36,15 +38,23 @@ export class UserManagement implements OnInit {
 
   readonly roleOptions = [UserRole.USER, UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.VENDOR];
   readonly roleLabels = UserRoleLabels;
+  readonly vendorTypeOptions = Object.values(VendorType);
 
   constructor(
     private adminManagementService: AdminManagementService,
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private confirmDialog: ConfirmDialogService,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit(): void {
+    // Skip authenticated API calls during SSR — tokens aren't available server-side,
+    // and Angular's non-destructive hydration never re-runs ngOnInit on the client,
+    // so an SSR-time failure here would leave the page stuck until the component
+    // is destroyed and recreated by a later client-side navigation.
+    if (!isPlatformBrowser(this.platformId)) return;
     this.loadUsers();
   }
 
@@ -111,7 +121,8 @@ export class UserManagement implements OnInit {
       email: user.email,
       password: '',
       role: user.role,
-      countryId: user.countryId || ''
+      countryId: user.countryId || '',
+      vendorType: user.vendorType || ''
     };
     this.modalOpen = true;
     this.error = '';
@@ -140,7 +151,8 @@ export class UserManagement implements OnInit {
       username: this.form.username.trim(),
       email: this.form.email.trim().toLowerCase(),
       role: this.form.role,
-      countryId: this.form.countryId?.trim() || undefined
+      countryId: this.form.countryId?.trim() || undefined,
+      vendorType: this.form.role === UserRole.VENDOR ? this.form.vendorType?.trim() || undefined : undefined
     };
 
     const trimmedPassword = this.form.password?.trim();
@@ -168,8 +180,13 @@ export class UserManagement implements OnInit {
     });
   }
 
-  deleteUser(user: AdminUser): void {
-    const ok = window.confirm(`Delete user ${user.email}? This cannot be undone.`);
+  async deleteUser(user: AdminUser): Promise<void> {
+    const ok = await this.confirmDialog.confirm({
+      title: 'Delete this user?',
+      message: `Delete ${user.email}? This cannot be undone.`,
+      confirmLabel: 'Delete User',
+      danger: true
+    });
     if (!ok) {
       return;
     }
@@ -244,7 +261,8 @@ export class UserManagement implements OnInit {
       email: '',
       password: '',
       role: UserRole.USER,
-      countryId: ''
+      countryId: '',
+      vendorType: ''
     };
   }
 

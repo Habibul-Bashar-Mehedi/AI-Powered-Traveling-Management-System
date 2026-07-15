@@ -31,7 +31,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/v1/services")
-@PreAuthorize("hasRole('USER')")
+@PreAuthorize("hasAnyRole('USER','ADMIN','SUPER_ADMIN')")
 @RequiredArgsConstructor
 @Tag(name = "Service Catalog", description = "Browse and book active vendor service listings")
 public class ServiceCatalogController {
@@ -39,7 +39,7 @@ public class ServiceCatalogController {
     private final ServiceCatalogService serviceCatalogService;
 
     @GetMapping
-    @Operation(summary = "List active vendor services available for booking")
+    @Operation(summary = "List active vendor services available for booking (also used by admins to pick package components)")
     public ResponseEntity<Page<PublicServiceListingDTO>> getActiveServices(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -57,6 +57,7 @@ public class ServiceCatalogController {
     }
 
     @PostMapping("/{id}/book")
+    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Book a specific active service listing")
     public ResponseEntity<VendorBookingDTO> bookService(
             @PathVariable UUID id,

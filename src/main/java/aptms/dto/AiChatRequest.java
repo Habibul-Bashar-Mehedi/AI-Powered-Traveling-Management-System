@@ -1,10 +1,12 @@
 package aptms.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 
 public class AiChatRequest {
 
     private String username;
+    @NotBlank(message = "Message must not be empty")
     private String message;
     private List<AiChatTurn> history;
 

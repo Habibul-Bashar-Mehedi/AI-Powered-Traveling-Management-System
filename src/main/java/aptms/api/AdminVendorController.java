@@ -1,11 +1,13 @@
 package aptms.api;
 
 import aptms.dto.vendor.AdminVendorActionDTO;
+import aptms.dto.vendor.AdminVendorUpdateDTO;
 import aptms.dto.vendor.PayoutRequestDTO;
 import aptms.dto.vendor.VendorProfileDTO;
 import aptms.services.AdminVendorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -68,6 +70,15 @@ public class AdminVendorController {
             @RequestBody AdminVendorActionDTO action) {
         UUID adminId = getCurrentUserId();
         return ResponseEntity.ok(adminVendorService.suspendVendor(id, adminId, action.getReason()));
+    }
+
+    @PatchMapping("/{id}")
+    @Operation(summary = "Update vendor details (business name, vendor type)")
+    public ResponseEntity<VendorProfileDTO> updateVendor(
+            @PathVariable UUID id,
+            @Valid @RequestBody AdminVendorUpdateDTO dto) {
+        UUID adminId = getCurrentUserId();
+        return ResponseEntity.ok(adminVendorService.updateVendor(id, adminId, dto));
     }
 
     @PostMapping("/{id}/reinstate")

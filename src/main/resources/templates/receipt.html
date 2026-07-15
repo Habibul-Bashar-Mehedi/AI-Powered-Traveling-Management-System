@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Booking Receipt</title>
+    <style>
+        @page { size: A4; margin: 2.2cm; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #1f2937; font-size: 12px; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 14px; margin-bottom: 20px; }
+        .brand { font-size: 20px; font-weight: bold; color: #0f172a; }
+        .receipt-meta { text-align: right; font-size: 12px; color: #475569; }
+        .receipt-meta .title { font-size: 16px; font-weight: bold; color: #0f172a; margin-bottom: 4px; }
+        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: bold; background-color: #dcfce7; color: #166534; }
+        .section { margin-bottom: 18px; }
+        .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 6px; font-weight: bold; }
+        .two-col { display: flex; justify-content: space-between; }
+        .two-col > div { width: 48%; }
+        table.items { width: 100%; border-collapse: collapse; margin-top: 6px; }
+        table.items th { text-align: left; background-color: #f1f5f9; padding: 8px; font-size: 11px; text-transform: uppercase; color: #475569; }
+        table.items td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
+        table.totals { width: 100%; margin-top: 10px; }
+        table.totals td { padding: 4px 8px; }
+        table.totals .grand-total td { font-weight: bold; font-size: 14px; border-top: 2px solid #0f172a; padding-top: 8px; }
+        .footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #94a3b8; text-align: center; }
+        .label { color: #64748b; }
+        .value { color: #0f172a; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="brand">SMTS Travel</div>
+        <div class="receipt-meta">
+            <div class="title">Booking Receipt</div>
+            <div>Receipt No: <span th:text="${receipt.id}">-</span></div>
+            <div>Issued: <span th:text="${#temporals.format(receipt.issuedAt, 'dd MMM yyyy, HH:mm')}">-</span></div>
+        </div>
+    </div>
+
+    <div class="section two-col">
+        <div>
+            <div class="section-title">Billed To</div>
+            <div class="value" th:text="${receipt.customerName}">Customer Name</div>
+            <div class="label" th:text="${receipt.customerEmail}">customer@email.com</div>
+        </div>
+        <div style="text-align:right;">
+            <div class="section-title">Provided By</div>
+            <div class="value" th:text="${receipt.providerName}">Provider Name</div>
+            <div class="label" th:text="${receipt.providerAddress}">Provider Address</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <span class="status-badge" th:text="${receipt.status}">CONFIRMED</span>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Booking Details</div>
+        <table class="items">
+            <thead>
+            <tr>
+                <th>Description</th>
+                <th>Travel Dates</th>
+                <th>Qty</th>
+                <th style="text-align:right;">Amount</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>
+                    <span th:text="${receipt.title}">Service Name</span><br/>
+                    <span class="label" th:if="${receipt.destinationName}" th:text="${receipt.destinationName}">Destination</span>
+                </td>
+                <td>
+                    <span th:text="${#temporals.format(receipt.travelStartDate, 'dd MMM yyyy')}">-</span>
+                    <span th:if="${receipt.travelEndDate}"> &rarr; <span th:text="${#temporals.format(receipt.travelEndDate, 'dd MMM yyyy')}">-</span></span>
+                </td>
+                <td th:text="${receipt.quantity}">1</td>
+                <td style="text-align:right;" th:text="${receipt.currencyCode + ' ' + #numbers.formatDecimal(receipt.amount, 1, 2)}">USD 0.00</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <table class="totals">
+            <tr class="grand-total">
+                <td style="text-align:right;">Total Paid</td>
+                <td style="text-align:right; width: 140px;" th:text="${receipt.currencyCode + ' ' + #numbers.formatDecimal(receipt.amount, 1, 2)}">USD 0.00</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section two-col" th:if="${receipt.paymentMethod != null or receipt.paymentReference != null}">
+        <div>
+            <div class="section-title">Payment</div>
+            <div th:if="${receipt.paymentMethod}"><span class="label">Method:</span> <span class="value" th:text="${receipt.paymentMethod}">-</span></div>
+            <div th:if="${receipt.paymentStatus}"><span class="label">Payment Status:</span> <span class="value" th:text="${receipt.paymentStatus}">-</span></div>
+            <div th:if="${receipt.paymentReference}"><span class="label">Reference:</span> <span class="value" th:text="${receipt.paymentReference}">-</span></div>
+        </div>
+        <div style="text-align:right;">
+            <div class="section-title">Booked On</div>
+            <div class="value" th:text="${#temporals.format(receipt.bookingDate, 'dd MMM yyyy, HH:mm')}">-</div>
+        </div>
+    </div>
+
+    <div class="section" th:if="${receipt.specialRequests}">
+        <div class="section-title">Special Requests</div>
+        <div th:text="${receipt.specialRequests}">-</div>
+    </div>
+
+    <div class="footer">
+        This is a system-generated receipt for booking <span th:text="${receipt.id}">-</span> and does not require a signature.
+    </div>
+</body>
+</html>

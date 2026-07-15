@@ -82,6 +82,11 @@ public class VendorService {
     @Column(name = "location_address", length = 500)
     private String locationAddress;
 
+    /** Optional — lets a listing be grouped by destination (e.g. for user spending summaries). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "destination_id")
+    private Destination destination;
+
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 

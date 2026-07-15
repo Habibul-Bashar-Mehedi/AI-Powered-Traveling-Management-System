@@ -1,0 +1,178 @@
+<div class="en-root">
+
+  <header class="en-header">
+    <div>
+      <a routerLink="/dashboard" class="en-back">← Dashboard</a>
+      <h1 class="en-title">Explore Nearby</h1>
+      <p class="en-subtitle">Find food, markets, and items around you</p>
+    </div>
+  </header>
+
+  <section class="en-filter-bar">
+    <div class="en-filter-group">
+      <button type="button" class="en-btn en-btn-primary" [disabled]="locatingInProgress" (click)="useMyLocation()">
+        {{ locatingInProgress ? 'Locating…' : '📍 Use My Location' }}
+      </button>
+      <label class="en-radius-label" *ngIf="filterMode === 'location'">
+        Radius
+        <input type="number" min="1" class="en-radius-input" [(ngModel)]="radiusKm" (ngModelChange)="loadAll()"/>
+        km
+      </label>
+    </div>
+
+    <div class="en-filter-group">
+      <span class="en-or">or</span>
+      <select class="en-select" [(ngModel)]="selectedDestinationId" (ngModelChange)="onDestinationSelected()">
+        <option [ngValue]="null">Select a destination…</option>
+        <option *ngFor="let d of destinations" [ngValue]="d.id">{{ d.name }} ({{ d.region }})</option>
+      </select>
+    </div>
+
+    <button type="button" class="en-btn en-btn-ghost" *ngIf="filterMode !== 'none'" (click)="clearFilter()">Clear filter</button>
+
+    <p class="en-error" *ngIf="locationError">{{ locationError }}</p>
+  </section>
+
+  <!-- Food -->
+  <section class="en-section">
+    <h2 class="en-section-title">Traditional Food</h2>
+    <div class="en-grid" *ngIf="!foodsLoading && foods.length > 0">
+      <app-card
+        *ngFor="let food of foods"
+        [title]="food.dishName"
+        [subtitle]="foodSubtitle(food)"
+        [description]="food.description"
+        (viewDetails)="openFoodDetails(food)">
+        <button card-primary type="button" class="en-btn en-btn-primary" *ngIf="resolvedService(food.linkedServiceId)" (click)="bookFood(food)">
+          Book
+        </button>
+      </app-card>
+    </div>
+    <app-loading-state *ngIf="foodsLoading" variant="shimmer-cards" [count]="3"></app-loading-state>
+    <p class="en-empty" *ngIf="!foodsLoading && foods.length === 0">No traditional food found for this filter.</p>
+  </section>
+
+  <!-- Markets -->
+  <section class="en-section">
+    <h2 class="en-section-title">Markets</h2>
+    <div class="en-grid" *ngIf="!marketsLoading && markets.length > 0">
+      <app-card
+        *ngFor="let market of markets"
+        [title]="market.name"
+        [subtitle]="marketSubtitle(market)"
+        [description]="market.description"
+        [showViewDetails]="true"
+        (viewDetails)="openMarketDetails(market)">
+      </app-card>
+    </div>
+    <app-loading-state *ngIf="marketsLoading" variant="shimmer-cards" [count]="3"></app-loading-state>
+    <p class="en-empty" *ngIf="!marketsLoading && markets.length === 0">No markets found for this filter.</p>
+  </section>
+
+  <!-- Items -->
+  <section class="en-section">
+    <h2 class="en-section-title">Traditional Items</h2>
+    <div class="en-grid" *ngIf="!itemsLoading && items.length > 0">
+      <app-card
+        *ngFor="let item of items"
+        [title]="item.categoryName"
+        [subtitle]="itemSubtitle(item)"
+        [description]="item.description"
+        [showViewDetails]="true"
+        (viewDetails)="openItemDetails(item)">
+        <button card-primary type="button" class="en-btn en-btn-primary" *ngIf="resolvedService(item.linkedServiceId)" (click)="orderItem(item)">
+          Order
+        </button>
+      </app-card>
+    </div>
+    <app-loading-state *ngIf="itemsLoading" variant="shimmer-cards" [count]="3"></app-loading-state>
+    <p class="en-empty" *ngIf="!itemsLoading && items.length === 0">No traditional items found for this filter.</p>
+  </section>
+
+  <!-- Food Details -->
+  @if (detailFood) {
+    <app-modal [open]="true" [titleText]="detailFood.dishName" [subtitleText]="detailFood.destination?.name" icon="🍽️" (closed)="closeFoodDetails()">
+      <p class="en-detail-desc">{{ detailFood.description }}</p>
+      <dl class="en-detail-grid">
+        <div class="en-detail-item" *ngIf="detailFood.culturalContext">
+          <dt>About This Dish</dt>
+          <dd>{{ detailFood.culturalContext }}</dd>
+        </div>
+        <div class="en-detail-item" *ngIf="detailFood.priceRange">
+          <dt>Price Range</dt>
+          <dd>{{ detailFood.priceRange }}</dd>
+        </div>
+        <div class="en-detail-item" *ngIf="detailFood.recommendedLocation">
+          <dt>Where to Try</dt>
+          <dd>{{ detailFood.recommendedLocation }}</dd>
+        </div>
+      </dl>
+      <button modal-footer type="button" class="en-btn en-btn-ghost" (click)="closeFoodDetails()">Close</button>
+      <button modal-footer type="button" class="en-btn en-btn-primary" *ngIf="resolvedService(detailFood.linkedServiceId)" (click)="bookFood(detailFood)">
+        Book
+      </button>
+    </app-modal>
+  }
+
+  <!-- Market Details -->
+  @if (detailMarket) {
+    <app-modal [open]="true" [titleText]="detailMarket.name" [subtitleText]="detailMarket.destination?.name" icon="🏪" (closed)="closeMarketDetails()">
+      <p class="en-detail-desc">{{ detailMarket.description }}</p>
+      <dl class="en-detail-grid">
+        <div class="en-detail-item" *ngIf="detailMarket.location">
+          <dt>Location</dt>
+          <dd>{{ detailMarket.location }}</dd>
+        </div>
+        <div class="en-detail-item" *ngIf="detailMarket.operatingDays">
+          <dt>Operating Days</dt>
+          <dd>{{ detailMarket.operatingDays }}</dd>
+        </div>
+        <div class="en-detail-item" *ngIf="detailMarket.operatingHours">
+          <dt>Operating Hours</dt>
+          <dd>{{ detailMarket.operatingHours }}</dd>
+        </div>
+      </dl>
+      <button modal-footer type="button" class="en-btn en-btn-ghost" (click)="closeMarketDetails()">Close</button>
+    </app-modal>
+  }
+
+  <!-- Item Details -->
+  @if (detailItem) {
+    <app-modal [open]="true" [titleText]="detailItem.categoryName" [subtitleText]="detailItem.market?.name" icon="🛍️" (closed)="closeItemDetails()">
+      <p class="en-detail-desc">{{ detailItem.description }}</p>
+      <dl class="en-detail-grid">
+        <div class="en-detail-item" *ngIf="detailItem.priceRange">
+          <dt>Price Range</dt>
+          <dd>{{ detailItem.priceRange }}</dd>
+        </div>
+      </dl>
+      <button modal-footer type="button" class="en-btn en-btn-ghost" (click)="closeItemDetails()">Close</button>
+      <button modal-footer type="button" class="en-btn en-btn-primary" *ngIf="resolvedService(detailItem.linkedServiceId)" (click)="orderItem(detailItem)">
+        Order
+      </button>
+    </app-modal>
+  }
+
+  <!-- Booking modal (shared) -->
+  @if (bookingDraft) {
+    <app-service-booking-modal
+      [service]="bookingDraft"
+      (closed)="closeBookingModal()"
+      (booked)="onServiceBooked($event)">
+    </app-service-booking-modal>
+  }
+
+  <!-- Pay Now modal (opened right after a booking is reserved, unpaid) -->
+  @if (payNowDraft) {
+    <app-pay-now-modal
+      [bookingType]="payNowDraft.bookingType"
+      [bookingId]="payNowDraft.bookingId"
+      [bookingReference]="payNowDraft.bookingReference"
+      [merchantName]="payNowDraft.merchantName"
+      [amount]="payNowDraft.amount"
+      [currencyCode]="payNowDraft.currencyCode"
+      (closed)="closePayNowModal()">
+    </app-pay-now-modal>
+  }
+
+</div>

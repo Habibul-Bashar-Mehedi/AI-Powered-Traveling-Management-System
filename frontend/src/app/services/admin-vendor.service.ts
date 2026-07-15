@@ -3,11 +3,16 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { API_ENDPOINTS } from '../constants/api-endpoints';
-import { VendorProfile, PayoutRequest } from '../models/vendor.model';
+import { VendorProfile, PayoutRequest, ReinstatementRequest } from '../models/vendor.model';
 
 export interface AdminVendorAction {
   reason?: string;
   action?: string;
+}
+
+export interface AdminVendorUpdate {
+  vendorType?: string;
+  businessName?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -42,6 +47,10 @@ export class AdminVendorService {
     return this.http.post<VendorProfile>(`${this.base}${API_ENDPOINTS.ADMIN_VENDOR.REINSTATE(id)}`, {});
   }
 
+  updateVendor(id: string, dto: AdminVendorUpdate): Observable<VendorProfile> {
+    return this.http.patch<VendorProfile>(`${this.base}${API_ENDPOINTS.ADMIN_VENDOR.UPDATE(id)}`, dto);
+  }
+
   getPendingPayouts(): Observable<PayoutRequest[]> {
     return this.http.get<PayoutRequest[]>(`${this.base}${API_ENDPOINTS.ADMIN_VENDOR.PENDING_PAYOUTS}`);
   }
@@ -52,5 +61,17 @@ export class AdminVendorService {
       `${this.base}${API_ENDPOINTS.ADMIN_VENDOR.PROCESS_PAYOUT(payoutId)}?approve=${approve}`,
       body
     );
+  }
+
+  getReinstatementRequests(status?: string): Observable<ReinstatementRequest[]> {
+    const url = status
+      ? `${this.base}${API_ENDPOINTS.ADMIN_REINSTATEMENT.ALL}?status=${status}`
+      : `${this.base}${API_ENDPOINTS.ADMIN_REINSTATEMENT.ALL}`;
+    return this.http.get<ReinstatementRequest[]>(url);
+  }
+
+  reviewReinstatementRequest(id: string, approve: boolean, reason?: string): Observable<ReinstatementRequest> {
+    const body = { decision: approve ? 'APPROVE' : 'REJECT', reason };
+    return this.http.patch<ReinstatementRequest>(`${this.base}${API_ENDPOINTS.ADMIN_REINSTATEMENT.REVIEW(id)}`, body);
   }
 }

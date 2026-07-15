@@ -64,6 +64,7 @@ public interface VendorBookingRepository extends JpaRepository<VendorBooking, UU
         SELECT b FROM VendorBooking b
         JOIN FETCH b.service s
         JOIN FETCH b.vendor v
+        LEFT JOIN FETCH s.destination
         WHERE b.user.id = :userId
         ORDER BY b.createdAt DESC
     """)
@@ -136,5 +137,18 @@ public interface VendorBookingRepository extends JpaRepository<VendorBooking, UU
     @Modifying
     @Query("DELETE FROM VendorBooking vb WHERE vb.vendor.vendorId = :vendorId")
     void deleteByVendorId(@Param("vendorId") UUID vendorId);
+
+    /** All component bookings belonging to one package booking (for payment resolution/cancellation). */
+    List<VendorBooking> findByPackageBooking_PackageBookingId(UUID packageBookingId);
+
+    /** Single-service bookings still unpaid past a cutoff — candidates for expiry (not part of a package). */
+    @Query("""
+        SELECT b FROM VendorBooking b
+        WHERE b.paymentStatus = aptms.enums.VendorPaymentStatus.PENDING
+          AND b.bookingStatus = aptms.enums.VendorBookingStatus.PENDING
+          AND b.packageBooking IS NULL
+          AND b.createdAt < :cutoff
+    """)
+    List<VendorBooking> findStalePendingPayments(@Param("cutoff") Instant cutoff);
 }
 
